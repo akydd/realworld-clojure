@@ -14,5 +14,5 @@
   "Register a user"
   [user]
   (if (m/validate User user)
-    {:user user}
+    {:user (db/insert-user user)}
     {:errors (me/humanize (m/explain User user))}))

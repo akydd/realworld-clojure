@@ -1,6 +1,7 @@
 (ns realworld-clojure.core
   (:require [compojure.core :as core]
             [realworld-clojure.config :as config]
+            [realworld-clojure.middleware :refer [wrap-exception]]
             [org.httpkit.server :as http-server]
             [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
             [ring.middleware.content-type :refer [wrap-content-type]]
@@ -41,6 +42,7 @@
     (ragtime-repl/migrate migration-config)
     (http-server/run-server (->
                              #'app-routes
+                             wrap-exception
                              wrap-json-response
                              (wrap-content-type "text/json")
                              (wrap-json-body {:keywords? true}))  {:port port})

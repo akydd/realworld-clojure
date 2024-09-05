@@ -4,5 +4,3 @@
 
 (defn read-config []
   (aero/read-config (io/resource "config.edn")))
-
-(read-config)

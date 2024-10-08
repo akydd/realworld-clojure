@@ -13,7 +13,9 @@
                  [org.clojure/clojure "1.11.3"]
                  [com.github.seancorfield/next.jdbc "1.3.939"]
                  [org.postgresql/postgresql "42.7.3"]
-                 [ragtime "0.8.0"]]
+                 [clj-test-containers "0.7.4"]
+                 [ragtime "0.8.0"]
+                 [com.stuartsierra/component "1.1.0"]]
 
   :main ^:skip-aot realworld-clojure.core
   :target-path "target/%s"

@@ -21,7 +21,7 @@
 
   (stop [component]
     (println "Stopping webserver")
-    (:server component)
+    ((:server component) :timeout 10)
     (assoc component :server nil)))
 
 (defn new-webserver [port]

@@ -20,4 +20,7 @@
   :main ^:skip-aot realworld-clojure.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all
-                       :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}})
+                       :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}
+             :dev {:source-paths ["dev"]
+                   :dependencies [[org.clojure/tools.namespace "1.5.0"]
+                                  [org.clojure/java.classpath "1.1.0"]]}})

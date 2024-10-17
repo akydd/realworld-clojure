@@ -10,8 +10,9 @@
 
 (defn app-routes [router]
   (core/routes
-   (core/POST "/api/users/login" [] {:status 200})
-   (core/POST "/api/users" [] (handlers/no-op (:handler router)))
+   (core/GET "/api/no-op" [] (handlers/no-op (:handler router)))
+   (core/POST "/api/users/login" [] )
+   (core/POST "/api/users" [] (handlers/register-user (:handler router)))
    (core/GET "/api/user" [] {:status 200})
    (core/PUT "/api/user" [] {:status 200})
    (core/GET "/api/profiles/:username" [username] {:status 200})

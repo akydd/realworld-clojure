@@ -25,7 +25,7 @@
   component/Lifecycle
 
   (start [component]
-    (println "Starting database with " dbspec)
+    (println "Starting database with" dbspec)
     (let [ds (jdbc/get-datasource dbspec)
           migration-config {:datastore (ragtime-jdbc/sql-database dbspec)
                             :migrations (ragtime-jdbc/load-resources "migrations")}]

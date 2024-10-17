@@ -11,7 +11,7 @@
   component/Lifecycle
 
   (start [component]
-    (println "Starting webserver on port " port)
+    (println "Starting webserver on port" port)
     (assoc component :server (http-server/run-server (->
                                                       (router/app-routes router)
                                                       wrap-exception

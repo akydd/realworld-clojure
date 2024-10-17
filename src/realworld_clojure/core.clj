@@ -9,7 +9,7 @@
    [realworld-clojure.ports.router :as router])
   (:gen-class))
 
-(defn realworld-clojure-system [config]
+(defn new-system [config]
   (let [dbspec (:dbspec config)
         server-config (:server config)]
     (component/system-map
@@ -17,21 +17,22 @@
      :user-controller (component/using
                        (user/new-user-controller)
                        [:database])
-     :handlers (component/using
+     :handler (component/using
                 (handlers/new-handler)
                 [:user-controller])
      :router (component/using
               (router/new-router)
-              [:handlers])
+              [:handler])
      :web-server (component/using
                   (webserver/new-webserver (:port server-config))
                   [:router]))))
 
+(defn start [system]
+  (component/start-system system))
+
+(defn stop [system]
+  (component/stop-system system))
+
 (defn -main []
-  (let [system (-> (config/read-config)
-                   (realworld-clojure-system)
-                   (component/start-system))]
-    (println "Starting RealWorld Clojure")
-    (.addShutdownHook
-     (Runtime/getRuntime)
-     (new Thread #(component/stop-system system)))))
+  (println "Starting RealWorld Clojure")
+  (start (new-system (config/read-config))))

@@ -15,7 +15,8 @@
                  [org.postgresql/postgresql "42.7.3"]
                  [clj-test-containers "0.7.4"]
                  [ragtime "0.8.0"]
-                 [com.stuartsierra/component "1.1.0"]]
+                 [com.stuartsierra/component "1.1.0"]
+                 [buddy/buddy-hashers "2.0.167"]]
 
   :main ^:skip-aot realworld-clojure.core
   :target-path "target/%s"

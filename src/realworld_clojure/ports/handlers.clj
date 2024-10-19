@@ -6,6 +6,11 @@
 (defn new-handler []
   (->Handler nil))
 
+(defn health [_]
+  (fn [req]
+    {:status 200
+     :body (:body req)}))
+
 (defn register-user
   "Register a user"
   [handler]
@@ -17,7 +22,20 @@
         {:status 200
          :body u}))))
 
-(defn no-op [handler]
-  (fn [req]
-    {:status 200
-     :body (:body req)}))
+(defn login-user
+  "Login a user"
+  [_]
+  (fn [_] 
+    {:status 200}))
+
+(defn get-user
+  "get a user"
+  [_]
+  (fn [_] 
+    {:status 200}))
+
+(defn update-user
+  "Update a user"
+  [_]
+  (fn [_] 
+    {:status 200}))

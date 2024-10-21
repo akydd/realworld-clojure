@@ -16,7 +16,12 @@
                  [clj-test-containers "0.7.4"]
                  [ragtime "0.8.0"]
                  [com.stuartsierra/component "1.1.0"]
-                 [buddy/buddy-hashers "2.0.167"]]
+                 [buddy/buddy-hashers "2.0.167"]
+                 [buddy/buddy-sign "3.5.351"]
+                 [buddy/buddy-auth "3.0.1"]
+                 [cambium/cambium.core         "1.1.1"]
+                 [cambium/cambium.codec-simple "1.0.0"]
+                 [cambium/cambium.logback.core "0.4.6"]]
 
   :main ^:skip-aot realworld-clojure.core
   :target-path "target/%s"

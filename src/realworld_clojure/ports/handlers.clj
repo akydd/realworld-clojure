@@ -1,5 +1,6 @@
 (ns realworld-clojure.ports.handlers
-  (:require [realworld-clojure.domain.user :as user]))
+  (:require [realworld-clojure.domain.user :as user]
+            [buddy.auth :refer [authenticated?]]))
 
 (defrecord Handler [user-controller])
 
@@ -25,17 +26,19 @@
 (defn login-user
   "Login a user"
   [_]
-  (fn [_] 
+  (fn [_]
     {:status 200}))
 
 (defn get-user
   "get a user"
   [_]
-  (fn [_] 
-    {:status 200}))
+  (fn [req]
+    (if (authenticated? req)
+      {:status 200}
+      {:status 400})))
 
 (defn update-user
   "Update a user"
   [_]
-  (fn [_] 
+  (fn [_]
     {:status 200}))

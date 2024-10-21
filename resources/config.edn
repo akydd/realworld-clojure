@@ -4,4 +4,5 @@
           :dbname #or [#env DB_NAME "app"]
           :user #or [#env DB_USER "admin"]
           :password #or [#env DB_PASSWORD "password"]}
- :server {:port #long #or [#env PORT 8090]}}
+ :server {:port #long #or [#env PORT 8090]}
+ :jwt-secret #or [#env JWT_SECRET "jwtsecret"]}

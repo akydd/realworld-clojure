@@ -11,20 +11,21 @@
 
 (defn new-system [config]
   (let [dbspec (:dbspec config)
-        server-config (:server config)]
+        server-config (:server config)
+        jwt-secret (:jwt-secret config)]
     (component/system-map
      :database (db/new-database dbspec)
      :user-controller (component/using
-                       (user/new-user-controller)
+                       (user/new-user-controller jwt-secret)
                        [:database])
      :handler (component/using
-                (handlers/new-handler)
-                [:user-controller])
+               (handlers/new-handler)
+               [:user-controller])
      :router (component/using
               (router/new-router)
               [:handler])
      :web-server (component/using
-                  (webserver/new-webserver (:port server-config))
+                  (webserver/new-webserver (:port server-config) jwt-secret)
                   [:router]))))
 
 (defn start [system]

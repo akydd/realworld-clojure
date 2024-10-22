@@ -1,5 +1,6 @@
 (ns realworld-clojure.middleware
-  (:require [cambium.core  :as log]))
+  (:require [cambium.core  :as log]
+            [buddy.auth :refer [authenticated? throw-unauthorized]]))
 
 (defn wrap-exception [handler]
   (fn [req]
@@ -12,3 +13,9 @@
   (fn [req]
     (log/info (pr-str req))
     (handler req)))
+
+(defn wrap-no-auth-error [handler]
+  (fn [req]
+    (if-not (authenticated? req)
+      {:status 403}
+      (handler req))))

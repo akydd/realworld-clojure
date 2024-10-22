@@ -1,12 +1,17 @@
 (ns realworld-clojure.ports.router
   (:require
    [realworld-clojure.ports.handlers :as handlers]
-   [compojure.core :as core]))
+   [realworld-clojure.middleware :refer [wrap-exception wrap-no-auth-error wrap-log-req]]
+   [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
+   [ring.middleware.content-type :refer [wrap-content-type]]
+   [buddy.auth.middleware :refer [wrap-authentication]]
+   [compojure.core :as core]
+   [buddy.auth.backends :as backends]))
 
-(defrecord Router [handler])
+(defrecord Router [jwt-secret handler])
 
-(defn new-router []
-  (->Router nil))
+(defn new-router [jwt-secret]
+  (map->Router {:jwt-secret jwt-secret}))
 
 (defn app-routes-no-auth [router]
   (core/routes
@@ -36,3 +41,21 @@
   (core/routes
    (core/GET "/api/articles" [] {:status 200})
    (core/GET "/api/articles/:slug/comments" [slug] {:status 200})))
+
+(defn unauthorized-handler [_]
+  {:status 403})
+
+(defn app-routes [router]
+  (let [backend (backends/jws {:secret (:jwt-secret router) :token-name "Bearer" :unauthorized-handler unauthorized-handler})]
+    (-> (core/routes
+         (app-routes-no-auth router)
+         (->
+          (app-routes-with-auth router)
+          wrap-log-req
+          wrap-no-auth-error
+          (wrap-authentication backend))
+         (app-routes-optional-auth router))
+        wrap-exception
+        wrap-json-response
+        (wrap-content-type "text/json")
+        (wrap-json-body {:keywords? true}))))

@@ -22,10 +22,10 @@
                (handlers/new-handler)
                [:user-controller])
      :router (component/using
-              (router/new-router)
+              (router/new-router jwt-secret)
               [:handler])
      :web-server (component/using
-                  (webserver/new-webserver (:port server-config) jwt-secret)
+                  (webserver/new-webserver (:port server-config))
                   [:router]))))
 
 (defn start [system]

@@ -11,6 +11,11 @@
   [database user]
   (sql/insert! (:datasource database) :users user {:builder-fn rs/as-unqualified-lower-maps}))
 
+(defn get-user
+  "Get a user record from uesr table"
+  [database id]
+  (sql/get-by-id (:datasource database) "users" id {:builder-fn rs/as-unqualified-lower-maps}))
+
 (defn migrate
   "Migrate the db"
   [database]

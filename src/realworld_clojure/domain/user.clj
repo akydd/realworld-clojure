@@ -34,6 +34,12 @@
       {:user (dissoc u :id :password)})
     {:errors (me/humanize (m/explain User user))}))
 
+(defn get-user
+  "Get a user"
+  [controller id]
+  (let [u (db/get-user (:database controller) id)]
+    {:user (dissoc u :id :password)}))
+
 (def UserLogin
   [:map
    [:email [:string {:min 1}]]

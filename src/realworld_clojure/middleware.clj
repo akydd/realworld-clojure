@@ -1,6 +1,6 @@
 (ns realworld-clojure.middleware
   (:require [cambium.core  :as log]
-            [buddy.auth :refer [authenticated? throw-unauthorized]]))
+            [buddy.auth :refer [authenticated?]]))
 
 (defn wrap-exception [handler]
   (fn [req]

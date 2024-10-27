@@ -46,7 +46,7 @@
   {:status 403})
 
 (defn app-routes [router]
-  (let [backend (backends/jws {:secret (:jwt-secret router) :token-name "Bearer" :unauthorized-handler unauthorized-handler})]
+  (let [backend (backends/jws {:secret (:jwt-secret router) :token-name "Token" :unauthorized-handler unauthorized-handler})]
     (-> (core/routes
          (app-routes-no-auth router)
          (->

@@ -11,6 +11,11 @@
     {:status 200
      :body (:body req)}))
 
+(defn clean-user
+  "Format the user object before returning it to web based api responses"
+  [user]
+  (dissoc user :id :password))
+
 (defn register-user
   "Register a user"
   [handler]
@@ -20,23 +25,30 @@
         {:status 422
          :body u}
         {:status 200
-         :body u}))))
+         :body {:user (clean-user u)}}))))
 
 (defn login-user
   "Login a user"
-  [_]
-  (fn [_]
-    {:status 200}))
+  [handler]
+  (fn [req]
+    (let [u (user/login-user (:user-controller handler) (get-in req [:body :user]))]
+      (if (nil? u)
+        {:status 403}
+        (if (:errors u)
+          {:status 422
+           :body u}
+          {:status 200
+           :body {:user (clean-user u)}})))))
 
 (defn get-user
   "get a user"
   [handler]
   (fn [req]
     (let [u (user/get-user (:user-controller handler) (get-in req [:identity :id]))]
-      (if (nil? (:user u))
+      (if (nil? u)
         {:status 404}
         {:status 200
-         :body u}))))
+         :body {:user (clean-user u)}}))))
 
 (defn update-user
   "Update a user"

@@ -18,7 +18,7 @@
   [user]
   (assoc user :password (hashers/derive (:password user))))
 
-(defn create-token
+(defn add-token
   "Returns the user with a token"
   [jwt-secret user]
   (assoc user :token (jwt/sign {:id (:id user)} jwt-secret)))
@@ -27,18 +27,17 @@
   "Register a user"
   [controller user]
   (if (m/validate User user)
-    (let [u (->> user
-                 hash-password
-                 (db/insert-user (:database controller))
-                 (create-token (:jwt-secret controller)))]
-      {:user (dissoc u :id :password)})
+    (->> user
+         hash-password
+         (db/insert-user (:database controller))
+         (add-token (:jwt-secret controller)))
     {:errors (me/humanize (m/explain User user))}))
 
 (defn get-user
   "Get a user"
   [controller id]
-  (let [u (db/get-user (:database controller) id)]
-    {:user (dissoc u :id :password)}))
+  (when-let [u (db/get-user (:database controller) id)]
+    (add-token (:jwt-secret controller) u)))
 
 (def UserLogin
   [:map
@@ -47,9 +46,13 @@
 
 (defn login-user
   "User login"
-  [user]
+  [controller user]
   (if (m/validate UserLogin user)
-    {:user user}
+    (when-let [fetched-user (db/get-user-by-email (:database controller) (:email user))]
+      (let [incoming-password (:password user)
+            encrypted-password (:password fetched-user)]
+        (when (:valid (hashers/verify incoming-password encrypted-password))
+          (add-token (:jwt-secret controller) fetched-user))))
     {:errors (me/humanize (m/explain UserLogin user))}))
 
 (defrecord UserController [jwt-secret database])

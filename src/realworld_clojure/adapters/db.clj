@@ -6,15 +6,23 @@
             [ragtime.repl :as ragtime-repl]
             [ragtime.jdbc :as ragtime-jdbc]))
 
+(def query-options
+  {:builder-fn rs/as-unqualified-lower-maps})
+
 (defn insert-user
   "Insert record into user table"
   [database user]
-  (sql/insert! (:datasource database) :users user {:builder-fn rs/as-unqualified-lower-maps}))
+  (sql/insert! (:datasource database) :users user query-options))
 
 (defn get-user
   "Get a user record from uesr table"
   [database id]
-  (sql/get-by-id (:datasource database) "users" id {:builder-fn rs/as-unqualified-lower-maps}))
+  (sql/get-by-id (:datasource database) "users" id query-options))
+
+(defn get-user-by-email
+  "Get a user record by email"
+  [database email]
+  (first (sql/find-by-keys (:datasource database) :users {:email email} query-options)))
 
 (defn migrate
   "Migrate the db"

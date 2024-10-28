@@ -16,7 +16,9 @@
 (defn hash-password
   "Returns the user with a hashed version of the password"
   [user]
-  (assoc user :password (hashers/derive (:password user))))
+  (if (:password user)
+    (assoc user :password (hashers/derive (:password user)))
+    user))
 
 (defn add-token
   "Returns the user with a token"
@@ -54,6 +56,24 @@
         (when (:valid (hashers/verify incoming-password encrypted-password))
           (add-token (:jwt-secret controller) fetched-user))))
     {:errors (me/humanize (m/explain UserLogin user))}))
+
+(def UserUpdate
+  [:map
+   [:email {:optional true} [:string {:min 1}]]
+   [:username {:optional true} [:string {:min 1}]]
+   [:password {:optional true} [:string {:min 1}]]
+   [:image {:optional true} [:string {:min 1}]]
+   [:bio {:optional true} [:string {:min 1}]]])
+
+(defn update-user
+  "Update a user record"
+  [controller id user]
+  (if (m/validate UserUpdate user)
+    (->> user
+         hash-password
+         (db/update-user (:database controller) id)
+         (add-token (:jwt-secret controller)))
+    {:errors (me/humanize (m/explain UserUpdate user))}))
 
 (defrecord UserController [jwt-secret database])
 

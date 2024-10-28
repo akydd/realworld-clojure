@@ -52,6 +52,13 @@
 
 (defn update-user
   "Update a user"
-  [_]
-  (fn [_]
-    {:status 200}))
+  [handler]
+  (fn [req]
+    (let [u (user/update-user (:user-controller handler) (get-in req [:identity :id]) (get-in req [:body :user]))]
+      (if (nil? u)
+        {:status 404}
+        (if (:errors u)
+          {:status 422
+           :body u}
+          {:status 200
+           :body {:user (clean-user u)}})))))

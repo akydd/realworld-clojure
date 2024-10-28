@@ -24,6 +24,12 @@
   [database email]
   (first (sql/find-by-keys (:datasource database) :users {:email email} query-options)))
 
+(defn update-user
+  "Update a user record"
+  [database id data]
+  (sql/update! (:datasource database) :users data {:id id})
+  (get-user database id))
+
 (defn migrate
   "Migrate the db"
   [database]

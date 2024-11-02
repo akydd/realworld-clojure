@@ -17,5 +17,7 @@
 (defn wrap-no-auth-error [handler]
   (fn [req]
     (if-not (authenticated? req)
-      {:status 403}
+      (do 
+        (log/warn "request it not authenticated")
+        {:status 403})
       (handler req))))

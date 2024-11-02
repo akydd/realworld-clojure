@@ -1,15 +1,16 @@
 (ns realworld-clojure.ports.handlers
-  (:require [realworld-clojure.domain.user :as user]))
+  (:require [realworld-clojure.domain.user :as user]
+            [realworld-clojure.domain.profile :as profile]))
 
-(defrecord Handler [user-controller])
+(defrecord Handler [user-controller profile-controller])
 
 (defn new-handler []
-  (->Handler nil))
+  (map->Handler {}))
 
 (defn health [_]
   (fn [req]
     {:status 200
-     :body (:body req)}))
+     :body {:body req}}))
 
 (defn clean-user
   "Format the user object before returning it to web based api responses"
@@ -19,8 +20,8 @@
 (defn register-user
   "Register a user"
   [handler]
-  (fn [req]
-    (let [u (user/register-user (:user-controller handler) (get-in req [:body :user]))]
+  (fn [user-data]
+    (let [u (user/register-user (:user-controller handler) user-data)]
       (if (u :errors)
         {:status 422
          :body u}
@@ -30,8 +31,8 @@
 (defn login-user
   "Login a user"
   [handler]
-  (fn [req]
-    (let [u (user/login-user (:user-controller handler) (get-in req [:body :user]))]
+  (fn [user]
+    (let [u (user/login-user (:user-controller handler) user)]
       (if (nil? u)
         {:status 403}
         (if (:errors u)
@@ -43,8 +44,8 @@
 (defn get-user
   "get a user"
   [handler]
-  (fn [req]
-    (let [u (user/get-user (:user-controller handler) (get-in req [:identity :id]))]
+  (fn [id]
+    (let [u (user/get-user (:user-controller handler) id)]
       (if (nil? u)
         {:status 404}
         {:status 200
@@ -53,8 +54,8 @@
 (defn update-user
   "Update a user"
   [handler]
-  (fn [req]
-    (let [u (user/update-user (:user-controller handler) (get-in req [:identity :id]) (get-in req [:body :user]))]
+  (fn [id user-data]
+    (let [u (user/update-user (:user-controller handler) id user-data)]
       (if (nil? u)
         {:status 404}
         (if (:errors u)
@@ -62,3 +63,13 @@
            :body u}
           {:status 200
            :body {:user (clean-user u)}})))))
+
+(defn get-profile
+  "Get a user profile by username"
+  [handler]
+  (fn [username id]
+    (let [p (profile/get-profile (:profile-controller handler) username id)]
+      (if (nil? p)
+        {:status 404}
+        {:status 200
+         :body {:profile p}}))))

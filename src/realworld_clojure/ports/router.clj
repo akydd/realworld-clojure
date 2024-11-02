@@ -15,17 +15,19 @@
 
 (defn app-routes-no-auth [router]
   (core/routes
+   ; (core/GET "/api/health-param/:param" [param] ((handlers/health-param (:handler router)) param))
    (core/GET "/api/health" [] (handlers/health (:handler router)))
-   (core/POST "/api/users/login" [] (handlers/login-user (:handler router)))
-   (core/POST "/api/users" [] (handlers/register-user (:handler router)))
+   (core/POST "/api/users/login" [:as {{:keys [user]} :body}] ((handlers/login-user (:handler router)) user))
+   (core/POST "/api/users" [:as {{:keys [user]} :body}] ((handlers/register-user (:handler router)) user))
    (core/GET "/api/articles/:slug" [slug] {:status 200})
    (core/GET "/api/tags" [] {:status 200})))
 
 (defn app-routes-with-auth [router]
   (core/routes
-   (core/GET "/api/user" [] (handlers/get-user (:handler router)))
-   (core/PUT "/api/user" [] (handlers/update-user (:handler router)))
-   (core/GET "/api/profiles/:username" [username] {:status 200})
+   (core/GET "/api/health-param-auth/:param" [param :as {{:keys [id]} :identity}] ((handlers/health-param-auth (:handler router)) param id))
+   (core/GET "/api/user" [:as {{:keys [id]} :identity}] ((handlers/get-user (:handler router)) id))
+   (core/PUT "/api/user" [:as {{:keys [id]} :identity} :as {{:keys [user]} :body}] ((handlers/update-user (:handler router)) id user))
+   (core/GET "/api/profiles/:username" [username :as {{:keys [id]} :identity}] ((handlers/get-profile (:handler router)) username id))
    (core/POST "/api/profiles/:username/follow" [username] {:status 200})
    (core/DELETE "/api/profiles/:username/follow" [username] {:status 200})
    (core/GET "/api/articles/feed" [] {:status 200})
@@ -51,10 +53,10 @@
          (app-routes-no-auth router)
          (->
           (app-routes-with-auth router)
-          wrap-log-req
           wrap-no-auth-error
           (wrap-authentication backend))
          (app-routes-optional-auth router))
+        wrap-log-req
         wrap-exception
         wrap-json-response
         (wrap-content-type "text/json")

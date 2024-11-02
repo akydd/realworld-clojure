@@ -5,6 +5,7 @@
    [realworld-clojure.adapters.db :as db]
    [realworld-clojure.ports.webserver :as webserver]
    [realworld-clojure.domain.user :as user]
+   [realworld-clojure.domain.profile :as profile]
    [realworld-clojure.ports.handlers :as handlers]
    [realworld-clojure.ports.router :as router])
   (:gen-class))
@@ -18,9 +19,12 @@
      :user-controller (component/using
                        (user/new-user-controller jwt-secret)
                        [:database])
+     :profile-controller (component/using
+                           (profile/new-profile-controller)
+                           [:database])
      :handler (component/using
                (handlers/new-handler)
-               [:user-controller])
+               [:user-controller :profile-controller])
      :router (component/using
               (router/new-router jwt-secret)
               [:handler])

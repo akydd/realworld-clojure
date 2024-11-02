@@ -9,6 +9,9 @@
 (def query-options
   {:builder-fn rs/as-unqualified-lower-maps})
 
+(def profile-query-options
+  (assoc query-options :columns [:username :bio :image]))
+
 (defn insert-user
   "Insert record into user table"
   [database user]
@@ -29,6 +32,16 @@
   [database id data]
   (sql/update! (:datasource database) :users data {:id id})
   (get-user database id))
+
+(defn get-profile-by-username
+  "Get a user by username"
+  [database username]
+  (first (sql/find-by-keys (:datasource database) :users {:username username} profile-query-options)))
+
+(defn get-follows
+  "Get a record from the follows table"
+  [database follower-id following-id]
+  (first (sql/find-by-keys (:datasource database) :follows {:user_id follower-id :follows following-id} query-options)))
 
 (defn migrate
   "Migrate the db"

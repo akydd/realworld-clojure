@@ -17,6 +17,11 @@
   [user]
   (dissoc user :id :password))
 
+(defn clean-profile
+  "Format a user object into a profile before returning it in web based api responses"
+  [profile]
+  (dissoc profile :id))
+
 (defn register-user
   "Register a user"
   [handler]
@@ -72,4 +77,25 @@
       (if (nil? p)
         {:status 404}
         {:status 200
-         :body {:profile p}}))))
+         :body {:profile (clean-profile p)}}))))
+
+(defn follow-user
+  "Follow a user"
+  [handler]
+  (fn [id username]
+    (let [p (profile/follow-user (:profile-controller handler) id username)]
+      (if (nil? p)
+        {:status 404}
+        {:status 200
+         :body {:profile (clean-profile p)}}))))
+
+
+(defn unfollow-user
+  "Follow a user"
+  [handler]
+  (fn [id username]
+    (let [p (profile/unfollow-user (:profile-controller handler) id username)]
+      (if (nil? p)
+        {:status 404}
+        {:status 200
+         :body {:profile (clean-profile p)}}))))

@@ -25,8 +25,8 @@
   (core/routes
    (core/GET "/api/user" [:as {{:keys [id]} :identity}] ((handlers/get-user (:handler router)) id))
    (core/PUT "/api/user" [:as {{:keys [id]} :identity} :as {{:keys [user]} :body}] ((handlers/update-user (:handler router)) id user))
-   (core/POST "/api/profiles/:username/follow" [username] {:status 200})
-   (core/DELETE "/api/profiles/:username/follow" [username] {:status 200})
+   (core/POST "/api/profiles/:username/follow" [username :as {{:keys [id]} :identity}] ((handlers/follow-user (:handler router)) id username))
+   (core/DELETE "/api/profiles/:username/follow" [username :as {{:keys [id]} :identity}] ((handlers/unfollow-user (:handler router)) id username))
    (core/GET "/api/articles/feed" [] {:status 200})
    (core/POST "/api/articles" [] {:status 200})
    (core/PUT "/api/articles/:slug" [slug] {:status 200})

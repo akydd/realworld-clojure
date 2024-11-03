@@ -10,7 +10,7 @@
   {:builder-fn rs/as-unqualified-lower-maps})
 
 (def profile-query-options
-  (assoc query-options :columns [:username :bio :image]))
+  (assoc query-options :columns [:id :username :bio :image]))
 
 (defn insert-user
   "Insert record into user table"
@@ -42,6 +42,16 @@
   "Get a record from the follows table"
   [database follower-id following-id]
   (first (sql/find-by-keys (:datasource database) :follows {:user_id follower-id :follows following-id} query-options)))
+
+(defn insert-follows
+  "Create a record in the follows table"
+  [database follower-id following-id]
+  (sql/insert! (:datasource database) :follows {:user_id follower-id :follows following-id}))
+
+(defn delete-follows
+  "Remove record from the follows table"
+  [database follower-id following-id]
+  (sql/delete! (:datasource database) :follows {:user_id follower-id :follows following-id}))
 
 (defn migrate
   "Migrate the db"

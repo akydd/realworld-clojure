@@ -73,7 +73,9 @@
   "Get a user profile by username"
   [handler]
   (fn [username id]
-    (let [p (profile/get-profile (:profile-controller handler) username id)]
+    (let [p (if (nil? id)
+              (profile/get-profile (:profile-controller handler) username)
+              (profile/get-profile (:profile-controller handler) username id))]
       (if (nil? p)
         {:status 404}
         {:status 200
@@ -88,7 +90,6 @@
         {:status 404}
         {:status 200
          :body {:profile (clean-profile p)}}))))
-
 
 (defn unfollow-user
   "Follow a user"

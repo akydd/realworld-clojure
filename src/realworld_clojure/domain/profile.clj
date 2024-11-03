@@ -5,13 +5,13 @@
    [malli.error :as me]))
 
 (defn get-profile
-  "Get a profile by username. If request is authenticated, set the 'following' field."
-  [controller username id]
-  (when-let [u (db/get-profile-by-username (:database controller) username)]
-    (if (nil? id)
-      u
-      (let [following (some? (db/get-follows (:database controller) id (:id u)))]
-        (assoc u :following following)))))
+  "Get a profile by username. If id is provided, set the 'following' field."
+  ([controller username id]
+   (when-let [u (get-profile controller username)]
+     (let [following (some? (db/get-follows (:database controller) id (:id u)))]
+       (assoc u :following following))))
+  ([controller username]
+   (db/get-profile-by-username (:database controller) username)))
 
 (def non-empty-string
   (m/schema [:string {:min 1}]))

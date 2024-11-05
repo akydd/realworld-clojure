@@ -6,6 +6,7 @@
    [realworld-clojure.ports.webserver :as webserver]
    [realworld-clojure.domain.user :as user]
    [realworld-clojure.domain.profile :as profile]
+   [realworld-clojure.domain.article :as article]
    [realworld-clojure.ports.handlers :as handlers]
    [realworld-clojure.ports.router :as router])
   (:gen-class))
@@ -21,6 +22,9 @@
                        [:database])
      :profile-controller (component/using
                            (profile/new-profile-controller)
+                           [:database])
+     :article-controller (component/using
+                           (article/new-article-controller)
                            [:database])
      :handler (component/using
                (handlers/new-handler)

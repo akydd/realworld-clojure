@@ -53,6 +53,11 @@
   [database follower-id following-id]
   (sql/delete! (:datasource database) :follows {:user_id follower-id :follows following-id}))
 
+(defn create-article
+  "Insert a record into the articles table"
+  [database article]
+  (sql/insert! (:datasource database) :articles article query-options))
+
 (defn migrate
   "Migrate the db"
   [database]

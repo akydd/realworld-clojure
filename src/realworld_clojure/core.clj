@@ -7,8 +7,7 @@
    [realworld-clojure.domain.user :as user]
    [realworld-clojure.domain.profile :as profile]
    [realworld-clojure.domain.article :as article]
-   [realworld-clojure.ports.handlers :as handlers]
-   [realworld-clojure.ports.router :as router])
+   [realworld-clojure.ports.handlers :as handlers])
   (:gen-class))
 
 (defn new-system [config]
@@ -21,20 +20,17 @@
                        (user/new-user-controller jwt-secret)
                        [:database])
      :profile-controller (component/using
-                           (profile/new-profile-controller)
-                           [:database])
+                          (profile/new-profile-controller)
+                          [:database])
      :article-controller (component/using
-                           (article/new-article-controller)
-                           [:database])
+                          (article/new-article-controller)
+                          [:database])
      :handler (component/using
                (handlers/new-handler)
                [:user-controller :profile-controller])
-     :router (component/using
-              (router/new-router jwt-secret)
-              [:handler])
      :web-server (component/using
-                  (webserver/new-webserver (:port server-config))
-                  [:router]))))
+                  (webserver/new-webserver (:port server-config) jwt-secret)
+                  [:handler]))))
 
 (defn start [system]
   (component/start-system system))

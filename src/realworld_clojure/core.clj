@@ -27,10 +27,10 @@
                           [:database])
      :handler (component/using
                (handlers/new-handler)
-               [:user-controller :profile-controller])
+               [:user-controller :profile-controller :article-controller])
      :web-server (component/using
                   (webserver/new-webserver (:port server-config) jwt-secret)
-                  [:handler]))))
+                  [:handler :database]))))
 
 (defn start [system]
   (component/start-system system))

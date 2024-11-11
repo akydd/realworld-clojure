@@ -58,6 +58,16 @@
   [database article]
   (sql/insert! (:datasource database) :articles article query-options))
 
+(defn get-article-by-slug
+  "Find a record in the article table by slug"
+  [database slug]
+  (sql/find-by-keys (:datasrouce database) :articles {:slug slug} query-options))
+
+(defn update-article
+  "Update a record in the articles table"
+  [database id article]
+  (sql/update! (:datasource database) :article article {:id id}))
+
 (defn migrate
   "Migrate the db"
   [database]

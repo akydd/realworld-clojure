@@ -35,12 +35,6 @@
          (add-token (:jwt-secret controller)))
     {:errors (me/humanize (m/explain User user))}))
 
-(defn get-user
-  "Get a user"
-  [controller id]
-  (when-let [u (db/get-user (:database controller) id)]
-    (add-token (:jwt-secret controller) u)))
-
 (def UserLogin
   [:map
    [:email [:string {:min 1}]]
@@ -67,11 +61,11 @@
 
 (defn update-user
   "Update a user record"
-  [controller id user]
+  [controller auth-user user]
   (if (m/validate UserUpdate user)
     (->> user
          hash-password
-         (db/update-user (:database controller) id)
+         (db/update-user (:database controller) (:id auth-user))
          (add-token (:jwt-secret controller)))
     {:errors (me/humanize (m/explain UserUpdate user))}))
 

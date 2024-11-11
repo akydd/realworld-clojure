@@ -1,8 +1,9 @@
 (ns realworld-clojure.ports.handlers
   (:require [realworld-clojure.domain.user :as user]
-            [realworld-clojure.domain.profile :as profile]))
+            [realworld-clojure.domain.profile :as profile]
+            [realworld-clojure.domain.article :as article]))
 
-(defrecord Handler [user-controller profile-controller])
+(defrecord Handler [user-controller profile-controller article-controller])
 
 (defn new-handler []
   (map->Handler {}))
@@ -20,6 +21,11 @@
   "Format a user object into a profile before returning it in web based api responses"
   [profile]
   (dissoc profile :id))
+
+(defn clean-article
+  "Format the article object before returning it in web based api responses"
+  [article]
+  (dissoc article :id))
 
 (defn register-user
   "Register a user"
@@ -43,19 +49,10 @@
         {:status 200
          :body {:user (clean-user u)}}))))
 
-(defn get-user
-  "get a user"
-  [handler id]
-  (let [u (user/get-user (:user-controller handler) id)]
-    (if (nil? u)
-      {:status 404}
-      {:status 200
-       :body {:user (clean-user u)}})))
-
 (defn update-user
   "Update a user"
-  [handler id user]
-  (let [u (user/update-user (:user-controller handler) id user)]
+  [handler auth-user user]
+  (let [u (user/update-user (:user-controller handler) auth-user user)]
     (if (nil? u)
       {:status 404}
       (if (:errors u)
@@ -66,10 +63,10 @@
 
 (defn get-profile
   "Get a user profile by username"
-  [handler username id]
-  (let [p (if (nil? id)
+  [handler username auth-user]
+  (let [p (if (nil? auth-user)
             (profile/get-profile (:profile-controller handler) username)
-            (profile/get-profile (:profile-controller handler) username id))]
+            (profile/get-profile (:profile-controller handler) username auth-user))]
     (if (nil? p)
       {:status 404}
       {:status 200
@@ -77,8 +74,8 @@
 
 (defn follow-user
   "Follow a user"
-  [handler id username]
-  (let [p (profile/follow-user (:profile-controller handler) id username)]
+  [handler auth-user username]
+  (let [p (profile/follow-user (:profile-controller handler) auth-user username)]
     (if (nil? p)
       {:status 404}
       {:status 200
@@ -86,9 +83,21 @@
 
 (defn unfollow-user
   "Follow a user"
-  [handler id username]
-  (let [p (profile/unfollow-user (:profile-controller handler) id username)]
+  [handler auth-user username]
+  (let [p (profile/unfollow-user (:profile-controller handler) auth-user username)]
     (if (nil? p)
       {:status 404}
       {:status 200
        :body {:profile (clean-profile p)}})))
+
+(defn create-article
+  "Create an article"
+  [handler article auth-user]
+  (let [a (article/create-article (:article-controller handler) article auth-user)]
+    (if (nil? a)
+      {:status 404}
+      (if (:errors a)
+        {:status 422
+         :body a}
+        {:status 200
+         :body {:article a}}))))

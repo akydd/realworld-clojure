@@ -113,3 +113,11 @@
          :body a}
         {:status 200
          :body {:article a}}))))
+
+(defn delete-article
+  "Delete an article"
+  [handler slug auth-user]
+  (let [a (article/delete-article (:article-controller handler) slug auth-user)]
+    (if (nil? a)
+      {:status 404}
+      {:status 200})))

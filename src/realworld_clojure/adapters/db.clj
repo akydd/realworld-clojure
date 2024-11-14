@@ -53,6 +53,11 @@
   [database follower-id following-id]
   (sql/delete! (:datasource database) :follows {:user_id follower-id :follows following-id}))
 
+(defn get-article
+  "Get a user record from uesr table"
+  [database id]
+  (sql/get-by-id (:datasource database) "articles" id query-options))
+
 (defn create-article
   "Insert a record into the articles table"
   [database article]
@@ -61,12 +66,18 @@
 (defn get-article-by-slug
   "Find a record in the article table by slug"
   [database slug]
-  (sql/find-by-keys (:datasource database) :articles {:slug slug} query-options))
+  (first (sql/find-by-keys (:datasource database) :articles {:slug slug} query-options)))
 
 (defn update-article
   "Update a record in the articles table"
   [database id article]
-  (sql/update! (:datasource database) :article article {:id id}))
+  (sql/update! (:datasource database) :articles article {:id id})
+  (get-article database id))
+
+(defn delete-article
+  "Delete a record from the articles table"
+  [database id]
+  (sql/delete! (:datasource database) :articles {:id id}))
 
 (defn migrate
   "Migrate the db"

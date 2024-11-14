@@ -52,5 +52,13 @@
         (throw-unauthorized)))
     {:errors (me/humanize (m/explain ArticleUpdate article-update))}))
 
+(defn delete-article
+  "Delete an article, given its slug. Must belong to auth-user."
+  [controller slug auth-user]
+  (when-let [article (db/get-article-by-slug (:database controller) slug)]
+    (if (= (:author article) (:id auth-user))
+      (db/delete-article (:database controller) (:id article))
+      (throw-unauthorized))))
+
 (defn new-article-controller []
   (map->ArticleController {}))

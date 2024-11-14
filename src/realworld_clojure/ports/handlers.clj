@@ -101,3 +101,15 @@
          :body a}
         {:status 200
          :body {:article a}}))))
+
+(defn update-article
+  "Update an article"
+  [handler slug article auth-user]
+  (let [a (article/update-article (:article-controller handler) slug article auth-user)]
+    (if (nil? a)
+      {:status 404}
+      (if (:errors a)
+        {:status 422
+         :body a}
+        {:status 200
+         :body {:article a}}))))

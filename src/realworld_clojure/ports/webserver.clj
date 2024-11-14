@@ -20,7 +20,6 @@
 
 (defn app-routes-with-auth [handler]
   (core/routes
-   ; (core/GET "/api/user" [:as {u :auth-user}] (handlers/get-user handler u))
    ;; TODO: format the user before returning
    (core/GET "/api/user" [:as {:keys [auth-user]}] {:status 200 :body {:user auth-user}})
    (core/PUT "/api/user" [:as {:keys [auth-user]} :as {{:keys [user]} :body}] (handlers/update-user handler auth-user user))
@@ -28,7 +27,7 @@
    (core/DELETE "/api/profiles/:username/follow" [username :as {:keys [auth-user]}] (handlers/unfollow-user handler auth-user username))
    (core/GET "/api/articles/feed" [] {:status 200})
    (core/POST "/api/articles" [:as {:keys [auth-user]} :as {{:keys [article]} :body}] (handlers/create-article handler article auth-user))
-   (core/PUT "/api/articles/:slug" [slug] {:status 200})
+   (core/PUT "/api/articles/:slug" [slug :as {:keys [auth-user]} :as {{:keys [article]} :body}] (handlers/update-article handler slug article auth-user))
    (core/DELETE "/api/articles/:slug" [slug] {:status 200})
    (core/POST "/api/articles/:slug/comments" [slug] {:status 200})
    (core/DELETE "/api/articles/:slug/comments/:id" [slug id] {:status 200})

@@ -48,8 +48,8 @@
   (if (m/validate ArticleUpdate article-update)
     (when-let [article (db/get-article-by-slug (:database controller) slug)]
       (if (= (:author article) (:id auth-user))
-        (db/update-article (:database controller) (:id article) article-update)
-        throw-unauthorized))
+        (db/update-article (:database controller) (:id article) (assoc article-update :updatedAt (jt/local-date-time)))
+        (throw-unauthorized)))
     {:errors (me/humanize (m/explain ArticleUpdate article-update))}))
 
 (defn new-article-controller []

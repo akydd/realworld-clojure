@@ -61,7 +61,7 @@
 (defn get-article-by-slug
   "Find a record in the article table by slug"
   [database slug]
-  (sql/find-by-keys (:datasrouce database) :articles {:slug slug} query-options))
+  (sql/find-by-keys (:datasource database) :articles {:slug slug} query-options))
 
 (defn update-article
   "Update a record in the articles table"

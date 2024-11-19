@@ -1,0 +1,8 @@
+{:dbspec {:dbtype "postgresql"
+          :host #or [#env TEST_DB_HOST "localhost"]
+          :port #long #or [#env TEST_DB_PORT 8092]
+          :dbname #or [#env TEST_DB_NAME "test-app"]
+          :user #or [#env TEST_DB_USER "admin"]
+          :password #or [#env TEST_DB_PASSWORD "password"]}
+ :server {:port #long #or [#env TEST_PORT 8099]}
+ :jwt-secret #or [#env TEST_JWT_SECRET "jwtsecret"]}

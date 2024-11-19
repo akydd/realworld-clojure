@@ -9,9 +9,6 @@
 (def query-options
   {:builder-fn rs/as-unqualified-lower-maps})
 
-(def profile-query-options
-  (assoc query-options :columns [:id :username :bio :image]))
-
 (defn insert-user
   "Insert record into user table"
   [database user]
@@ -27,16 +24,16 @@
   [database email]
   (first (sql/find-by-keys (:datasource database) :users {:email email} query-options)))
 
+(defn get-user-by-username
+  "Get a user record by username"
+  [database username]
+  (first (sql/find-by-keys (:datasource database) :users {:username username} query-options)))
+
 (defn update-user
   "Update a user record"
   [database id data]
   (sql/update! (:datasource database) :users data {:id id})
   (get-user database id))
-
-(defn get-profile-by-username
-  "Get a user by username"
-  [database username]
-  (first (sql/find-by-keys (:datasource database) :users {:username username} profile-query-options)))
 
 (defn get-follows
   "Get a record from the follows table"
@@ -78,6 +75,21 @@
   "Delete a record from the articles table"
   [database id]
   (sql/delete! (:datasource database) :articles {:id id}))
+
+(defn create-comment
+  "Add a record to the comments table"
+  [database comment]
+  (sql/insert! (:datasource database) :comments comment query-options))
+
+(defn get-article-comments
+  "Get all comments for an article"
+  [database article-id]
+  (sql/find-by-keys (:datasource database) :comments {:article article-id} query-options))
+
+(defn delete-comment
+  "Remove a record from the comment table"
+  [database id]
+  (sql/delete! (:datasource database) :comments {:id id}))
 
 (defn migrate
   "Migrate the db"

@@ -26,11 +26,9 @@
   [controller article auth-user]
   (if (m/validate Article article)
     (let [title (:title article)
-          article-to-save (->
-                           article
-                           (assoc :author (:id auth-user)
-                                  :slug (text-to-slug title)
-                                  :createdAt (jt/local-date-time)))
+          article-to-save (assoc article :author (:id auth-user)
+                                 :slug (text-to-slug title)
+                                 :createdAt (jt/local-date-time))
           saved-article (db/create-article (:database controller) article-to-save)
           author (db/get-user (:database controller) auth-user)]
       (assoc saved-article :author author :follows false))

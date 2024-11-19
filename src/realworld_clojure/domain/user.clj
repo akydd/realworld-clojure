@@ -30,7 +30,7 @@
   [controller user]
   (if (m/validate User user)
     (->> user
-         hash-password
+         (hash-password)
          (db/insert-user (:database controller))
          (add-token (:jwt-secret controller)))
     {:errors (me/humanize (m/explain User user))}))
@@ -64,7 +64,7 @@
   [controller auth-user user]
   (if (m/validate UserUpdate user)
     (->> user
-         hash-password
+         (hash-password)
          (db/update-user (:database controller) (:id auth-user))
          (add-token (:jwt-secret controller)))
     {:errors (me/humanize (m/explain UserUpdate user))}))

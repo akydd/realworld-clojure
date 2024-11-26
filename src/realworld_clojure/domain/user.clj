@@ -6,7 +6,7 @@
             [buddy.sign.jwt :as jwt]))
 
 (def User
-  [:map
+  [:map {:closed true}
    [:username [:string {:min 1}]]
    [:password [:string {:min 1}]]
    [:email [:string {:min 1}]]
@@ -30,13 +30,13 @@
   [controller user]
   (if (m/validate User user)
     (->> user
-         (hash-password)
+         hash-password
          (db/insert-user (:database controller))
          (add-token (:jwt-secret controller)))
     {:errors (me/humanize (m/explain User user))}))
 
 (def UserLogin
-  [:map
+  [:map {:closed true}
    [:email [:string {:min 1}]]
    [:password [:string {:min 1}]]])
 
@@ -52,7 +52,7 @@
     {:errors (me/humanize (m/explain UserLogin user))}))
 
 (def UserUpdate
-  [:map
+  [:map {:closed true}
    [:email {:optional true} [:string {:min 1}]]
    [:username {:optional true} [:string {:min 1}]]
    [:password {:optional true} [:string {:min 1}]]
@@ -64,7 +64,7 @@
   [controller auth-user user]
   (if (m/validate UserUpdate user)
     (->> user
-         (hash-password)
+         hash-password
          (db/update-user (:database controller) (:id auth-user))
          (add-token (:jwt-secret controller)))
     {:errors (me/humanize (m/explain UserUpdate user))}))

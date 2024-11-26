@@ -8,7 +8,7 @@
    [buddy.auth :refer [throw-unauthorized]]))
 
 (def Article
-  [:map
+  [:map {:closed true}
    [:title [:string {:min 1}]]
    [:description [:string {:min 1}]]
    [:body [:string {:min 1}]]])
@@ -35,7 +35,7 @@
     {:errors (me/humanize (m/explain Article article))}))
 
 (def ArticleUpdate
-  [:map
+  [:map {:closed true}
    [:title {:optional true} [:string {:min 1}]]
    [:description {:optional true} [:string {:min 1}]]
    [:body {:optional true} [:string {:min 1}]]])

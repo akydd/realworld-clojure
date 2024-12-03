@@ -1,7 +1,8 @@
 (ns realworld-clojure.ports.handlers
   (:require [realworld-clojure.domain.user :as user]
             [realworld-clojure.domain.profile :as profile]
-            [realworld-clojure.domain.article :as article]))
+            [realworld-clojure.domain.article :as article]
+            [realworld-clojure.ports.converters :as converters]))
 
 (defrecord Handler [user-controller profile-controller article-controller])
 
@@ -12,21 +13,6 @@
   {:status 200
    :body {:status "Alive"}})
 
-(defn clean-user
-  "Format the user object before returning it to web based api responses"
-  [user]
-  (dissoc user :id :password))
-
-(defn clean-profile
-  "Format a user object into a profile before returning it in web based api responses"
-  [profile]
-  (dissoc profile :id))
-
-(defn clean-article
-  "Format the article object before returning it in web based api responses"
-  [article]
-  (dissoc article :id))
-
 (defn register-user
   "Register a user"
   [handler user]
@@ -35,7 +21,7 @@
       {:status 422
        :body u}
       {:status 200
-       :body {:user (clean-user u)}})))
+       :body {:user (converters/user->user u)}})))
 
 (defn login-user
   "Login a user"
@@ -47,7 +33,7 @@
         {:status 422
          :body u}
         {:status 200
-         :body {:user (clean-user u)}}))))
+         :body {:user (converters/user->user u)}}))))
 
 (defn update-user
   "Update a user"
@@ -59,7 +45,7 @@
         {:status 422
          :body u}
         {:status 200
-         :body {:user (clean-user u)}}))))
+         :body {:user (converters/user->user u)}}))))
 
 (defn get-profile
   "Get a user profile by username"
@@ -70,7 +56,7 @@
     (if (nil? p)
       {:status 404}
       {:status 200
-       :body {:profile (clean-profile p)}})))
+       :body {:profile (converters/profile->profile p)}})))
 
 (defn follow-user
   "Follow a user"
@@ -79,7 +65,7 @@
     (if (nil? p)
       {:status 404}
       {:status 200
-       :body {:profile (clean-profile p)}})))
+       :body {:profile (converters/profile->profile p)}})))
 
 (defn unfollow-user
   "Follow a user"
@@ -88,7 +74,7 @@
     (if (nil? p)
       {:status 404}
       {:status 200
-       :body {:profile (clean-profile p)}})))
+       :body {:profile (converters/profile->profile p)}})))
 
 (defn create-article
   "Create an article"

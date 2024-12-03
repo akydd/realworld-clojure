@@ -6,35 +6,34 @@
    [malli.error :as me]))
 
 (defn get-profile
-  "Get a profile by username. If user is provided, set the 'following' field."
-  ([controller username user]
+  "Get a profile by username. If auth-user is provided, set the 'following' field."
+  ([controller username auth-user]
    (when-let [u (get-profile controller username)]
-     (let [following (some? (db/get-follows (:database controller) (:id user) (:id u)))]
+     (let [following (some? (db/get-follows (:database controller) (:id auth-user) (:id u)))]
        (assoc u :following following))))
   ([controller username]
-   (->> username
-        (db/get-user-by-username (:database controller))
-        (c/user-db->profile))))
+   (when-let [u (db/get-user-by-username (:database controller) username)]
+     (c/user-db->profile u))))
 
 (def non-empty-string
   (m/schema [:string {:min 1}]))
 
 (defn follow-user
-  "Set the user to Follow the user with username. Returns the profile of the user being followd, or nil."
-  [controller user username]
+  "Set auth-user to Follow the user with username. Returns the profile of the user being followd, or nil."
+  [controller auth-user username]
   (if (m/validate non-empty-string username)
     (when-let [u (db/get-user-by-username (:database controller) username)]
-      (db/insert-follows (:database controller) (:id user) (:id u))
+      (db/insert-follows (:database controller) (:id auth-user) (:id u))
       (assoc (c/user-db->profile u) :following true))
     {:errors (->> username
                   (m/explain non-empty-string)
                   (me/humanize))}))
 
 (defn unfollow-user
-  "Unfollow a user. Returns the profile of the user being unfollowed, or nil."
-  [controller user username]
+  "Set auth-user to unfollow a user. Returns the profile of the user being unfollowed, or nil."
+  [controller auth-user username]
   (when-let [u (db/get-user-by-username (:database controller) username)]
-    (db/delete-follows (:database controller) (:id user) (:id u))
+    (db/delete-follows (:database controller) (:id auth-user) (:id u))
     (assoc (c/user-db->profile u) :following false)))
 
 (defrecord ProfileController [database])

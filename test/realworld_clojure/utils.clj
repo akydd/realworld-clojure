@@ -6,6 +6,7 @@
 
 (def query-options
   {:builder-fn rs/as-unqualified-lower-maps})
+
 (defn clear-ds
   "Delete all data from datasource"
   [ds]

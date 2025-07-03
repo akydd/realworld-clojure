@@ -9,10 +9,9 @@
   "Get a profile by username. If auth-user is provided, set the 'following' field."
   ([controller username auth-user]
    (when-let [u (db/get-user-by-username (:database controller) username)]
-     (let [following (some? (db/get-follows (:database controller) (:id auth-user) (:id u)))]
-       (-> u
-           (c/user-db->profile)
-           (assoc :following following)))))
+     (-> u
+         (c/user-db->profile)
+         (assoc :following (db/following? (:database controller) auth-user u)))))
   ([controller username]
    (when-let [u (db/get-user-by-username (:database controller) username)]
      (c/user-db->profile u))))
@@ -26,7 +25,7 @@
   (if (m/validate non-empty-string username)
     (when-let [u (db/get-user-by-username (:database controller) username)]
       (db/insert-follows (:database controller) (:id auth-user) (:id u))
-      (assoc (c/user-db->profile u) :following true))
+      (assoc (c/user-db->profile u) :following (db/following? (:database controller) auth-user u)))
     {:errors (->> username
                   (m/explain non-empty-string)
                   (me/humanize))}))

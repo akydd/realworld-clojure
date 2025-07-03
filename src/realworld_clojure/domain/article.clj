@@ -2,6 +2,7 @@
   (:require
    [malli.core :as m]
    [realworld-clojure.adapters.db :as db]
+   [realworld-clojure.domain.converters :as c]
    [malli.error :as me]
    [java-time.api :as jt]
    [clojure.string :as string]
@@ -27,11 +28,11 @@
   (if (m/validate Article article)
     (let [title (:title article)
           article-to-save (assoc article :author (:id auth-user)
-                                 :slug (text-to-slug title)
-                                 :createdAt (jt/local-date-time))
+                                 :slug (text-to-slug title))
           saved-article (db/create-article (:database controller) article-to-save)
-          author (db/get-user (:database controller) auth-user)]
-      (assoc saved-article :author author :follows false))
+          author (db/get-user (:database controller) (:id auth-user))
+          following (db/following? (:database controller) auth-user author)]
+      (assoc saved-article :author (assoc (c/user-db->profile author) :following following)))
     {:errors (me/humanize (m/explain Article article))}))
 
 (def ArticleUpdate
@@ -46,7 +47,7 @@
   (if (m/validate ArticleUpdate article-update)
     (when-let [article (db/get-article-by-slug (:database controller) slug)]
       (if (= (:author article) (:id auth-user))
-        (db/update-article (:database controller) (:id article) (assoc article-update :updatedAt (jt/local-date-time)))
+        (db/update-article (:database controller) (:id article) article-update)
         (throw-unauthorized)))
     {:errors (me/humanize (m/explain ArticleUpdate article-update))}))
 

@@ -4,7 +4,8 @@
             [next.jdbc.result-set :as rs]
             [com.stuartsierra.component :as component]
             [ragtime.repl :as ragtime-repl]
-            [ragtime.jdbc :as ragtime-jdbc]))
+            [ragtime.jdbc :as ragtime-jdbc]
+            [java-time.api :as jt]))
 
 (def query-options
   {:builder-fn rs/as-unqualified-lower-maps})
@@ -40,6 +41,11 @@
   [database follower-id following-id]
   (first (sql/find-by-keys (:datasource database) :follows {:user_id follower-id :follows following-id} query-options)))
 
+(defn following?
+  "Returns true if the user is following the other user."
+  [database user other-user]
+  (some? (get-follows database (:id user) (:id other-user))))
+
 (defn insert-follows
   "Create a record in the follows table"
   [database follower-id following-id]
@@ -68,8 +74,9 @@
 (defn update-article
   "Update a record in the articles table"
   [database id article]
-  (sql/update! (:datasource database) :articles article {:id id})
-  (get-article database id))
+  (let [updated-at (jt/local-date-time)]
+    (sql/update! (:datasource database) :articles (assoc article :updatedat updated-at) {:id id})
+    (get-article database id)))
 
 (defn delete-article
   "Delete a record from the articles table"

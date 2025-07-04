@@ -4,7 +4,6 @@
    [realworld-clojure.adapters.db :as db]
    [realworld-clojure.domain.converters :as c]
    [malli.error :as me]
-   [java-time.api :as jt]
    [clojure.string :as string]
    [buddy.auth :refer [throw-unauthorized]]))
 
@@ -23,6 +22,11 @@
       string/lower-case
       (string/replace #"\W+" "-")))
 
+(defn- author->profile [author following]
+  (-> author
+      (c/user-db->profile)
+      (assoc :following following)))
+
 (defn create-article
   [controller article auth-user]
   (if (m/validate Article article)
@@ -31,8 +35,9 @@
                                  :slug (text-to-slug title))
           saved-article (db/create-article (:database controller) article-to-save)
           author (db/get-user (:database controller) (:id auth-user))
-          following (db/following? (:database controller) auth-user author)]
-      (assoc saved-article :author (assoc (c/user-db->profile author) :following following)))
+          following (db/following? (:database controller) auth-user author)
+          author-profile (author->profile author following)]
+      (assoc saved-article :author author-profile))
     {:errors (me/humanize (m/explain Article article))}))
 
 (def ArticleUpdate
@@ -41,13 +46,24 @@
    [:description {:optional true} [:string {:min 1}]]
    [:body {:optional true} [:string {:min 1}]]])
 
+(defn update-title [article-update]
+  (if (:title article-update)
+    (assoc article-update :slug (text-to-slug (:title article-update)))
+    article-update))
+
 (defn update-article
   "Update an article, given its slug."
   [controller slug article-update auth-user]
   (if (m/validate ArticleUpdate article-update)
     (when-let [article (db/get-article-by-slug (:database controller) slug)]
       (if (= (:author article) (:id auth-user))
-        (db/update-article (:database controller) (:id article) article-update)
+        (let [author (db/get-user (:database controller) (:author article))
+              updated-article (-> article-update
+                                  (update-title)
+                                  (db/update-article (:database controller) (:id article)))
+              following (db/following? (:database controller) auth-user author)
+              author-profile (author->profile author following)]
+          (assoc updated-article :author author-profile))
         (throw-unauthorized)))
     {:errors (me/humanize (m/explain ArticleUpdate article-update))}))
 

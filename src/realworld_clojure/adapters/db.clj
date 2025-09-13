@@ -10,10 +10,14 @@
 (def query-options
   {:builder-fn rs/as-unqualified-lower-maps})
 
+(def update-options
+  {:return-keys true
+   :builder-fn rs/as-unqualified-lower-maps})
+
 (defn insert-user
   "Insert record into user table"
   [database user]
-  (sql/insert! (:datasource database) :users user query-options))
+  (sql/insert! (:datasource database) :users user update-options))
 
 (defn get-user
   "Get a user record from uesr table"
@@ -33,8 +37,7 @@
 (defn update-user
   "Update a user record"
   [database id data]
-  (sql/update! (:datasource database) :users data {:id id})
-  (get-user database id))
+  (sql/update! (:datasource database) :users data {:id id} update-options))
 
 (defn get-follows
   "Get a record from the follows table"
@@ -75,8 +78,7 @@
   "Update a record in the articles table"
   [database id article]
   (let [updated-at (jt/local-date-time)]
-    (sql/update! (:datasource database) :articles (assoc article :updatedat updated-at) {:id id})
-    (get-article database id)))
+    (sql/update! (:datasource database) :articles (assoc article :updatedat updated-at) {:id id} update-options)))
 
 (defn delete-article
   "Delete a record from the articles table"

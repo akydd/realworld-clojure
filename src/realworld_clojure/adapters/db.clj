@@ -29,6 +29,21 @@
   [database email]
   (first (sql/find-by-keys (:datasource database) :users {:email email} query-options)))
 
+(defn get-profile
+  "Get a user profile"
+  ([database username]
+   (jdbc/execute-one! (:datasource database) ["select username, bio, image from users where username = ?" username] query-options))
+  ([database username auth-user]
+   (jdbc/execute-one! (:datasource database) ["select u.username, u.bio, u.image,
+case when (
+select count(*)
+from follows f
+where f.user_id = ?
+and f.follows = u.id
+) > 0 then true else false end as following
+from users u
+where u.username = ?", (:id auth-user), username] query-options)))
+
 (defn get-user-by-username
   "Get a user record by username"
   [database username]

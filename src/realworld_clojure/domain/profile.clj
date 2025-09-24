@@ -6,15 +6,11 @@
    [malli.error :as me]))
 
 (defn get-profile
-  "Get a profile by username. If auth-user is provided, set the 'following' field."
+  "Get a profile by username."
   ([controller username auth-user]
-   (when-let [u (db/get-user-by-username (:database controller) username)]
-     (-> u
-         (c/user-db->profile)
-         (assoc :following (db/following? (:database controller) auth-user u)))))
+   (db/get-profile (:database controller) username auth-user))
   ([controller username]
-   (when-let [u (db/get-user-by-username (:database controller) username)]
-     (c/user-db->profile u))))
+   (db/get-profile (:database controller) username)))
 
 (def non-empty-string
   (m/schema [:string {:min 1}]))

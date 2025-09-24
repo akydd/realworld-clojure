@@ -2,7 +2,8 @@
   (:require [realworld-clojure.domain.user :as user]
             [realworld-clojure.domain.profile :as profile]
             [realworld-clojure.domain.article :as article]
-            [realworld-clojure.ports.converters :as converters]))
+            [realworld-clojure.ports.converters :as converters]
+            [clojure.string :as str]))
 
 (defrecord Handler [user-controller profile-controller article-controller])
 
@@ -12,6 +13,17 @@
 (defn health [_handler _req]
   {:status 200
    :body {:status "Alive"}})
+
+(defn get-user
+  "Get current user."
+  [handler auth-user headers]
+  (let [token (second (str/split (get headers "authorization") #" "))
+        u (user/get-user (:user-controller handler) auth-user token)]
+    (if (u :errors)
+      {:status 422
+       :body u}
+      {:status 200
+       :body {:user (converters/user->user u)}})))
 
 (defn register-user
   "Register a user"

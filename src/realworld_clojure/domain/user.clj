@@ -25,6 +25,16 @@
   [jwt-secret user]
   (assoc user :token (jwt/sign {:id (:id user)} jwt-secret)))
 
+(defn password-valid?
+  "Returns true if the password is valid."
+  [incoming-password encrypted-password]
+  (:valid (hashers/verify incoming-password encrypted-password)))
+
+(defn get-user
+  "Return the current user."
+  [_controller auth-user token]
+  (assoc auth-user :token token))
+
 (defn register-user
   "Register a user"
   [controller user]
@@ -47,7 +57,7 @@
     (when-let [fetched-user (db/get-user-by-email (:database controller) (:email user))]
       (let [incoming-password (:password user)
             encrypted-password (:password fetched-user)]
-        (when (:valid (hashers/verify incoming-password encrypted-password))
+        (when (password-valid? incoming-password encrypted-password)
           (add-token (:jwt-secret controller) fetched-user))))
     {:errors (me/humanize (m/explain UserLogin user))}))
 

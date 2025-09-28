@@ -39,10 +39,8 @@
   "Register a user"
   [controller user]
   (if (m/validate User user)
-    (->> user
-         hash-password
-         (db/insert-user (:database controller))
-         (add-token (:jwt-secret controller)))
+    (let [new-user (db/insert-user (:database controller) (hash-password user))]
+      (add-token (:jwt-secret controller) new-user))
     {:errors (me/humanize (m/explain User user))}))
 
 (def UserLogin
@@ -71,13 +69,13 @@
 
 (defn update-user
   "Update a user record"
-  [controller auth-user user]
-  (if (m/validate UserUpdate user)
-    (->> user
+  [controller auth-user updates]
+  (if (m/validate UserUpdate updates)
+    (->> updates
          hash-password
-         (db/update-user (:database controller) (:id auth-user))
+         (db/update-user (:database controller) auth-user)
          (add-token (:jwt-secret controller)))
-    {:errors (me/humanize (m/explain UserUpdate user))}))
+    {:errors (me/humanize (m/explain UserUpdate updates))}))
 
 (defrecord UserController [jwt-secret database])
 

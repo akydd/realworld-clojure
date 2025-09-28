@@ -22,7 +22,7 @@
 (defn get-user
   "Get a user record from user table"
   [database id]
-  (sql/get-by-id (:datasource database) "users" id query-options))
+  (sql/get-by-id (:datasource database) :users id query-options))
 
 (defn get-user-by-email
   "Get a user record by email"
@@ -51,8 +51,8 @@ where u.username = ?", (:id auth-user), username] query-options)))
 
 (defn update-user
   "Update a user record"
-  [database id data]
-  (sql/update! (:datasource database) :users data {:id id} update-options))
+  [database auth-user data]
+  (sql/update! (:datasource database) :users data {:id (:id auth-user)} update-options))
 
 (defn follow-user
   [database auth-user user]
@@ -65,10 +65,11 @@ where u.username = ?", (:id auth-user), username] query-options)))
 
 (defn db-record->model
   [m]
-  (let [author (select-keys m [:username :bio :image])]
-    (-> m
-        (dissoc :username :bio :image)
-        (assoc :author author))))
+  (let [ks (if (contains? m :following)
+             [:following :username :bio :image]
+             [:username :bio :image])
+        author (select-keys m ks)]
+    (assoc (reduce dissoc m ks) :author author)))
 
 (defn get-article-by-slug
   "Get an article by slug."
@@ -145,15 +146,34 @@ where slug = ?", (:body comment), (:id auth-user), slug] update-options)]
 (defn get-article-comments
   "Get all comments for an article"
   ([database slug]
-   (sql/find-by-keys (:datasource database) :comments {:article slug} query-options))
+   (let [cs (jdbc/execute! (:datasource database) ["select c.id, c.body, c.createdat, c.updatedat,
+u.username, u.bio, u.image
+from comments as c
+left join users as u
+on c.author = u.id
+where c.article in
+(select id from articles where slug=?)", slug] query-options)]
+     (map db-record->model cs)))
   ([database slug auth-user]
-   (let [cs (jdbc/execute! (:datasource database) [])]
+   (let [cs (jdbc/execute! (:datasource database) ["select c.id, c.body, c.createdat, c.updatedat,
+u.username, u.bio, u.image,
+case when (
+select count(*)
+from follows f
+where f.user_id = ?
+and f.follows = c.author
+) > 0 then true else false end as following
+from comments as c
+left join users as u
+on c.author = u.id
+where c.article in
+(select id from articles where slug = ?)", (:id auth-user), slug] query-options)]
      (map db-record->model cs))))
 
 (defn delete-comment
   "Remove a record from the comment table"
-  [database slug]
-  (sql/delete! (:datasource database) :comments {:slug slug}))
+  [database id]
+  (sql/delete! (:datasource database) :comments {:id id}))
 
 (defn migrate
   "Migrate the db"

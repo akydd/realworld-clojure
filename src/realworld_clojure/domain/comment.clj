@@ -2,7 +2,8 @@
   (:require
    [malli.error :as me]
    [malli.core :as m]
-   [realworld-clojure.adapters.db :as db]))
+   [realworld-clojure.adapters.db :as db]
+   [buddy.auth :refer [throw-unauthorized]]))
 
 (defrecord CommentController [database])
 
@@ -20,12 +21,18 @@
 
 (defn delete-comment
   "Delete a comment"
-  [controller article-slug comment-id auth-user])
+  [controller _article-slug id auth-user]
+  (let [c (db/get-comment (:database controller) id auth-user)]
+    (if (= (:username auth-user) (get-in c [:author :username]))
+      (db/delete-comment (:database controller) id)
+      (throw-unauthorized))))
 
-(defn get-comments-for-article
+(defn get-article-comments
   "Get all comments for an article"
-  ([controller article-slug])
-  ([controller article-slug auth-user]))
+  ([controller slug]
+   (db/get-article-comments (:database controller) slug))
+  ([controller slug auth-user]
+   (db/get-article-comments (:database controller) slug auth-user)))
 
 (defn new-comment-controller []
   (map->CommentController {}))

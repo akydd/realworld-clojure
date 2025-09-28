@@ -15,6 +15,8 @@
   {:status 200
    :body {:status "Alive"}})
 
+;; Handlers that return a user need to first convert the user data before returning it.
+
 (defn get-user
   "Get current user."
   [handler auth-user headers]
@@ -60,6 +62,9 @@
         {:status 200
          :body {:user (converters/user->user u)}}))))
 
+;; Handlers that returna  profile do not need to strip the id from the profile body,
+;; because the id is not included in the profiles when retrieved from the db.
+
 (defn get-profile
   "Get a user profile by username"
   [handler username auth-user]
@@ -78,7 +83,7 @@
     (if (nil? p)
       {:status 404}
       {:status 200
-       :body {:profile (converters/profile->profile p)}})))
+       :body {:profile p}})))
 
 (defn unfollow-user
   "Follow a user"
@@ -87,7 +92,7 @@
     (if (nil? p)
       {:status 404}
       {:status 200
-       :body {:profile (converters/profile->profile p)}})))
+       :body {:profile p}})))
 
 (defn get-article-by-slug
   "Get article by slug."
@@ -135,4 +140,11 @@
 (defn create-comment
   "Create a new comment for an article"
   [handler slug comment auth-user]
-  (let [c (comment/create-comment (:comment-controller handler) slug comment auth-user)]))
+  (let [c (comment/create-comment (:comment-controller handler) slug comment auth-user)]
+    (if (nil? c)
+      {:status 404}
+      (if (:errors c)
+        {:status 422
+         :body c}
+        {:status 200
+         :body {:comment c}}))))

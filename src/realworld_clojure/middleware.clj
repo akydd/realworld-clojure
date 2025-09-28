@@ -31,7 +31,7 @@
       (let [auth-id (get-in req [:identity :id])
             auth-user (db/get-user database auth-id)]
         (if auth-user
-          ;; TODO: do not leak the encrypted password
-          (handler (assoc req :auth-user auth-user))
+          ;; do not leak the encrypted password
+          (handler (assoc req :auth-user (dissoc auth-user :password)))
           (handler req)))
       (handler req))))

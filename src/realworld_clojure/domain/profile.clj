@@ -28,9 +28,13 @@
 (defn unfollow-user
   "Set auth-user to unfollow a user. Returns the profile of the user being unfollowed, or nil."
   [controller auth-user username]
-  (when-let [u (db/get-user-by-username (:database controller) username)]
-    (db/unfollow-user (:database controller) auth-user u)
-    (db/get-profile (:database controller) username auth-user)))
+  (if (m/validate non-empty-string username)
+    (when-let [u (db/get-user-by-username (:database controller) username)]
+      (db/unfollow-user (:database controller) auth-user u)
+      (db/get-profile (:database controller) username auth-user))
+    {:errors (->> username
+                  (m/explain non-empty-string)
+                  (me/humanize))}))
 
 (defrecord ProfileController [database])
 

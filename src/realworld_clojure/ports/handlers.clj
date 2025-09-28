@@ -2,10 +2,11 @@
   (:require [realworld-clojure.domain.user :as user]
             [realworld-clojure.domain.profile :as profile]
             [realworld-clojure.domain.article :as article]
+            [realworld-clojure.domain.comment :as comment]
             [realworld-clojure.ports.converters :as converters]
             [clojure.string :as str]))
 
-(defrecord Handler [user-controller profile-controller article-controller])
+(defrecord Handler [user-controller profile-controller article-controller comment-controller])
 
 (defn new-handler []
   (map->Handler {}))
@@ -130,3 +131,8 @@
     (if (nil? a)
       {:status 404}
       {:status 200})))
+
+(defn create-comment
+  "Create a new comment for an article"
+  [handler slug comment auth-user]
+  (let [c (comment/create-comment (:comment-controller handler) slug comment auth-user)]))

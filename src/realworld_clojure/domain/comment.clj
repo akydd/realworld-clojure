@@ -2,7 +2,6 @@
   (:require
    [malli.error :as me]
    [malli.core :as m]
-   [realworld-clojure.domain.converters :as c]
    [realworld-clojure.adapters.db :as db]))
 
 (defrecord CommentController [database])
@@ -11,15 +10,12 @@
   [:map
    [:body [:string {:min 1}]]])
 
-(defn add-comment-to-article
+(defn create-comment
   "Add a new comment to an article."
-  [controller comment article-slug auth-user]
+  [controller slug comment auth-user]
   (if (m/validate CommentCreate comment)
-    (when-let [article (db/get-article-by-slug (:database controller) article-slug)]
-      (let [comment-to-save (assoc comment :article (:id article) :author (:id auth-user))
-            saved-comment (db/create-comment (:database controller) comment-to-save)]
-        (when saved-comment
-          (assoc saved-comment :author (c/user-db->profile auth-user)))))
+    (when (db/get-article-by-slug (:database controller) slug)
+      (db/create-comment (:database controller) slug comment auth-user))
     {:errors (me/humanize (m/explain CommentCreate comment))}))
 
 (defn delete-comment

@@ -63,10 +63,10 @@ where u.username = ?", (:id auth-user), username] query-options)))
   [database auth-user user]
   (sql/delete! (:datasource database) :follows {:user_id (:id auth-user) :follows (:id user)}))
 
-(defn article-db->model
-  [article]
-  (let [author (select-keys article [:username :bio :image])]
-    (-> article
+(defn db-record->model
+  [m]
+  (let [author (select-keys m [:username :bio :image])]
+    (-> m
         (dissoc :username :bio :image)
         (assoc :author author))))
 
@@ -80,7 +80,7 @@ from articles as a
 left join users as b
 on a.author = b.id
 where a.slug = ?", slug] query-options)]
-     (article-db->model db-article)))
+     (db-record->model db-article)))
   ([database slug auth-user]
    (let [db-article
          (jdbc/execute-one! (:datasource database) ["select a.slug, a.title, a.description, a.body,
@@ -95,7 +95,7 @@ from articles as a
 left join users as b
 on a.author = b.id
 where a.slug = ?", (:id auth-user), slug] query-options)]
-     (article-db->model db-article))))
+     (db-record->model db-article))))
 
 (defn create-article
   "Insert a record into the articles table"
@@ -116,15 +116,39 @@ where a.slug = ?", (:id auth-user), slug] query-options)]
   [database slug]
   (sql/delete! (:datasource database) :articles {:slug slug}))
 
+(defn get-comment
+  "Get a single comment by id."
+  [database id auth-user]
+  (let [c (jdbc/execute-one! (:datasource database) ["select c.id, c.createdat, c.updatedat, c.body,
+u.username, u.bio, u.image,
+case when (
+select count(*)
+from follows f
+where f.user_id = ?
+and f.follows = c.author
+) > 0 then true else false end as following
+from comments as c
+left join users as u
+on c.author = u.id
+where c.id = ?", (:id auth-user) id] query-options)]
+    (db-record->model c)))
+
 (defn create-comment
   "Add a record to the comments table"
-  [database comment]
-  (sql/insert! (:datasource database) :comments comment query-options))
+  [database slug comment auth-user]
+  (let [c (jdbc/execute-one! (:datasource database) ["insert into comments (article, body, author)
+select id, ?, ?
+from articles
+where slug = ?", (:body comment), (:id auth-user), slug] update-options)]
+    (get-comment database (:id c) auth-user)))
 
 (defn get-article-comments
   "Get all comments for an article"
-  [database article-id]
-  (sql/find-by-keys (:datasource database) :comments {:article article-id} query-options))
+  ([database slug]
+   (sql/find-by-keys (:datasource database) :comments {:article slug} query-options))
+  ([database slug auth-user]
+   (let [cs (jdbc/execute! (:datasource database) [])]
+     (map db-record->model cs))))
 
 (defn delete-comment
   "Remove a record from the comment table"

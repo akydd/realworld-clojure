@@ -20,7 +20,7 @@
   (sql/insert! (:datasource database) :users user update-options))
 
 (defn get-user
-  "Get a user record from uesr table"
+  "Get a user record from user table"
   [database id]
   (sql/get-by-id (:datasource database) "users" id query-options))
 
@@ -54,51 +54,67 @@ where u.username = ?", (:id auth-user), username] query-options)))
   [database id data]
   (sql/update! (:datasource database) :users data {:id id} update-options))
 
-(defn get-follows
-  "Get a record from the follows table"
-  [database follower-id following-id]
-  (first (sql/find-by-keys (:datasource database) :follows {:user_id follower-id :follows following-id} query-options)))
+(defn follow-user
+  [database auth-user user]
+  (sql/insert! (:datasource database) :follows {:user_id (:id auth-user) :follows (:id user)}))
 
-(defn following?
-  "Returns true if the user is following the other user."
-  [database user other-user]
-  (some? (get-follows database (:id user) (:id other-user))))
+(defn unfollow-user
+  "Unfollow a user."
+  [database auth-user user]
+  (sql/delete! (:datasource database) :follows {:user_id (:id auth-user) :follows (:id user)}))
 
-(defn insert-follows
-  "Create a record in the follows table"
-  [database follower-id following-id]
-  (sql/insert! (:datasource database) :follows {:user_id follower-id :follows following-id}))
+(defn article-db->model
+  [article]
+  (let [author (select-keys article [:username :bio :image])]
+    (-> article
+        (dissoc :username :bio :image)
+        (assoc :author author))))
 
-(defn delete-follows
-  "Remove record from the follows table"
-  [database follower-id following-id]
-  (sql/delete! (:datasource database) :follows {:user_id follower-id :follows following-id}))
-
-(defn get-article
-  "Get a user record from uesr table"
-  [database id]
-  (sql/get-by-id (:datasource database) "articles" id query-options))
+(defn get-article-by-slug
+  "Get an article by slug."
+  ([database slug]
+   (let [db-article
+         (jdbc/execute-one! (:datasource database) ["select a.slug, a.title, a.description, a.body,
+a.createdat, a.updatedat, b.username, b.bio, b.image
+from articles as a
+left join users as b
+on a.author = b.id
+where a.slug = ?", slug] query-options)]
+     (article-db->model db-article)))
+  ([database slug auth-user]
+   (let [db-article
+         (jdbc/execute-one! (:datasource database) ["select a.slug, a.title, a.description, a.body,
+a.createdat, a.updatedat, b.username, b.bio, b.image,
+case when (
+select count(*)
+from follows f
+where f.user_id = ?
+and f.follows = a.author
+) > 0 then true else false end as following
+from articles as a
+left join users as b
+on a.author = b.id
+where a.slug = ?", (:id auth-user), slug] query-options)]
+     (article-db->model db-article))))
 
 (defn create-article
   "Insert a record into the articles table"
-  [database article]
-  (sql/insert! (:datasource database) :articles article query-options))
-
-(defn get-article-by-slug
-  "Find a record in the article table by slug"
-  [database slug]
-  (first (sql/find-by-keys (:datasource database) :articles {:slug slug} query-options)))
+  [database article auth-user]
+  (let [a (assoc article :author (:id auth-user))
+        saved-article (sql/insert! (:datasource database) :articles a update-options)]
+    (get-article-by-slug database (:slug saved-article) auth-user)))
 
 (defn update-article
   "Update a record in the articles table"
-  [database id article]
-  (let [updated-at (jt/local-date-time)]
-    (sql/update! (:datasource database) :articles (assoc article :updatedat updated-at) {:id id} update-options)))
+  [database slug updates auth-user]
+  (let [updated-at (jt/local-date-time)
+        updated-article (sql/update! (:datasource database) :articles (assoc updates :updatedat updated-at) {:slug slug} update-options)]
+    (get-article-by-slug database (:slug updated-article) auth-user)))
 
 (defn delete-article
   "Delete a record from the articles table"
-  [database id]
-  (sql/delete! (:datasource database) :articles {:id id}))
+  [database slug]
+  (sql/delete! (:datasource database) :articles {:slug slug}))
 
 (defn create-comment
   "Add a record to the comments table"
@@ -112,8 +128,8 @@ where u.username = ?", (:id auth-user), username] query-options)))
 
 (defn delete-comment
   "Remove a record from the comment table"
-  [database id]
-  (sql/delete! (:datasource database) :comments {:id id}))
+  [database slug]
+  (sql/delete! (:datasource database) :comments {:slug slug}))
 
 (defn migrate
   "Migrate the db"

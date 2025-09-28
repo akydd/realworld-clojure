@@ -15,7 +15,6 @@
    (core/GET "/api/health" req (handlers/health handler req))
    (core/POST "/api/users/login" [:as {{:keys [user]} :body}] (handlers/login-user handler user))
    (core/POST "/api/users" [:as {{:keys [user]} :body}] (handlers/register-user handler user))
-   (core/GET "/api/articles/:slug" [slug] {:status 200})
    (core/GET "/api/tags" [] {:status 200})))
 
 (defn app-routes-with-auth [handler]
@@ -38,6 +37,7 @@
   (core/routes
    (core/GET "/api/profiles/:username" [username :as {:keys [auth-user]}] (handlers/get-profile handler username auth-user))
    (core/GET "/api/articles" [] {:status 200})
+   (core/GET "/api/articles/:slug" [slug :as {:keys [auth-user]}] (handlers/get-article-by-slug handler slug auth-user))
    (core/GET "/api/articles/:slug/comments" [slug] {:status 200})))
 
 (defn unauthorized-handler [_]

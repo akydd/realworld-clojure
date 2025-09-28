@@ -11,7 +11,7 @@
     [sut (core/new-system (config/read-test-config))]
     (is (nil? (profile/get-profile (:profile-controller sut) "hello")))))
 
-(deftest get-profile-exists
+(deftest get-profile
   (u/with-system
     [sut (core/new-system (config/read-test-config))]
     (let [db (get-in sut [:database :datasource])
@@ -19,7 +19,7 @@
           p (profile/get-profile (:profile-controller sut) (:username test-user))]
       (is (u/profile-matches-user? p test-user)))))
 
-(deftest get-profile-following
+(deftest get-profile-authenticated
   (u/with-system
     [sut (core/new-system (config/read-test-config))]
     (let [db (get-in sut [:database :datasource])

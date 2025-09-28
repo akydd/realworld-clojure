@@ -10,6 +10,10 @@
 (def query-options
   {:builder-fn rs/as-unqualified-lower-maps})
 
+(def update-options
+  {:return-keys true
+   :builder-fn rs/as-unqualified-lower-maps})
+
 (defn clear-ds
   "Delete all data from datasource"
   [ds]
@@ -44,5 +48,5 @@
   "Save a test article to the db."
   [db author-id]
   (let [article (mg/generate article/Article)
-        slug (article/text-to-slug (:title article))]
-    (sql/insert! db :articles (assoc article :author author-id :slug slug) query-options)))
+        slug (article/str->slug (:title article))]
+    (sql/insert! db :articles (assoc article :author author-id :slug slug) update-options)))

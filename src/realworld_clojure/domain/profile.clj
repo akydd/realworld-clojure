@@ -1,7 +1,6 @@
 (ns realworld-clojure.domain.profile
   (:require
    [realworld-clojure.adapters.db :as db]
-   [realworld-clojure.domain.converters :as c]
    [malli.core :as m]
    [malli.error :as me]))
 
@@ -16,12 +15,12 @@
   (m/schema [:string {:min 1}]))
 
 (defn follow-user
-  "Set auth-user to Follow the user with username. Returns the profile of the user being followd, or nil."
+  "Set auth-user to follow the user with username. Returns the profile of the user being followed, or nil."
   [controller auth-user username]
   (if (m/validate non-empty-string username)
     (when-let [u (db/get-user-by-username (:database controller) username)]
-      (db/insert-follows (:database controller) (:id auth-user) (:id u))
-      (assoc (c/user-db->profile u) :following (db/following? (:database controller) auth-user u)))
+      (db/follow-user (:database controller) auth-user u)
+      (db/get-profile (:database controller) username auth-user))
     {:errors (->> username
                   (m/explain non-empty-string)
                   (me/humanize))}))
@@ -30,8 +29,8 @@
   "Set auth-user to unfollow a user. Returns the profile of the user being unfollowed, or nil."
   [controller auth-user username]
   (when-let [u (db/get-user-by-username (:database controller) username)]
-    (db/delete-follows (:database controller) (:id auth-user) (:id u))
-    (assoc (c/user-db->profile u) :following false)))
+    (db/unfollow-user (:database controller) auth-user u)
+    (db/get-profile (:database controller) username auth-user)))
 
 (defrecord ProfileController [database])
 

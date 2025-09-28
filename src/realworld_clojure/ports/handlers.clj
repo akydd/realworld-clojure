@@ -68,7 +68,7 @@
     (if (nil? p)
       {:status 404}
       {:status 200
-       :body {:profile (converters/profile->profile p)}})))
+       :body {:profile p}})))
 
 (defn follow-user
   "Follow a user"
@@ -87,6 +87,17 @@
       {:status 404}
       {:status 200
        :body {:profile (converters/profile->profile p)}})))
+
+(defn get-article-by-slug
+  "Get article by slug."
+  [handler slug auth-user]
+  (let [article (if (nil? auth-user)
+                  (article/get-article-by-slug (:article-controller handler) slug)
+                  (article/get-article-by-slug (:article-controller handler) slug auth-user))]
+    (if (nil? article)
+      {:status 404}
+      {:status 200
+       :body {:article article}})))
 
 (defn create-article
   "Create an article"

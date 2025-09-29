@@ -3,7 +3,8 @@
             [malli.core :as m]
             [malli.error :as me]
             [buddy.hashers :as hashers]
-            [buddy.sign.jwt :as jwt]))
+            [buddy.sign.jwt :as jwt]
+            [buddy.auth :refer [throw-unauthorized]]))
 
 (def User
   [:map {:closed true}
@@ -55,8 +56,9 @@
     (when-let [fetched-user (db/get-user-by-email (:database controller) (:email user))]
       (let [incoming-password (:password user)
             encrypted-password (:password fetched-user)]
-        (when (password-valid? incoming-password encrypted-password)
-          (add-token (:jwt-secret controller) fetched-user))))
+        (if (password-valid? incoming-password encrypted-password)
+          (add-token (:jwt-secret controller) fetched-user)
+          (throw-unauthorized))))
     {:errors (me/humanize (m/explain UserLogin user))}))
 
 (def UserUpdate

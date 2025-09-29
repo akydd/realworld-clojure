@@ -5,7 +5,8 @@
    [realworld-clojure.domain.user :as user]
    [malli.generator :as mg]
    [next.jdbc.sql :as sql]
-   [realworld-clojure.domain.article :as article]))
+   [realworld-clojure.domain.article :as article]
+   [buddy.hashers :as hashers]))
 
 (def query-options
   {:builder-fn rs/as-unqualified-lower-maps})
@@ -37,7 +38,9 @@
 (defn create-user
   "Save a test user to the db."
   [db]
-  (sql/insert! db :users (mg/generate user/User) query-options))
+  (let [user (mg/generate user/User)
+        password (hashers/derive (:password user))]
+    (sql/insert! db :users (assoc user :password password) update-options)))
 
 (defn create-follows
   "Save a fdllowing record to the db."

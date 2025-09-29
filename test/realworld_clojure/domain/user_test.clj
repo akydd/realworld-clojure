@@ -37,9 +37,9 @@
     (test-utils/with-system
       [sut (core/new-system (config/read-test-config))]
       (let [db (get-in sut [:database :datasource])
-            test-user (mg/generate user/User)
-            _ (sql/insert! db :users test-user)]
-        (is (thrown-with-msg? Exception #"duplicate" (user/register-user (:user-controller sut) test-user))))))
+            test-user (test-utils/create-user db)
+            duplicate-user (select-keys test-user [:username :email])]
+        (is (thrown-with-msg? Exception #"duplicate" (user/register-user (:user-controller sut) (assoc duplicate-user :password "hi")))))))
 
   (testing "success"
     (test-utils/with-system

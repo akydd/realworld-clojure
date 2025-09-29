@@ -56,23 +56,22 @@
       [sut (core/new-system (config/read-test-config))]
       (let [input {:garbage "test"}
             db (get-in sut [:database :datasource])
-            test-user (mg/generate user/User)
-            saved-user (sql/insert! db :users test-user test-utils/query-options)
-            result (user/update-user (:user-controller sut) saved-user input)]
+            auth-user (test-utils/create-user db)
+            result (user/update-user (:user-controller sut) auth-user input)]
         (is (c/contains? result :errors)))))
 
   (testing "username exists"
     (test-utils/with-system
       [sut (core/new-system (config/read-test-config))]
       (let [db (get-in sut [:database :datasource])
-            auth-user (sql/insert! db :users {:username "auth" :email "auth" :password "auth"} test-utils/query-options)
-            _ (sql/insert! db :users {:username "taken" :email "taken" :password "taken"})]
-        (is (thrown-with-msg? Exception #"duplicate" (user/update-user (:user-controller sut) auth-user {:username "taken"}))))))
+            auth-user (test-utils/create-user db)
+            other-user (test-utils/create-user db)]
+        (is (thrown-with-msg? Exception #"duplicate" (user/update-user (:user-controller sut) auth-user {:username (:username other-user)}))))))
 
   (testing "email exists"
     (test-utils/with-system
       [sut (core/new-system (config/read-test-config))]
       (let [db (get-in sut [:database :datasource])
-            auth-user (sql/insert! db :users {:username "auth" :email "auth" :password "auth"} test-utils/query-options)
-            _ (sql/insert! db :users {:username "taken" :email "taken" :password "taken"})]
-        (is (thrown-with-msg? Exception #"duplicate" (user/update-user (:user-controller sut) auth-user {:email "taken"})))))))
+            auth-user (test-utils/create-user db)
+            other-user (test-utils/create-user db)]
+        (is (thrown-with-msg? Exception #"duplicate" (user/update-user (:user-controller sut) auth-user {:email (:email other-user)})))))))

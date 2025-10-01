@@ -26,7 +26,7 @@
     (if-not (buddy-auth/authenticated? req)
       (do
         (log/warn "request it not authenticated")
-        {:status 403})
+        {:status 401})
       (handler req))))
 
 (defn wrap-auth-user [handler database]

@@ -53,4 +53,4 @@
             r (send-request {:user (select-keys user [:email :password])})
             parsed-body (json/parse-string (:body r) true)]
         (is (= 200 (:status r)))
-        #dbg (is (true? (m/validate user-response-schema (:user parsed-body))))))))
+        (is (true? (m/validate user-response-schema (:user parsed-body))))))))

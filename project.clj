@@ -3,8 +3,7 @@
   :url "https://realworld-docs.netlify.app/"
   :license {:name "EPL-2.0 OR GPL-2.0-or-later WITH Classpath-exception-2.0"
             :url "https://www.eclipse.org/legal/epl-2.0/"}
-  :dependencies [[org.clojure/clojure "1.11.1"]
-                 [aero "1.1.6"]
+  :dependencies [[aero "1.1.6"]
                  [metosin/malli "0.16.4"]
                  [compojure "1.6.1"]
                  [http-kit "2.3.0"]
@@ -22,7 +21,8 @@
                  [cambium/cambium.core         "1.1.1"]
                  [cambium/cambium.codec-simple "1.0.0"]
                  [cambium/cambium.logback.core "0.4.6"]
-                 [clojure.java-time "1.4.2"]]
+                 [clojure.java-time "1.4.2"]
+                 [cheshire "6.1.0"]]
 
   :main ^:skip-aot realworld-clojure.core
   :target-path "target/%s"

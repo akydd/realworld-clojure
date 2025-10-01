@@ -1,6 +1,6 @@
 (ns realworld-clojure.domain.article-test
   (:require
-   [clojure.test :refer :all]
+   [clojure.test :refer [deftest is]]
    [realworld-clojure.utils :as u]
    [realworld-clojure.config-test :as config]
    [malli.generator :as mg]

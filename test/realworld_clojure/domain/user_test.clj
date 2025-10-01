@@ -4,7 +4,6 @@
    [realworld-clojure.utils :as test-utils]
    [realworld-clojure.domain.user :as user]
    [malli.generator :as mg]
-   [next.jdbc.sql :as sql]
    [clojure.test :refer [deftest is testing]]
    [realworld-clojure.core :as core]
    [clojure.core :as c]))

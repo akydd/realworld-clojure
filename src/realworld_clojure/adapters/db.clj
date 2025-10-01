@@ -1,18 +1,18 @@
 (ns realworld-clojure.adapters.db
   (:require [next.jdbc :as jdbc]
             [next.jdbc.sql :as sql]
-            [next.jdbc.result-set :as rs]
+            [next.jdbc.optional :as o]
             [com.stuartsierra.component :as component]
             [ragtime.repl :as ragtime-repl]
             [ragtime.jdbc :as ragtime-jdbc]
             [java-time.api :as jt]))
 
 (def query-options
-  {:builder-fn rs/as-unqualified-lower-maps})
+  {:builder-fn o/as-unqualified-lower-maps})
 
 (def update-options
   {:return-keys true
-   :builder-fn rs/as-unqualified-lower-maps})
+   :builder-fn o/as-unqualified-lower-maps})
 
 (defn insert-user
   "Insert record into user table"

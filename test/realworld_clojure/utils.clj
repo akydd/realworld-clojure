@@ -36,11 +36,12 @@
     (= (select-keys profile keys) (select-keys user keys))))
 
 (defn create-user
-  "Save a test user to the db."
+  "Save a test user to the db. Returns the user with an unhashed password, for testing."
   [db]
   (let [user (mg/generate user/User)
-        password (hashers/derive (:password user))]
-    (sql/insert! db :users (assoc user :password password) update-options)))
+        password (hashers/derive (:password user))
+        new-user (sql/insert! db :users (assoc user :password password) update-options)]
+    (assoc new-user :password (:password user))))
 
 (defn create-follows
   "Save a fdllowing record to the db."

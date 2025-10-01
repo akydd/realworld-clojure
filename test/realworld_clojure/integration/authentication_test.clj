@@ -2,6 +2,7 @@
   (:require
    [clojure.test :refer [deftest testing is]]
    [realworld-clojure.utils :as test-utils]
+   [realworld-clojure.integration.common :refer [user-response-schema]]
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
    [org.httpkit.client :as http]
@@ -10,14 +11,6 @@
 
 ;; TODO: get the port from the config
 (def url "http://localhost:8099/api/users/login")
-
-(def user-response-schema
-  [:map {:closed true}
-   [:username [:string {:min 1}]]
-   [:token [:string {:min 1}]]
-   [:email [:string {:min 1}]]
-   [:bio {:optional true} [:string {:min 1}]]
-   [:image {:optional true} [:string {:min 1}]]])
 
 (defn send-request
   [body]

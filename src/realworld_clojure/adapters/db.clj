@@ -17,7 +17,13 @@
 (defn insert-user
   "Insert record into user table"
   [database user]
-  (sql/insert! (:datasource database) :users user update-options))
+  (try
+    (sql/insert! (:datasource database) :users user update-options)
+    (catch org.postgresql.util.PSQLException e
+      (print (class (.getSQLState e)))
+      (case (.getSQLState e)
+        "23505" (throw (ex-info "Duplicate user" {:type :duplicate}))
+        (throw (ex-info "db error" {:type :unknown} e))))))
 
 (defn get-user
   "Get a user record from user table"

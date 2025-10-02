@@ -19,7 +19,6 @@
 
 (defn app-routes-with-auth [handler]
   (core/routes
-   ;; TODO: format the user before returning
    (core/GET "/api/user" [:as {:keys [auth-user headers]}] (handlers/get-user handler auth-user headers))
    (core/PUT "/api/user" [:as {:keys [auth-user]} :as {{:keys [user]} :body}] (handlers/update-user handler auth-user user))
    (core/POST "/api/profiles/:username/follow" [username :as {:keys [auth-user]}] (handlers/follow-user handler auth-user username))
@@ -40,6 +39,7 @@
    (core/GET "/api/articles/:slug" [slug :as {:keys [auth-user]}] (handlers/get-article-by-slug handler slug auth-user))
    (core/GET "/api/articles/:slug/comments" [slug] {:status 200})))
 
+;; TODO: is this needed?
 (defn unauthorized-handler [_]
   {:status 403})
 

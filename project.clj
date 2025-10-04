@@ -30,4 +30,6 @@
                        :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}
              :dev {:source-paths ["dev"]
                    :dependencies [[org.clojure/tools.namespace "1.5.0"]
-                                  [org.clojure/java.classpath "1.1.0"]]}})
+                                  [org.clojure/java.classpath "1.1.0"]
+                                  [io.github.noahtheduke/splint "1.21.0"]]}}
+  :aliases {"splint" ["run" "-m" "noahtheduke.splint"]})

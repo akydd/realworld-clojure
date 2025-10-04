@@ -14,16 +14,19 @@
   {:return-keys true
    :builder-fn o/as-unqualified-lower-maps})
 
+(defn- handle-psql-exception
+  [e]
+  (case (.getSQLState e)
+    "23505" (throw (ex-info "duplicate record" {:type :duplicate}))
+    (throw (ex-info "db error" {:type :unknown} e))))
+
 (defn insert-user
   "Insert record into user table"
   [database user]
   (try
     (sql/insert! (:datasource database) :users user update-options)
     (catch org.postgresql.util.PSQLException e
-      (print (class (.getSQLState e)))
-      (case (.getSQLState e)
-        "23505" (throw (ex-info "Duplicate user" {:type :duplicate}))
-        (throw (ex-info "db error" {:type :unknown} e))))))
+      (handle-psql-exception e))))
 
 (defn get-user
   "Get a user record from user table"
@@ -58,7 +61,10 @@ where u.username = ?", (:id auth-user), username] query-options)))
 (defn update-user
   "Update a user record"
   [database auth-user data]
-  (sql/update! (:datasource database) :users data {:id (:id auth-user)} update-options))
+  (try
+    (sql/update! (:datasource database) :users data {:id (:id auth-user)} update-options)
+    (catch org.postgresql.util.PSQLException e
+      (handle-psql-exception e))))
 
 (defn follow-user
   [database auth-user user]

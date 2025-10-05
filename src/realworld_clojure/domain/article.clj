@@ -3,10 +3,10 @@
    [malli.core :as m]
    [realworld-clojure.adapters.db :as db]
    [malli.error :as me]
-   [clojure.string :as string]
+   [clojure.string :as str]
    [buddy.auth :refer [throw-unauthorized]]))
 
-(def Article
+(def article-schema
   [:map {:closed true}
    [:title [:string {:min 1}]]
    [:description [:string {:min 1}]]
@@ -18,8 +18,8 @@
   "Given a string, return it formatted to a slug"
   [s]
   (-> s
-      string/lower-case
-      (string/replace #"\W+" "-")))
+      str/lower-case
+      (str/replace #"\W+" "-")))
 
 (defn get-article-by-slug
   "Get an article by slug."
@@ -30,12 +30,12 @@
 
 (defn create-article
   [controller article auth-user]
-  (if (m/validate Article article)
+  (if (m/validate article-schema article)
     (let [a (assoc article :slug (str->slug (:title article)))]
       (db/create-article (:database controller) a auth-user))
-    {:errors (me/humanize (m/explain Article article))}))
+    {:errors (me/humanize (m/explain article-schema article))}))
 
-(def ArticleUpdate
+(def article-update-schema
   [:map {:closed true}
    [:title {:optional true} [:string {:min 1}]]
    [:description {:optional true} [:string {:min 1}]]
@@ -50,13 +50,13 @@
 (defn update-article
   "Update an article, given its slug."
   [controller slug updates auth-user]
-  (if (m/validate ArticleUpdate updates)
+  (if (m/validate article-update-schema updates)
     (when-let [article (db/get-article-by-slug (:database controller) slug)]
       ;; We don't have the author id at this level, but usernames are unique.
       (if (= (get-in article [:author :username]) (:username auth-user))
         (db/update-article (:database controller) slug (update-slug updates) auth-user)
         (throw-unauthorized)))
-    {:errors (me/humanize (m/explain ArticleUpdate updates))}))
+    {:errors (me/humanize (m/explain article-update-schema updates))}))
 
 (defn delete-article
   "Delete an article, given its slug. Must belong to auth-user."

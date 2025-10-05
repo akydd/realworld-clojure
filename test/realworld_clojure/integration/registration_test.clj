@@ -36,7 +36,7 @@
   (testing "success"
     (test-utils/with-system
       [sut (core/new-system (config/read-test-config))]
-      (let [user (mg/generate user/User)
+      (let [user (mg/generate user/user-schema)
             r (send-request {:user user})
             parsed-body (json/parse-string (:body r) true)]
         (is (= 200 (:status r)))

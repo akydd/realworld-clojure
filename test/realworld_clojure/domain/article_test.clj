@@ -21,7 +21,7 @@
   (u/with-system [sut (core/new-system (config/read-test-config))]
     (let [db (get-in sut [:database :datasource])
           author (u/create-user db)
-          input (mg/generate article/Article)
+          input (mg/generate article/article-schema)
           a (article/create-article (:article-controller sut) input author)]
       (is (article-matches-input? a input))
       (is (u/profile-matches-user? (:author a) author))
@@ -33,7 +33,7 @@
     (let [db (get-in sut [:database :datasource])
           author (u/create-user db)
           a (u/create-article db (:id author))
-          input (mg/generate article/ArticleUpdate)
+          input (mg/generate article/article-update-schema)
           updated (article/update-article (:article-controller sut) (:slug a) input author)]
       (is (article-matches-update-input? updated input))
       (is (u/profile-matches-user? (:author updated) author))

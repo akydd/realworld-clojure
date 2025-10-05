@@ -43,7 +43,7 @@
   (testing "success"
     (test-utils/with-system
       [sut (core/new-system (config/read-test-config))]
-      (let [test-user (mg/generate user/User)
+      (let [test-user (mg/generate user/user-schema)
             new-user (user/register-user (:user-controller sut) test-user)]
         (is (every? new-user [:email :username :password :token]))
         (is (= (:username test-user) (:username new-user)))

@@ -38,7 +38,7 @@
 (defn create-user
   "Save a test user to the db. Returns the user with an unhashed password, for testing."
   [db]
-  (let [user (mg/generate user/User)
+  (let [user (mg/generate user/user-schema)
         password (hashers/derive (:password user))
         new-user (sql/insert! db :users (assoc user :password password) update-options)]
     (assoc new-user :password (:password user))))
@@ -51,6 +51,6 @@
 (defn create-article
   "Save a test article to the db."
   [db author-id]
-  (let [article (mg/generate article/Article)
+  (let [article (mg/generate article/article-schema)
         slug (article/str->slug (:title article))]
     (sql/insert! db :articles (assoc article :author author-id :slug slug) update-options)))

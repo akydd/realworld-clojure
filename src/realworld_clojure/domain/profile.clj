@@ -6,10 +6,10 @@
 
 (defn get-profile
   "Get a profile by username."
-  ([controller username auth-user]
-   (db/get-profile (:database controller) username auth-user))
   ([controller username]
-   (db/get-profile (:database controller) username)))
+   (db/get-profile (:database controller) username))
+  ([controller username auth-user]
+   (db/get-profile (:database controller) username auth-user)))
 
 (def non-empty-string
   (m/schema [:string {:min 1}]))

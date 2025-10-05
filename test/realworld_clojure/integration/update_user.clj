@@ -6,7 +6,7 @@
    [realworld-clojure.utils :as test-utils]
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
-   [mali.core :as m]
+   [malli.core :as m]
    [realworld-clojure.integration.common :refer [user-response-schema]]))
 
 (def url "http://localhost:8099/api/user")
@@ -77,5 +77,5 @@
             r (send-request {:username "Bilbo Baggins"} token)
             parsed-update-body (json/parse-string (:body r) true)]
         (is (= 200 (:status r)))
-        (is (true? (m/validate? user-response-schema (:user parsed-update-body))))
+        (is (true? (m/validate user-response-schema (:user parsed-update-body))))
         (is (= "Bilbo Baggins" (get-in parsed-update-body [:user :username])))))))

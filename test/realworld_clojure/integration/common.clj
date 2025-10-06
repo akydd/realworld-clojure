@@ -7,3 +7,16 @@
    [:email [:string {:min 1}]]
    [:bio {:optional true} [:string {:min 1}]]
    [:image {:optional true} [:string {:min 1}]]])
+
+(def no-auth-profile-schema
+  [:map {:closed true}
+   [:username [:string {:min 1}]]
+   [:bio {:optional true} [:string {:min 1}]]
+   [:image {:optional true} [:string {:min 1}]]])
+
+(def auth-profile-schema
+  [:map {:closed true}
+   [:username [:string {:min 1}]]
+   [:bio {:optional true} [:string {:min 1}]]
+   [:image {:optional true} [:string {:min 1}]]
+   [:following [:boolean]]])

@@ -1,7 +1,7 @@
 (ns realworld-clojure.utils
   (:require
    [com.stuartsierra.component :as component]
-   [next.jdbc.result-set :as rs]
+   [next.jdbc.optional :as o]
    [realworld-clojure.domain.user :as user]
    [malli.generator :as mg]
    [next.jdbc.sql :as sql]
@@ -9,11 +9,11 @@
    [buddy.hashers :as hashers]))
 
 (def query-options
-  {:builder-fn rs/as-unqualified-lower-maps})
+  {:builder-fn o/as-unqualified-lower-maps})
 
 (def update-options
   {:return-keys true
-   :builder-fn rs/as-unqualified-lower-maps})
+   :builder-fn o/as-unqualified-lower-maps})
 
 (defn clear-ds
   "Delete all data from datasource"

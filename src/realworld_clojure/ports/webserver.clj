@@ -46,7 +46,9 @@
 (defn app-routes [handler jwt-secret database]
   (let [backend (backends/jws {:secret jwt-secret :token-name "Token" :unauthorized-handler unauthorized-handler})]
     (-> (core/routes
-         (app-routes-no-auth handler)
+         (->
+          (app-routes-no-auth handler)
+          (core/wrap-routes wrap-log-req))
          (->
           (app-routes-with-auth handler)
           (core/wrap-routes wrap-log-req)

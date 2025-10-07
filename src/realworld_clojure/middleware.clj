@@ -25,7 +25,7 @@
   (fn [req]
     (if-not (buddy-auth/authenticated? req)
       (do
-        (log/warn "request it not authenticated")
+        (log/warn "request is not authenticated")
         {:status 401})
       (handler req))))
 

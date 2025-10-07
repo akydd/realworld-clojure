@@ -25,9 +25,9 @@
 
 (defn get-profile-request
   ([username]
-   @(http/get (str base-url "/profiles/" username) (get-headers)))
+   @(http/get (str base-url "/profiles/" username) {:headers (get-headers)}))
   ([username token]
-   @(http/get (str base-url "/profiles/" username) (get-headers token))))
+   @(http/get (str base-url "/profiles/" username) {:headers (get-headers token)})))
 
 (defn login-request
   ([user]

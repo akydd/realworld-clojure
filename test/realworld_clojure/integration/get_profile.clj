@@ -5,7 +5,7 @@
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
    [malli.core :as m]
-   [realworld-clojure.integration.common :refer [no-auth-profile-schema get-profile-request]]
+   [realworld-clojure.integration.common :refer [no-auth-profile-schema auth-profile-schema get-profile-request login-request]]
    [cheshire.core :as json]))
 
 (deftest get-profile
@@ -25,8 +25,11 @@
       [sut (core/new-system (config/read-test-config))]
       (let [db (get-in sut [:database :datasource])
             user (test-utils/create-user db)
-            r (get-profile-request (:username user))
+            user-two (test-utils/create-user db)
+            login-response (login-request user-two)
+            token (get-in (json/parse-string (:body login-response) true) [:user :token])
+            r (get-profile-request (:username user) token)
             body (json/parse-string (:body r) true)]
         (is (= 200 (:status r)))
         (is (= (:username user) (get-in body [:profile :username])))
-        (is (true? (m/validate no-auth-profile-schema (:profile body))))))))
+        (is (true? (m/validate auth-profile-schema (:profile body))))))))

@@ -94,7 +94,8 @@ from articles as a
 left join users as b
 on a.author = b.id
 where a.slug = ?", slug] query-options)]
-     (db-record->model db-article)))
+     (when db-article
+       (db-record->model db-article))))
   ([database slug auth-user]
    (let [db-article
          (jdbc/execute-one! (:datasource database) ["select a.slug, a.title, a.description, a.body,
@@ -109,7 +110,8 @@ from articles as a
 left join users as b
 on a.author = b.id
 where a.slug = ?", (:id auth-user), slug] query-options)]
-     (db-record->model db-article))))
+     (when db-article
+       (db-record->model db-article)))))
 
 (defn create-article
   "Insert a record into the articles table"

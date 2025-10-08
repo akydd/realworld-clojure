@@ -64,6 +64,12 @@
   ([username token]
    @(http/delete (str base-url "/profiles/" username "/follow") {:headers (get-headers token)})))
 
+(defn get-article-request
+  ([slug]
+   @(http/get (str base-url "/articles/" slug) {:headers (get-headers)}))
+  ([slug token]
+   @(http/get (str base-url "/articles/" slug) {:headers (get-headers token)})))
+
 ;; helper comparison functions
 
 (defn profiles-equal?
@@ -93,3 +99,13 @@
    [:bio {:optional true} [:string {:min 1}]]
    [:image {:optional true} [:string {:min 1}]]
    [:following [:boolean]]])
+
+(def no-auth-article-schema
+  [:map {:closed true}
+   [:slug [:string {:min 1}]]
+   [:title [:string {:min 1}]]
+   [:description [:string {:min 1}]]
+   [:body [:string {:min 1}]]
+   [:createdat [:string {:min 1}]]
+   [:updatedat {:optional true} [:string {:min 1}]]
+   [:author #'no-auth-profile-schema]])

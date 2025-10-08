@@ -68,7 +68,8 @@ where u.username = ?", (:id auth-user), username] query-options)))
 
 (defn follow-user
   [database auth-user user]
-  (sql/insert! (:datasource database) :follows {:user_id (:id auth-user) :follows (:id user)}))
+  (jdbc/execute-one! (:datasource database) ["insert into follows (user_id, follows)
+values (?, ?) on conflict do nothing", (:id auth-user) (:id user)]))
 
 (defn unfollow-user
   "Unfollow a user."

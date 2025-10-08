@@ -40,4 +40,17 @@
         (is (true? (get-in body [:profile :following])))
         (is (true? (profiles-equal? user-two (:profile body)))))))
 
-  (testing "already following user"))
+  (testing "already following user"
+    (test-utils/with-system
+      [sut (core/new-system (config/read-test-config))]
+      (let [db (get-in sut [:database :datasource])
+            user-one (test-utils/create-user db)
+            user-two (test-utils/create-user db)
+            token (get-login-token user-one)
+            _ (follow-user-request (:username user-two) token)
+            r (follow-user-request (:username user-two) token)
+            body (json/parse-string (:body r) true)]
+        (is (= 200 (:status r)))
+        (is (true? (m/validate auth-profile-schema (:profile body))))
+        (is (true? (get-in body [:profile :following])))
+        (is (true? (profiles-equal? user-two (:profile body))))))))

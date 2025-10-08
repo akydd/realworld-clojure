@@ -58,6 +58,12 @@
   ([username token]
    @(http/post (str base-url "/profiles/" username "/follow") {:headers (get-headers token)})))
 
+(defn unfollow-user-request
+  ([username]
+   @(http/delete (str base-url "/profiles/" username "/follow") {:headers (get-headers)}))
+  ([username token]
+   @(http/delete (str base-url "/profiles/" username "/follow") {:headers (get-headers token)})))
+
 ;; helper comparison functions
 
 (defn profiles-equal?

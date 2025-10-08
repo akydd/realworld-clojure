@@ -34,6 +34,11 @@
    @(http/post (str base-url "/users/login") {:headers (get-headers)
                                               :body (json/generate-string {:user (select-keys user [:email :password])})})))
 
+(defn get-login-token
+  [user]
+  (let [r (login-request user)]
+    (get-in (json/parse-string (:body r) true) [:user :token])))
+
 (defn update-user-request
   ([user]
    @(http/put (str base-url "/user") {:headers (get-headers)
@@ -46,6 +51,19 @@
   [user]
   @(http/post (str base-url "/users") {:headers (get-headers)
                                        :body (json/generate-string {:user (select-keys user [:username :password :email])})}))
+
+(defn follow-user-request
+  ([username]
+   @(http/post (str base-url "/profiles/" username "/follow") {:headers (get-headers)}))
+  ([username token]
+   @(http/post (str base-url "/profiles/" username "/follow") {:headers (get-headers token)})))
+
+;; helper comparison functions
+
+(defn profiles-equal?
+  [a b]
+  (let [ks [:username :bio :image]]
+    (= (select-keys a ks) (select-keys b ks))))
 
 ;; Response schemas, used for validation.
 

@@ -6,7 +6,7 @@
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
    [malli.core :as m]
-   [realworld-clojure.integration.common :refer [update-user-request login-request user-response-schema]]))
+   [realworld-clojure.integration.common :refer [update-user-request user-response-schema get-login-token]]))
 
 (deftest update-user
   (testing "no authentication"
@@ -30,9 +30,7 @@
       [sut (core/new-system (config/read-test-config))]
       (let [db (get-in sut [:database :datasource])
             user (test-utils/create-user db)
-            login-response (login-request user)
-            body (json/parse-string (:body login-response) true)
-            token (get-in body [:user :token])
+            token (get-login-token user)
             r (update-user-request {:garbage "hi"} token)]
         (is (= 422 (:status r))))))
 
@@ -42,9 +40,7 @@
       (let [db (get-in sut [:database :datasource])
             user-one (test-utils/create-user db)
             user-two (test-utils/create-user db)
-            login-response (login-request user-two)
-            body (json/parse-string (:body login-response) true)
-            token (get-in body [:user :token])
+            token (get-login-token user-two)
             r (update-user-request {:username (:username user-one)} token)]
         (is (= 409 (:status r))))))
 
@@ -53,9 +49,7 @@
       [sut (core/new-system (config/read-test-config))]
       (let [db (get-in sut [:database :datasource])
             user (test-utils/create-user db)
-            login-response (login-request user)
-            body (json/parse-string (:body login-response) true)
-            token (get-in body [:user :token])
+            token (get-login-token user)
             r (update-user-request {:username "Bilbo Baggins"} token)
             parsed-update-body (json/parse-string (:body r) true)]
         (is (= 200 (:status r)))

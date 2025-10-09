@@ -2,7 +2,8 @@
   (:require
    [cheshire.core :as json]
    [realworld-clojure.config-test :as config]
-   [org.httpkit.client :as http]))
+   [org.httpkit.client :as http]
+   [clojure.string :as str]))
 
 (def port (get-in (config/read-test-config) [:server :port]))
 (def host "http://localhost")
@@ -70,12 +71,30 @@
   ([slug token]
    @(http/get (str base-url "/articles/" slug) {:headers (get-headers token)})))
 
+(defn create-article-request
+  ([article]
+   @(http/post (str base-url "/articles") {:headers (get-headers)
+                                           :body (json/generate-string {:article article})}))
+  ([article token]
+   @(http/post (str base-url "/articles") {:headers (get-headers token)
+                                           :body (json/generate-string {:article article})})))
 ;; helper comparison functions
 
 (defn profiles-equal?
   [a b]
   (let [ks [:username :bio :image]]
     (= (select-keys a ks) (select-keys b ks))))
+
+(defn article-matches-input?
+  [article input]
+  (let [ks [:title :description :body]]
+    (= (select-keys article ks) (select-keys input ks))))
+
+(defn slug-is-correct?
+  [article]
+  (= (:slug article) (-> (:title article)
+                         str/lower-case
+                         (str/replace #"W+" "-"))))
 
 ;; Response schemas, used for validation.
 

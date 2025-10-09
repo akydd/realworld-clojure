@@ -29,6 +29,17 @@
             r (create-article-request {:garbage "hi"} token)]
         (is (= 422 (:status r))))))
 
+  (testing "slug is taken"
+    (test-utils/with-system
+      [sut (core/new-system (config/read-test-config))]
+      (let [db (get-in sut [:database :datasource])
+            user (test-utils/create-user db)
+            article-one (test-utils/create-article db (:id user))
+            input (assoc (mg/generate article/article-schema) :title (:title article-one))
+            token (get-login-token user)
+            r (create-article-request input token)]
+        (is (= 409 (:status r))))))
+
   (testing "success, no tags"
     (test-utils/with-system
       [sut (core/new-system (config/read-test-config))]

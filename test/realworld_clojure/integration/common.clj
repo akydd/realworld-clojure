@@ -109,3 +109,13 @@
    [:createdat [:string {:min 1}]]
    [:updatedat {:optional true} [:string {:min 1}]]
    [:author #'no-auth-profile-schema]])
+
+(def auth-article-schema
+  [:map {:closed true}
+   [:slug [:string {:min 1}]]
+   [:title [:string {:min 1}]]
+   [:description [:string {:min 1}]]
+   [:body [:string {:min 1}]]
+   [:createdat [:string {:min 1}]]
+   [:updatedat {:optional true} [:string {:min 1}]]
+   [:author #'auth-profile-schema]])

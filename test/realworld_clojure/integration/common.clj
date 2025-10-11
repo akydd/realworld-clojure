@@ -93,6 +93,14 @@
   ([slug token]
    @(http/delete (str base-url "/articles/" slug) {:headers (get-headers token)})))
 
+(defn create-comment-request
+  ([slug comment]
+   @(http/post (str base-url "/articles/" slug "/comments") {:headers (get-headers)
+                                                             :body (json/generate-string {:comment comment})}))
+  ([slug comment token]
+   @(http/post (str base-url "/articles/" slug "/comments") {:headers (get-headers token)
+                                                             :body (json/generate-string {:comment comment})})))
+
 ;; helper comparison functions
 
 (defn profiles-equal?

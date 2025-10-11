@@ -140,7 +140,7 @@ where a.slug = ?", (:id auth-user), slug] query-options)]
 (defn get-comment
   "Get a single comment by id."
   [database id auth-user]
-  (let [c (jdbc/execute-one! (:datasource database) ["select c.id, c.createdat, c.updatedat, c.body,
+  (when-let [c (jdbc/execute-one! (:datasource database) ["select c.id, c.createdat, c.updatedat, c.body,
 u.username, u.bio, u.image,
 case when (
 select count(*)
@@ -157,7 +157,7 @@ where c.id = ?", (:id auth-user) id] query-options)]
 (defn create-comment
   "Add a record to the comments table"
   [database slug comment auth-user]
-  (let [c (jdbc/execute-one! (:datasource database) ["insert into comments (article, body, author)
+  (when-let [c (jdbc/execute-one! (:datasource database) ["insert into comments (article, body, author)
 select id, ?, ?
 from articles
 where slug = ?", (:body comment), (:id auth-user), slug] update-options)]

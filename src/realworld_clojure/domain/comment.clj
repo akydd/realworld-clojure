@@ -7,17 +7,17 @@
 
 (defrecord CommentController [database])
 
-(def CommentCreate
+(def comment-create-schema
   [:map
    [:body [:string {:min 1}]]])
 
 (defn create-comment
   "Add a new comment to an article."
   [controller slug comment auth-user]
-  (if (m/validate CommentCreate comment)
+  (if (m/validate comment-create-schema comment)
     (when (db/get-article-by-slug (:database controller) slug)
       (db/create-comment (:database controller) slug comment auth-user))
-    {:errors (me/humanize (m/explain CommentCreate comment))}))
+    {:errors (me/humanize (m/explain comment-create-schema comment))}))
 
 (defn delete-comment
   "Delete a comment"

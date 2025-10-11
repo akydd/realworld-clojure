@@ -78,6 +78,15 @@
   ([article token]
    @(http/post (str base-url "/articles") {:headers (get-headers token)
                                            :body (json/generate-string {:article article})})))
+
+(defn update-article-request
+  ([slug update]
+   @(http/put (str base-url "/articles/" slug) {:headers (get-headers)
+                                                :body (json/generate-string {:article update})}))
+  ([slug update token]
+   @(http/put (str base-url "/articles/" slug) {:headers (get-headers token)
+                                                :body (json/generate-string {:article update})})))
+
 ;; helper comparison functions
 
 (defn profiles-equal?

@@ -126,9 +126,11 @@ where a.slug = ?", (:id auth-user), slug] query-options)]
 (defn update-article
   "Update a record in the articles table"
   [database slug updates auth-user]
-  (let [updated-at (jt/local-date-time)
-        updated-article (sql/update! (:datasource database) :articles (assoc updates :updatedat updated-at) {:slug slug} update-options)]
-    (get-article-by-slug database (:slug updated-article) auth-user)))
+  (let [updated-at (jt/local-date-time)]
+    (try (sql/update! (:datasource database) :articles (assoc updates :updatedat updated-at) {:slug slug} update-options)
+         (catch org.postgresql.util.PSQLException e
+           (handle-psql-exception e)))
+    (get-article-by-slug database (or (:slug updates) slug) auth-user)))
 
 (defn delete-article
   "Delete a record from the articles table"

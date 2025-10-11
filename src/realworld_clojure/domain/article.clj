@@ -45,7 +45,7 @@
   [updates]
   (if (:title updates)
     (assoc updates :slug (str->slug (:title updates)))
-    (updates)))
+    updates))
 
 (defn update-article
   "Update an article, given its slug."

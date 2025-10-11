@@ -9,8 +9,7 @@
    [realworld-clojure.domain.article :as article]
    [malli.core :as m]
    [malli.error :as me]
-   [cheshire.core :as json]
-   [clojure.string :as str]))
+   [cheshire.core :as json]))
 
 (deftest create-article
   (testing "no auth"
@@ -29,7 +28,7 @@
             r (create-article-request {:garbage "hi"} token)]
         (is (= 422 (:status r))))))
 
-  (testing "slug is taken"
+  (testing "duplicate slug"
     (test-utils/with-system
       [sut (core/new-system (config/read-test-config))]
       (let [db (get-in sut [:database :datasource])

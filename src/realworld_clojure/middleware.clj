@@ -7,6 +7,7 @@
   (fn [req]
     (try (handler req)
          (catch Exception e
+           (log/error {} e "Caught exception")
            (let [ex-data (ex-data e)]
              (if (= (:type ex-data) :duplicate)
                {:status 409

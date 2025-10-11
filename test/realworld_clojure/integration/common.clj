@@ -3,7 +3,8 @@
    [cheshire.core :as json]
    [realworld-clojure.config-test :as config]
    [org.httpkit.client :as http]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [realworld-clojure.domain.comment :as comment]))
 
 (def port (get-in (config/read-test-config) [:server :port]))
 (def host "http://localhost")
@@ -160,4 +161,20 @@
    [:body [:string {:min 1}]]
    [:createdat [:string {:min 1}]]
    [:updatedat {:optional true} [:string {:min 1}]]
+   [:author #'auth-profile-schema]])
+
+(def no-auth-comment-schema
+  [:map {:closed true}
+   [:id :int]
+   [:createdat [:string {:min 1}]]
+   [:updatedat [:string {:min 1}]]
+   [:body [:string {:min 1}]]
+   [:author #'no-auth-profile-schema]])
+
+(def auth-comment-schema
+  [:map {:closed true}
+   [:id :int]
+   [:createdat [:string {:min 1}]]
+   [:updatedat [:string {:min 1}]]
+   [:body [:string {:min 1}]]
    [:author #'auth-profile-schema]])

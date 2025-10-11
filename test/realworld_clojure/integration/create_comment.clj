@@ -4,9 +4,12 @@
    [realworld-clojure.utils :as test-utils]
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
-   [realworld-clojure.integration.common :refer [create-comment-request get-login-token]]
+   [realworld-clojure.integration.common :refer [create-comment-request get-login-token auth-comment-schema]]
    [malli.generator :as mg]
-   [realworld-clojure.domain.comment :as comment]))
+   [realworld-clojure.domain.comment :as comment]
+   [cheshire.core :as json]
+   [malli.core :as m]
+   [malli.error :as me]))
 
 (deftest create-comment
   (testing "no auth"
@@ -37,4 +40,17 @@
             r (create-comment-request (:slug article) c token)]
         (is (= 422 (:status r))))))
 
-  (testing "success"))
+  (testing "success"
+    (test-utils/with-system
+      [sut (core/new-system (config/read-test-config))]
+      (let [db (get-in sut [:database :datasource])
+            user (test-utils/create-user db)
+            article (test-utils/create-article db (:id user))
+            c (mg/generate comment/comment-create-schema)
+            token (get-login-token user)
+            r (create-comment-request (:slug article) c token)
+            comment (:comment (json/parse-string (:body r) true))]
+        (is (= 200 (:status r)))
+        (is (true? (m/validate auth-comment-schema comment)) (->> comment
+                                                                  (m/explain auth-comment-schema)
+                                                                  (me/humanize)))))))

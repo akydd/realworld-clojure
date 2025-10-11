@@ -87,6 +87,12 @@
    @(http/put (str base-url "/articles/" slug) {:headers (get-headers token)
                                                 :body (json/generate-string {:article update})})))
 
+(defn delete-article-request
+  ([slug]
+   @(http/delete (str base-url "/articles/" slug) {:headers (get-headers)}))
+  ([slug token]
+   @(http/delete (str base-url "/articles/" slug) {:headers (get-headers token)})))
+
 ;; helper comparison functions
 
 (defn profiles-equal?

@@ -28,7 +28,7 @@
    (core/PUT "/api/articles/:slug" [slug :as {:keys [auth-user]} :as {{:keys [article]} :body}] (handlers/update-article handler slug article auth-user))
    (core/DELETE "/api/articles/:slug" [slug :as {:keys [auth-user]}] (handlers/delete-article handler slug auth-user))
    (core/POST "/api/articles/:slug/comments" [slug :as {:keys [auth-user]} :as {{:keys [comment]} :body}] (handlers/create-comment handler slug comment auth-user))
-   (core/DELETE "/api/articles/:slug/comments/:id" [slug id] {:status 200})
+   (core/DELETE "/api/articles/:slug/comments/:id" [slug id :as {:keys [auth-user]}] (handlers/delete-comment handler slug (Integer/parseInt id) auth-user))
    (core/POST "/api/articles/:slug/favorite" [slug] {:status 200})
    (core/DELETE "/api/articles/:slug/favorite" [slug] {:status 200})))
 

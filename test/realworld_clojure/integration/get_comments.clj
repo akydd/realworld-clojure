@@ -24,7 +24,7 @@
             r (get-comments-request (:slug article))
             comments (:comments (json/parse-string (:body r) true))]
         (is (= 200 (:status r)))
-        (is (= 0 (count comments))))))
+        (is (zero? (count comments))))))
 
   (testing "no auth"
     (test-utils/with-system

@@ -97,13 +97,13 @@
 (defn get-article-by-slug
   "Get article by slug."
   [handler slug auth-user]
-  (let [article (if (nil? auth-user)
-                  (article/get-article-by-slug (:article-controller handler) slug)
-                  (article/get-article-by-slug (:article-controller handler) slug auth-user))]
-    (if (nil? article)
+  (let [a (if (nil? auth-user)
+            (article/get-article-by-slug (:article-controller handler) slug)
+            (article/get-article-by-slug (:article-controller handler) slug auth-user))]
+    (if (nil? a)
       {:status 404}
       {:status 200
-       :body {:article article}})))
+       :body {:article a}})))
 
 (defn create-article
   "Create an article"
@@ -159,3 +159,11 @@
       {:status 404}
       {:status 200
        :body {:comments comments}})))
+
+(defn delete-comment
+  "Delete comment"
+  [handler slug id auth-user]
+  (let [p (comment/delete-comment (:article-controller handler) slug id auth-user)]
+    (if (nil? p)
+      {:status 404}
+      {:status 200})))

@@ -108,6 +108,12 @@
   ([slug token]
    @(http/get (str base-url "/articles/" slug "/comments") {:headers (get-headers token)})))
 
+(defn delete-comment-request
+  ([slug id]
+   @(http/delete (str base-url "/articles/" slug "/comments/" id) {:headers (get-headers)}))
+  ([slug id token]
+   @(http/delete (str base-url "/articles/" slug "/comments/" id) {:headers (get-headers token)})))
+
 ;; helper comparison functions
 
 (defn profiles-equal?

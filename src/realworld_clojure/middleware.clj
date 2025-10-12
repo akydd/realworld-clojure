@@ -7,15 +7,16 @@
   (fn [req]
     (try (handler req)
          (catch Exception e
-           (log/error {} e "Caught exception")
            (let [ex-data (ex-data e)]
              (if (= (:type ex-data) :duplicate)
                {:status 409
-                :body {:errors "hi"}}
+                :body {:errors ex-data}}
                (case (::buddy-auth/type ex-data)
                  ::buddy-auth/unauthorized {:status 403}
-                 {:status 500
-                  :body {:errors (str "Internal error" (.getMessage e))}})))))))
+                 (do
+                   (log/error {} e "Caught exception")
+                   {:status 500
+                    :body {:errors (str "Internal error" (.getMessage e))}}))))))))
 
 (defn wrap-log-req [handler]
   (fn [req]

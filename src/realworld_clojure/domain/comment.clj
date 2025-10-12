@@ -21,11 +21,12 @@
 
 (defn delete-comment
   "Delete a comment"
-  [controller _article-slug id auth-user]
-  (let [c (db/get-comment (:database controller) id auth-user)]
-    (if (= (:username auth-user) (get-in c [:author :username]))
-      (db/delete-comment (:database controller) id)
-      (throw-unauthorized))))
+  [controller slug id auth-user]
+  (when (db/get-article-by-slug (:database controller) slug)
+    (when-let [c (db/get-comment (:database controller) id auth-user)]
+      (if (= (:username auth-user) (get-in c [:author :username]))
+        (db/delete-comment (:database controller) id)
+        (throw-unauthorized)))))
 
 (defn get-article-comments
   "Get all comments for an article"

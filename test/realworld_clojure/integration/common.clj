@@ -102,6 +102,12 @@
    @(http/post (str base-url "/articles/" slug "/comments") {:headers (get-headers token)
                                                              :body (json/generate-string {:comment comment})})))
 
+(defn get-comments-request
+  ([slug]
+   @(http/get (str base-url "/articles/" slug "/comments") {:headers (get-headers)}))
+  ([slug token]
+   @(http/get (str base-url "/articles/" slug "/comments") {:headers (get-headers token)})))
+
 ;; helper comparison functions
 
 (defn profiles-equal?

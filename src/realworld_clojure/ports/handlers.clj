@@ -148,3 +148,14 @@
          :body c}
         {:status 200
          :body {:comment c}}))))
+
+(defn get-comments
+  "Get comments for an article"
+  [handler slug auth-user]
+  (let [comments (if (nil? auth-user)
+                   (comment/get-article-comments (:article-controller handler) slug)
+                   (comment/get-article-comments (:article-controller handler) slug auth-user))]
+    (if (nil? comments)
+      {:status 404}
+      {:status 200
+       :body {:comments comments}})))

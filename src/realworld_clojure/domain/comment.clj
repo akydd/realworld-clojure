@@ -30,9 +30,11 @@
 (defn get-article-comments
   "Get all comments for an article"
   ([controller slug]
-   (db/get-article-comments (:database controller) slug))
+   (when (db/get-article-by-slug (:database controller) slug)
+     (db/get-article-comments (:database controller) slug)))
   ([controller slug auth-user]
-   (db/get-article-comments (:database controller) slug auth-user)))
+   (when (db/get-article-by-slug (:database controller) slug)
+     (db/get-article-comments (:database controller) slug auth-user))))
 
 (defn new-comment-controller []
   (map->CommentController {}))

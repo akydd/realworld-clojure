@@ -6,7 +6,8 @@
    [malli.generator :as mg]
    [next.jdbc.sql :as sql]
    [realworld-clojure.domain.article :as article]
-   [buddy.hashers :as hashers]))
+   [buddy.hashers :as hashers]
+   [realworld-clojure.domain.comment :as comment]))
 
 (def query-options
   {:builder-fn o/as-unqualified-lower-maps})
@@ -35,6 +36,11 @@
   (let [keys [:username :bio :image]]
     (= (select-keys profile keys) (select-keys user keys))))
 
+(defn comments-are-equal?
+  [a b]
+  (let [keys [:id :createdat :updatedat :body]]
+    (= (select-keys keys a) (select-keys keys b))))
+
 (defn create-user
   "Save a test user to the db. Returns the user with an unhashed password, for testing."
   [db]
@@ -54,3 +60,8 @@
   (let [article (mg/generate article/article-schema)
         slug (article/str->slug (:title article))]
     (sql/insert! db :articles (assoc article :author author-id :slug slug) update-options)))
+
+(defn create-comment
+  [db article-id author-id]
+  (let [comment (mg/generate comment/comment-create-schema)]
+    (sql/insert! db :comments (assoc comment :author author-id :article article-id) update-options)))

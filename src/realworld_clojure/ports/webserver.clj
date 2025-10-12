@@ -37,7 +37,7 @@
    (core/GET "/api/profiles/:username" [username :as {:keys [auth-user]}] (handlers/get-profile handler username auth-user))
    (core/GET "/api/articles" [] {:status 200})
    (core/GET "/api/articles/:slug" [slug :as {:keys [auth-user]}] (handlers/get-article-by-slug handler slug auth-user))
-   (core/GET "/api/articles/:slug/comments" [slug] {:status 200})))
+   (core/GET "/api/articles/:slug/comments" [slug :as {:keys [auth-user]}] (handlers/get-comments handler slug auth-user))))
 
 ;; TODO: is this needed?
 (defn unauthorized-handler [_]

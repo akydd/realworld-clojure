@@ -166,7 +166,7 @@ where slug = ?", (:body comment), (:id auth-user), slug] update-options)]
 (defn get-article-comments
   "Get all comments for an article"
   ([database slug]
-   (let [cs (jdbc/execute! (:datasource database) ["select c.id, c.body, c.createdat, c.updatedat,
+   (when-let [cs (jdbc/execute! (:datasource database) ["select c.id, c.body, c.createdat, c.updatedat,
 u.username, u.bio, u.image
 from comments as c
 left join users as u
@@ -175,7 +175,7 @@ where c.article in
 (select id from articles where slug=?)", slug] query-options)]
      (map db-record->model cs)))
   ([database slug auth-user]
-   (let [cs (jdbc/execute! (:datasource database) ["select c.id, c.body, c.createdat, c.updatedat,
+   (when-let [cs (jdbc/execute! (:datasource database) ["select c.id, c.body, c.createdat, c.updatedat,
 u.username, u.bio, u.image,
 case when (
 select count(*)

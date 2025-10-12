@@ -34,12 +34,16 @@
             user-twp (test-utils/create-user db)
             article (test-utils/create-article db (:id user-one))
             c-1 (test-utils/create-comment db (:id article) (:id user-one))
-            c02 (test-utils/create-comment db (:id article) (:id user-twp))
+            c-2 (test-utils/create-comment db (:id article) (:id user-twp))
             r (get-comments-request (:slug article))
             comments (:comments (json/parse-string (:body r) true))]
         (is (= 200 (:status r)))
         (is (= 2 (count comments)))
-        (is (every? #(m/validate no-auth-comment-schema %) comments)))))
+        (is (every? #(m/validate no-auth-comment-schema %) comments))
+        (is (= (:body c-1) (:body (first comments))))
+        (is (= (:body c-2) (:body (second comments))))
+        (is (test-utils/comments-are-equal? c-1 (first comments)))
+        (is (test-utils/comments-are-equal? c-2 (second comments))))))
 
   (testing "with auth"
     (test-utils/with-system
@@ -57,5 +61,6 @@
         (is (= 2 (count comments)))
         (is (every? #(m/validate auth-comment-schema %) comments))
         (is (= (:body c-1) (:body (first comments))))
+        (is (= (:body c-2) (:body (second comments))))
         (is (test-utils/comments-are-equal? c-1 (first comments)))
         (is (test-utils/comments-are-equal? c-2 (second comments)))))))

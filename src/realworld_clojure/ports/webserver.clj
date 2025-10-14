@@ -4,9 +4,12 @@
    [realworld-clojure.middleware :refer [wrap-exception wrap-no-auth-error wrap-log-req wrap-auth-user]]
    [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
    [ring.middleware.content-type :refer [wrap-content-type]]
+   [ring.middleware.keyword-params :refer [wrap-keyword-params]]
+   [ring.middleware.params :refer [wrap-params]]
    [buddy.auth.middleware :refer [wrap-authentication]]
    [realworld-clojure.ports.handlers :as handlers]
    [compojure.core :as core]
+   [compojure.coercions :refer [as-int]]
    [org.httpkit.server :as http-server]
    [buddy.auth.backends :as backends]))
 
@@ -28,14 +31,14 @@
    (core/PUT "/api/articles/:slug" [slug :as {:keys [auth-user]} :as {{:keys [article]} :body}] (handlers/update-article handler slug article auth-user))
    (core/DELETE "/api/articles/:slug" [slug :as {:keys [auth-user]}] (handlers/delete-article handler slug auth-user))
    (core/POST "/api/articles/:slug/comments" [slug :as {:keys [auth-user]} :as {{:keys [comment]} :body}] (handlers/create-comment handler slug comment auth-user))
-   (core/DELETE "/api/articles/:slug/comments/:id" [slug id :as {:keys [auth-user]}] (handlers/delete-comment handler slug (Integer/parseInt id) auth-user))
+   (core/DELETE "/api/articles/:slug/comments/:id" [slug id :<< as-int :as {:keys [auth-user]}] (handlers/delete-comment handler slug id auth-user))
    (core/POST "/api/articles/:slug/favorite" [slug] {:status 200})
    (core/DELETE "/api/articles/:slug/favorite" [slug] {:status 200})))
 
 (defn app-routes-optional-auth [handler]
   (core/routes
    (core/GET "/api/profiles/:username" [username :as {:keys [auth-user]}] (handlers/get-profile handler username auth-user))
-   (core/GET "/api/articles" [] {:status 200})
+   (core/GET "/api/articles" [:as {:keys [params auth-user]}] (handlers/list-articles handler params auth-user))
    (core/GET "/api/articles/:slug" [slug :as {:keys [auth-user]}] (handlers/get-article-by-slug handler slug auth-user))
    (core/GET "/api/articles/:slug/comments" [slug :as {:keys [auth-user]}] (handlers/get-comments handler slug auth-user))))
 
@@ -58,6 +61,8 @@
          (->
           (app-routes-optional-auth handler)
           (core/wrap-routes wrap-log-req)
+          (core/wrap-routes wrap-keyword-params)
+          (core/wrap-routes wrap-params)
           (core/wrap-routes wrap-auth-user database)
           (core/wrap-routes wrap-authentication backend)))
         wrap-exception

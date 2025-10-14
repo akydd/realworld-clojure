@@ -195,6 +195,34 @@ where c.article in
   [database id]
   (sql/delete! (:datasource database) :comments {:id id}))
 
+(defn list-articles
+  ([database filters]
+   (let [limit (or (:limit filters) 20)
+         offset (or (:offset filters) 0)]
+     (when-let [articles (jdbc/execute! (:datasource database) ["select a.slug, a.title, a.description,
+a.createdat, a.updatedat, b.username, b.bio, b.image
+from articles as a
+left join users as b
+on a.author = b.id
+limit ?
+offset ?", limit, offset] query-options)]
+       (map db-record->model articles))))
+  ([database filters auth-user]
+   (when-let [articles (jdbc/execute! (:datasource database) ["select a.slug, a.title, a.description,
+a.createdat, a.updatedat, b.username, b.bio, b.image
+case when (
+select count(*)
+from follows f
+where f.user_id = ?
+and f.follows = a.author
+) > 0 then true else false end as following
+from articles as a
+left join users as b
+on a.author = b.id
+limit ?
+offset ?", (:id auth-user), (or (:limit filters) 20), (or (:offset filters) 0)] query-options)]
+     (map db-record->model articles))))
+
 (defn migrate
   "Migrate the db"
   [database]

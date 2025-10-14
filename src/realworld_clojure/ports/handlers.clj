@@ -105,6 +105,23 @@
       {:status 200
        :body {:article a}})))
 
+(defn- params->filters
+  [params]
+  (let [ks [:limit :offset]
+        to-int (select-keys params ks)
+        converted-ints (reduce (fn [acc [k v]] (assoc acc k (Integer/parseInt v))) {} to-int)]
+    (merge params converted-ints)))
+
+(defn list-articles
+  "Get list of articles, filtered"
+  [handler params auth-user]
+  (let [filters (params->filters params)
+        articles (if (nil? auth-user)
+                   (article/list-articles (:article-controller handler) filters)
+                   (article/list-articles (:article-controller handler) filters auth-user))]
+    {:status 200
+     :body {:articles articles}}))
+
 (defn create-article
   "Create an article"
   [handler article auth-user]

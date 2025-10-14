@@ -67,5 +67,23 @@
       (db/delete-article (:database controller) slug)
       (throw-unauthorized))))
 
+(def list-articles-filter-schema
+  [:map {:closed true}
+   [:tag {:optional true} [:string {:min 1}]]
+   [:author {:optional true} [:string {:min 1}]]
+   [:favorited {:optional true} [:string {:min 1}]]
+   [:limit {:optional true} [:int {:min 1}]]
+   [:offset {:optional true} [:int {:min 0}]]])
+
+(defn list-articles
+  ([controller filters]
+   (if (m/validate list-articles-filter-schema filters)
+     (db/list-articles (:database controller) filters)
+     {:errors (me/humanize (m/explain list-articles-filter-schema filters))}))
+  ([controller filters auth-user]
+   (if (m/validate list-articles-filter-schema filters)
+     (db/list-articles (:database controller) filters auth-user)
+     {:errors (me/humanize (m/explain list-articles-filter-schema filters))})))
+
 (defn new-article-controller []
   (map->ArticleController {}))

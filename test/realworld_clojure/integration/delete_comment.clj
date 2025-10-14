@@ -31,7 +31,7 @@
             article (test-utils/create-article db (:id user))
             token (get-login-token user)
             r (delete-comment-request (:slug article) "not-an-int" token)]
-        (is (= 500 (:status r))))))
+        (is (= 404 (:status r))))))
 
   (testing "comment not found"
     (test-utils/with-system

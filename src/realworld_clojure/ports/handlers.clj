@@ -154,6 +154,24 @@
       {:status 404}
       {:status 200})))
 
+(defn favorite-article
+  "Mark article as a favorite for auth-user."
+  [handler slug auth-user]
+  (let [a (article/favorite-article (:article-controller handler) slug auth-user)]
+    (if (nil? a)
+      {:status 404}
+      {:status 200
+       :body {:article a}})))
+
+(defn unfavorite-article
+  "Unfavorite an article for the auth-user."
+  [handler slug auth-user]
+  (let [a (article/unfavorite-aarticle (:article-controller handler) slug auth-user)]
+    (if (nil? a)
+      {:status 400}
+      {:status 200
+       :body {:article a}})))
+
 (defn create-comment
   "Create a new comment for an article"
   [handler slug comment auth-user]

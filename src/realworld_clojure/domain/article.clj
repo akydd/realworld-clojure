@@ -85,5 +85,13 @@
      (db/list-articles (:database controller) filters auth-user)
      {:errors (me/humanize (m/explain list-articles-filter-schema filters))})))
 
+(defn favorite-article
+  [controller slug auth-user]
+  (db/favorite-article (:database controller) slug auth-user))
+
+(defn unfavorite-aarticle
+  [controller slug auth-user]
+  (db/unfavorite-article (:database controller) slug auth-user))
+
 (defn new-article-controller []
   (map->ArticleController {}))

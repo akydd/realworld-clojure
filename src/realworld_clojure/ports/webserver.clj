@@ -32,8 +32,8 @@
    (core/DELETE "/api/articles/:slug" [slug :as {:keys [auth-user]}] (handlers/delete-article handler slug auth-user))
    (core/POST "/api/articles/:slug/comments" [slug :as {:keys [auth-user]} :as {{:keys [comment]} :body}] (handlers/create-comment handler slug comment auth-user))
    (core/DELETE "/api/articles/:slug/comments/:id" [slug id :<< as-int :as {:keys [auth-user]}] (handlers/delete-comment handler slug id auth-user))
-   (core/POST "/api/articles/:slug/favorite" [slug] {:status 200})
-   (core/DELETE "/api/articles/:slug/favorite" [slug] {:status 200})))
+   (core/POST "/api/articles/:slug/favorite" [slug :as {:keys [auth-user]}] (handlers/favorite-article handler slug auth-user))
+   (core/DELETE "/api/articles/:slug/favorite" [slug :as {:keys [auth-user]}] (handlers/unfavorite-article handler slug auth-user))))
 
 (defn app-routes-optional-auth [handler]
   (core/routes

@@ -114,6 +114,18 @@
   ([slug id token]
    @(http/delete (str base-url "/articles/" slug "/comments/" id) {:headers (get-headers token)})))
 
+(defn favorite-article-request
+  ([slug]
+   @(http/post (str base-url "/articles/" slug "/favorite") {:headers (get-headers)}))
+  ([slug token]
+   @(http/post (str base-url "/articles/" slug "/favorite") {:headers (get-headers token)})))
+
+(defn unfavorite-article-request
+  ([slug]
+   @(http/delete (str base-url "/articles/" slug "/favorite") {:headers (get-headers)}))
+  ([slug token]
+   @(http/delete (str base-url "/articles/" slug "/favorite") {:headers (get-headers token)})))
+
 ;; helper comparison functions
 
 (defn profiles-equal?
@@ -163,6 +175,7 @@
    [:body [:string {:min 1}]]
    [:createdat [:string {:min 1}]]
    [:updatedat {:optional true} [:string {:min 1}]]
+   [:favoritescount [:int]]
    [:author #'no-auth-profile-schema]])
 
 (def auth-article-schema
@@ -173,6 +186,8 @@
    [:body [:string {:min 1}]]
    [:createdat [:string {:min 1}]]
    [:updatedat {:optional true} [:string {:min 1}]]
+   [:favorited [:boolean]]
+   [:favoritescount [:int]]
    [:author #'auth-profile-schema]])
 
 (def no-auth-comment-schema

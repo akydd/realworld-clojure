@@ -18,7 +18,7 @@
   [e]
   (case (.getSQLState e)
     "23505" (throw (ex-info "duplicate record" {:type :duplicate}))
-    (throw (ex-info "db error" {:type :unknown} e))))
+    (throw (ex-info "db error" {:type :unknown :state (.getSQLState e)} e))))
 
 (defn insert-user
   "Insert record into user table"
@@ -89,7 +89,10 @@ values (?, ?) on conflict do nothing", (:id auth-user) (:id user)]))
   ([database slug]
    (let [db-article
          (jdbc/execute-one! (:datasource database) ["select a.slug, a.title, a.description, a.body,
-a.createdat, a.updatedat, b.username, b.bio, b.image
+a.createdat, a.updatedat, b.username, b.bio, b.image,
+(select count(*)
+from favorites as f
+where f.article = a.id) as favoritescount
 from articles as a
 left join users as b
 on a.author = b.id
@@ -105,11 +108,19 @@ select count(*)
 from follows f
 where f.user_id = ?
 and f.follows = a.author
-) > 0 then true else false end as following
+) > 0 then true else false end as following,
+case when (
+select count(*) from favorites
+where user_id = ? and article = a.id
+limit 1
+) = 1 then true else false end as favorited, 
+(select count(*)
+from favorites as f
+where f.article = a.id) as favoritescount
 from articles as a
 left join users as b
 on a.author = b.id
-where a.slug = ?", (:id auth-user), slug] query-options)]
+where a.slug = ?", (:id auth-user), (:id auth-user), slug] query-options)]
      (when db-article
        (db-record->model db-article)))))
 
@@ -222,6 +233,24 @@ on a.author = b.id
 limit ?
 offset ?", (:id auth-user), (or (:limit filters) 20), (or (:offset filters) 0)] query-options)]
      (map db-record->model articles))))
+
+(defn favorite-article
+  [database slug auth-user]
+  (try
+    (jdbc/execute-one! (:datasource database) ["insert into favorites (user_id, article)
+select ?, id from articles
+where slug = ?", (:id auth-user), slug] update-options)
+    (catch org.postgresql.util.PSQLException e
+      (handle-psql-exception e)))
+  (get-article-by-slug database slug auth-user))
+
+(defn unfavorite-article
+  [database slug auth-user]
+  (jdbc/execute-one! (:datasource database) ["delete from favorites
+where user_id = ? and article in
+(select id from articles
+where slug = ?)" , (:id auth-user), slug])
+  (get-article-by-slug database slug auth-user))
 
 (defn migrate
   "Migrate the db"

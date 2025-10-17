@@ -122,6 +122,9 @@
     {:status 200
      :body {:articles articles}}))
 
+(defn article-feed
+  [handler parms auth-user])
+
 (defn create-article
   "Create an article"
   [handler article auth-user]

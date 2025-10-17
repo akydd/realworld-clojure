@@ -44,13 +44,10 @@
    (jdbc/execute-one! (:datasource database) ["select username, bio, image from users where username = ?" username] query-options))
   ([database username auth-user]
    (jdbc/execute-one! (:datasource database) ["select u.username, u.bio, u.image,
-case when (
-select count(*)
-from follows f
-where f.user_id = ?
-and f.follows = u.id
-) > 0 then true else false end as following
+case when f.follows is null then false else true end as following
 from users u
+left join follows as f
+on f.user_id = ? and f.follows = u.id
 where u.username = ?", (:id auth-user), username] query-options)))
 
 (defn get-user-by-username

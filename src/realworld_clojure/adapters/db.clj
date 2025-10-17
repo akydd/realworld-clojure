@@ -145,15 +145,12 @@ where a.slug = ?", (:id auth-user), (:id auth-user), slug] query-options)]
   [database id auth-user]
   (when-let [c (jdbc/execute-one! (:datasource database) ["select c.id, c.createdat, c.updatedat, c.body,
 u.username, u.bio, u.image,
-case when (
-select count(*)
-from follows f
-where f.user_id = ?
-and f.follows = c.author
-) > 0 then true else false end as following
+case when f.follows is null then false else true end as following
 from comments as c
 left join users as u
 on c.author = u.id
+left join follows as f
+on f.user_id = ? and f.follows = c.author
 where c.id = ?", (:id auth-user) id] query-options)]
     (db-record->model c)))
 
@@ -180,15 +177,12 @@ where c.article in
   ([database slug auth-user]
    (when-let [cs (jdbc/execute! (:datasource database) ["select c.id, c.body, c.createdat, c.updatedat,
 u.username, u.bio, u.image,
-case when (
-select count(*)
-from follows f
-where f.user_id = ?
-and f.follows = c.author
-) > 0 then true else false end as following
+case when f.follows is null then false else true end as following
 from comments as c
 left join users as u
 on c.author = u.id
+left join follows as f
+on f.user_id = ? and f.follows = c.author
 where c.article in
 (select id from articles where slug = ?)", (:id auth-user), slug] query-options)]
      (map db-record->model cs))))

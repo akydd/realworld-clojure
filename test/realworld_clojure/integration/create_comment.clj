@@ -53,4 +53,5 @@
         (is (= 200 (:status r)))
         (is (true? (m/validate auth-comment-schema comment)) (->> comment
                                                                   (m/explain auth-comment-schema)
-                                                                  (me/humanize)))))))
+                                                                  (me/humanize)))
+        (is (false? (get-in comment [:author :following])))))))

@@ -84,8 +84,8 @@ values (?, ?) on conflict do nothing", (:id auth-user) (:id user)]))
 (defn get-article-by-slug
   "Get an article by slug."
   ([database slug]
-   (let [db-article
-         (jdbc/execute-one! (:datasource database) ["select a.slug, a.title, a.description, a.body,
+   (when-let [db-article
+              (jdbc/execute-one! (:datasource database) ["select a.slug, a.title, a.description, a.body,
 a.createdat, a.updatedat, b.username, b.bio, b.image,
 (select count(*)
 from favorites as f
@@ -94,11 +94,10 @@ from articles as a
 left join users as b
 on a.author = b.id
 where a.slug = ?", slug] query-options)]
-     (when db-article
-       (db-record->model db-article))))
+     (db-record->model db-article)))
   ([database slug auth-user]
-   (let [db-article
-         (jdbc/execute-one! (:datasource database) ["select a.slug, a.title, a.description, a.body,
+   (when-let [db-article
+              (jdbc/execute-one! (:datasource database) ["select a.slug, a.title, a.description, a.body,
 a.createdat, a.updatedat, b.username, b.bio, b.image,
 case when favs.article is not null then true else false end as favorited,
 case when g.follows is not null then true else false end as following,
@@ -113,8 +112,7 @@ on favs.user_id = ? and favs.article = a.id
 left join follows as g
 on g.user_id = ? and g.follows = a.author
 where a.slug = ?", (:id auth-user), (:id auth-user), slug] query-options)]
-     (when db-article
-       (db-record->model db-article)))))
+     (db-record->model db-article))))
 
 (defn create-article
   "Insert a record into the articles table"
@@ -168,23 +166,25 @@ where slug = ?", (:body comment), (:id auth-user), slug] update-options)]
   ([database slug]
    (when-let [cs (jdbc/execute! (:datasource database) ["select c.id, c.body, c.createdat, c.updatedat,
 u.username, u.bio, u.image
-from comments as c
-left join users as u
+from articles as a
+inner join comments as c
+on a.id = c.article
+inner join users as u
 on c.author = u.id
-where c.article in
-(select id from articles where slug=?)", slug] query-options)]
+where a.slug=?", slug] query-options)]
      (map db-record->model cs)))
   ([database slug auth-user]
    (when-let [cs (jdbc/execute! (:datasource database) ["select c.id, c.body, c.createdat, c.updatedat,
 u.username, u.bio, u.image,
 case when f.follows is null then false else true end as following
-from comments as c
-left join users as u
+from articles as a
+inner join comments as c
+on a.id = c.article
+inner join users as u
 on c.author = u.id
 left join follows as f
 on f.user_id = ? and f.follows = c.author
-where c.article in
-(select id from articles where slug = ?)", (:id auth-user), slug] query-options)]
+where a.slug=?", (:id auth-user), slug] query-options)]
      (map db-record->model cs))))
 
 (defn delete-comment

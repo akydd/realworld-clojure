@@ -26,7 +26,7 @@
    (core/PUT "/api/user" [:as {:keys [auth-user]} :as {{:keys [user]} :body}] (handlers/update-user handler auth-user user))
    (core/POST "/api/profiles/:username/follow" [username :as {:keys [auth-user]}] (handlers/follow-user handler auth-user username))
    (core/DELETE "/api/profiles/:username/follow" [username :as {:keys [auth-user]}] (handlers/unfollow-user handler auth-user username))
-   (core/GET "/api/articles/feed" [:as {:keys [params auth-user]}] {:status 200})
+   (core/GET "/api/articles/feed" [:as {:keys [params auth-user]}] (handlers/article-feed handler params auth-user))
    (core/POST "/api/articles" [:as {:keys [auth-user]} :as {{:keys [article]} :body}] (handlers/create-article handler article auth-user))
    (core/PUT "/api/articles/:slug" [slug :as {:keys [auth-user]} :as {{:keys [article]} :body}] (handlers/update-article handler slug article auth-user))
    (core/DELETE "/api/articles/:slug" [slug :as {:keys [auth-user]}] (handlers/delete-article handler slug auth-user))

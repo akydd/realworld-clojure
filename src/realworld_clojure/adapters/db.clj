@@ -234,15 +234,20 @@ offset ?", (:id auth-user), limit, offset] query-options)]
         offset (or (:offset filters) 0)]
     (when-let [articles (jdbc/execute! (:datasource database) ["select a.slug, a.title, a.description,
 a.createdat, a.updatedat, u.username, u.bio, u.image,
+true as following,
+case when g.article is null then false else true end as favorited,
 (select count(*)
-from favorites as f
-where f.article = a.id) as favoritescount
-from articles as a
-left join users as u
-on a.author = u.id
-left join following as f
+from favorites as favs
+where favs.article = a.id) as favoritescount
+from follows as f
+inner join articles as a
 on a.author = f.follows
+inner join users as u
+on a.author = u.id
+left join favorites as g
+on g.user_id = f.user_id and g.article = a.id
 where f.user_id = ?
+order by case when a.updatedat is not null then a.updatedat else a.createdat end desc
 limit ?
 offset ?", (:id auth-user), limit, offset] query-options)]
       (map db-record->model articles))))

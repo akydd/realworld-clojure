@@ -85,6 +85,17 @@
      (db/list-articles (:database controller) filters auth-user)
      {:errors (me/humanize (m/explain list-articles-filter-schema filters))})))
 
+(def article-feed-filter-schema
+  [:map {:closed true}
+   [:limit {:optional true} [:int {:min 1}]]
+   [:offset {:optional true} [:int {:min 0}]]])
+
+(defn article-feed
+  [controller filters auth-user]
+  (if (m/validate article-feed-filter-schema filters)
+    (db/article-feed (:database controller) filters auth-user)
+    {:errors (me/humanize (m/explain article-feed-filter-schema filters))}))
+
 (defn favorite-article
   [controller slug auth-user]
   (db/favorite-article (:database controller) slug auth-user))

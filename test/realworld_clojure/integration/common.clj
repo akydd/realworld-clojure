@@ -126,6 +126,12 @@
   ([slug token]
    @(http/delete (str base-url "/articles/" slug "/favorite") {:headers (get-headers token)})))
 
+(defn article-feed-request
+  ([filter-str]
+   @(http/get (str base-url "/articles/feed" filter-str) {:headers (get-headers)}))
+  ([filter-str token]
+   @(http/get (str base-url "/articles/feed" filter-str) {:headers (get-headers token)})))
+
 ;; helper comparison functions
 
 (defn profiles-equal?

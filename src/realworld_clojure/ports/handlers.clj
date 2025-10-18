@@ -123,7 +123,11 @@
      :body {:articles articles}}))
 
 (defn article-feed
-  [handler parms auth-user])
+  [handler params auth-user]
+  (let [filters (params->filters params)
+        articles (article/article-feed (:article-controller handler) filters auth-user)]
+    {:status 200
+     :body {:articles articles}}))
 
 (defn create-article
   "Create an article"

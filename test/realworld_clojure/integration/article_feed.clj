@@ -1,11 +1,12 @@
 (ns realworld-clojure.integration.article-feed
   (:require
    [clojure.test :refer [deftest testing is]]
-   [realworld-clojure.integration.common :refer [article-feed-request get-login-token]]
+   [realworld-clojure.integration.common :refer [article-feed-request get-login-token profiles-equal? article-matches-feed? article-feed-schema]]
    [realworld-clojure.utils :as test-utils]
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
-   [cheshire.core :as json]))
+   [cheshire.core :as json]
+   [malli.core :as m]))
 
 (deftest article-feed
 
@@ -47,4 +48,32 @@
                                   (json/parse-string true)
                                   (:articles))]
         (is (= 200 (:status r)))
-        (is (zero? (count returned-articles)))))))
+        (is (zero? (count returned-articles))))))
+
+  (testing "following multiple authors"
+    (test-utils/with-system
+      [sut (core/new-system (config/read-test-config))]
+      (let [db (get-in sut [:database :datasource])
+            author-one (test-utils/create-user db)
+            author-two (test-utils/create-user db)
+            user (test-utils/create-user db)
+            _ (test-utils/create-follows db user author-one)
+            _ (test-utils/create-follows db user author-two)
+            a1 (test-utils/create-article db (:id author-one))
+            a2 (test-utils/create-article db (:id author-two))
+            token (get-login-token user)
+            r (article-feed-request "" token)
+            articles (-> r
+                         (:body)
+                         (json/parse-string true)
+                         (:articles))]
+        (is (= 200 (:status r)))
+        (is (every? #(m/validate article-feed-schema %) articles))
+        (is (every? #(get-in % [:author :following]) articles))
+        (is (= 2 (count articles)))
+        (is (true? (profiles-equal? author-one (:author (second articles)))))
+        (is (true? (article-matches-feed? a1 (second articles))))
+        (is (true? (profiles-equal? author-two (:author (first articles)))))
+        (is (true? (article-matches-feed? a2 (first articles)))))))
+
+  (testing "orders articles by most recently updated"))

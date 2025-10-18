@@ -3,8 +3,7 @@
    [cheshire.core :as json]
    [realworld-clojure.config-test :as config]
    [org.httpkit.client :as http]
-   [clojure.string :as str]
-   [realworld-clojure.domain.comment :as comment]))
+   [clojure.string :as str]))
 
 (def port (get-in (config/read-test-config) [:server :port]))
 (def host "http://localhost")
@@ -134,15 +133,24 @@
 
 ;; helper comparison functions
 
+(defn keys-match?
+  [a b ks]
+  (= (select-keys a ks) (select-keys b ks)))
+
 (defn profiles-equal?
   [a b]
   (let [ks [:username :bio :image]]
-    (= (select-keys a ks) (select-keys b ks))))
+    (keys-match? a b ks)))
 
 (defn article-matches-input?
   [article input]
   (let [ks [:title :description :body]]
-    (= (select-keys article ks) (select-keys input ks))))
+    (keys-match? article input ks)))
+
+(defn article-matches-feed?
+  [article feed]
+  (let [ks [:title :description :createat :updatedat]]
+    (keys-match? article feed ks)))
 
 (defn slug-is-correct?
   [article]
@@ -210,4 +218,15 @@
    [:createdat [:string {:min 1}]]
    [:updatedat [:string {:min 1}]]
    [:body [:string {:min 1}]]
+   [:author #'auth-profile-schema]])
+
+(def article-feed-schema
+  [:map {:closed true}
+   [:slug [:string {:min 1}]]
+   [:title [:string {:min 1}]]
+   [:description [:string {:min 1}]]
+   [:createdat [:string {:min 1}]]
+   [:updatedat {:optional true} [:string {:min 1}]]
+   [:favorited [:boolean]]
+   [:favoritescount [:int {:min 0}]]
    [:author #'auth-profile-schema]])

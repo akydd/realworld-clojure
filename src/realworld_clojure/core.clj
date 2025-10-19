@@ -8,7 +8,8 @@
    [realworld-clojure.domain.profile :as profile]
    [realworld-clojure.domain.article :as article]
    [realworld-clojure.ports.handlers :as handlers]
-   [realworld-clojure.domain.comment :as comment])
+   [realworld-clojure.domain.comment :as comment]
+   [realworld-clojure.domain.tags :as tag])
   (:gen-class))
 
 (defn new-system [config]
@@ -29,9 +30,12 @@
      :comment-controller (component/using
                           (comment/new-comment-controller)
                           [:database])
+     :tag-controller (component/using
+                      (tag/new-tag-controller)
+                      [:database])
      :handler (component/using
                (handlers/new-handler)
-               [:user-controller :profile-controller :article-controller :comment-controller])
+               [:user-controller :profile-controller :article-controller :comment-controller :tag-controller])
      :web-server (component/using
                   (webserver/new-webserver (:port server-config) jwt-secret)
                   [:handler :database]))))

@@ -192,6 +192,11 @@
    [:favoritescount [:int]]
    [:author #'no-auth-profile-schema]])
 
+(def multiple-no-auth-article-schema
+  [:map {:closed true}
+   [:articles [:vector {:min 0} #'no-auth-article-schema]]
+   [:articlesCount [:int {:min 0}]]])
+
 (def auth-article-schema
   [:map {:closed true}
    [:slug [:string {:min 1}]]
@@ -203,6 +208,22 @@
    [:favorited [:boolean]]
    [:favoritescount [:int]]
    [:author #'auth-profile-schema]])
+
+(def auth-article-feed-schema
+  [:map {:closed true}
+   [:slug [:string {:min 1}]]
+   [:title [:string {:min 1}]]
+   [:description [:string {:min 1}]]
+   [:createdat [:string {:min 1}]]
+   [:updatedat {:optional true} [:string {:min 1}]]
+   [:favorited [:boolean]]
+   [:favoritescount [:int]]
+   [:author #'auth-profile-schema]])
+
+(def multiple-auth-article-schema
+  [:map {:closed true}
+   [:articles [:vector {:min 0} #'auth-article-feed-schema]]
+   [:articlesCount [:int {:min 0}]]])
 
 (def no-auth-comment-schema
   [:map {:closed true}

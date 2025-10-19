@@ -18,7 +18,7 @@
    (core/GET "/api/health" req (handlers/health handler req))
    (core/POST "/api/users/login" [:as {{:keys [user]} :body}] (handlers/login-user handler user))
    (core/POST "/api/users" [:as {{:keys [user]} :body}] (handlers/register-user handler user))
-   (core/GET "/api/tags" [] {:status 200})))
+   (core/GET "/api/tags" [] (handlers/get-tags handler))))
 
 (defn app-routes-with-auth [handler]
   (core/routes

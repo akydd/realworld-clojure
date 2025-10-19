@@ -1,12 +1,13 @@
 (ns realworld-clojure.integration.article-feed
   (:require
    [clojure.test :refer [deftest testing is]]
-   [realworld-clojure.integration.common :refer [article-feed-request get-login-token profiles-equal? article-matches-feed? article-feed-schema]]
+   [realworld-clojure.integration.common :refer [article-feed-request get-login-token profiles-equal? article-matches-feed? article-feed-schema multiple-auth-article-schema]]
    [realworld-clojure.utils :as test-utils]
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
    [cheshire.core :as json]
-   [malli.core :as m]))
+   [malli.core :as m]
+   [malli.error :as me]))
 
 (deftest article-feed
 
@@ -25,12 +26,16 @@
             user (test-utils/create-user db)
             token (get-login-token user)
             r (article-feed-request "" token)
-            returned-articles (-> r
-                                  (:body)
-                                  (json/parse-string true)
-                                  (:articles))]
+            body (-> r
+                     (:body)
+                     (json/parse-string true))
+            articles (:articles body)]
         (is (= 200 (:status r)))
-        (is (zero? (count returned-articles))))))
+        (is (true? (m/validate multiple-auth-article-schema body)) (->> body
+                                                                        (m/explain multiple-auth-article-schema)
+                                                                        (me/humanize)))
+        (is (zero? (count articles)))
+        (is (zero? (:articlesCount body))))))
 
   (testing "following user with no articles"
     (test-utils/with-system
@@ -43,12 +48,15 @@
             _ (test-utils/create-follows db user-two user-three)
             token (get-login-token user-two)
             r (article-feed-request "" token)
-            returned-articles (-> r
-                                  (:body)
-                                  (json/parse-string true)
-                                  (:articles))]
+            body (-> r
+                     (:body)
+                     (json/parse-string true))]
         (is (= 200 (:status r)))
-        (is (zero? (count returned-articles))))))
+        (is (true? (m/validate multiple-auth-article-schema body)) (->> body
+                                                                        (m/explain multiple-auth-article-schema)
+                                                                        (me/humanize)))
+        (is (zero? (count (:articles body))))
+        (is (zero? (:articlesCount body))))))
 
   (testing "following multiple authors"
     (test-utils/with-system
@@ -63,14 +71,17 @@
             a2 (test-utils/create-article db (:id author-two))
             token (get-login-token user)
             r (article-feed-request "" token)
-            articles (-> r
-                         (:body)
-                         (json/parse-string true)
-                         (:articles))]
+            body (-> r
+                     (:body)
+                     (json/parse-string true))
+            articles (:articles body)]
         (is (= 200 (:status r)))
-        (is (every? #(m/validate article-feed-schema %) articles))
+        (is (true? (m/validate multiple-auth-article-schema body)) (->> body
+                                                                        (m/explain multiple-auth-article-schema)
+                                                                        (me/humanize)))
         (is (every? #(get-in % [:author :following]) articles))
         (is (= 2 (count articles)))
+        (is (= 2 (:articlesCount body)))
         (is (true? (profiles-equal? author-one (:author (second articles)))))
         (is (true? (article-matches-feed? a1 (second articles))))
         (is (true? (profiles-equal? author-two (:author (first articles)))))

@@ -3,6 +3,7 @@
             [realworld-clojure.domain.profile :as profile]
             [realworld-clojure.domain.article :as article]
             [realworld-clojure.domain.comment :as comment]
+            [realworld-clojure.domain.tags :as tag]
             [realworld-clojure.ports.converters :as converters]
             [clojure.string :as str]))
 
@@ -125,9 +126,9 @@
 (defn article-feed
   [handler params auth-user]
   (let [filters (params->filters params)
-        articles (article/article-feed (:article-controller handler) filters auth-user)]
+        feed (article/article-feed (:article-controller handler) filters auth-user)]
     {:status 200
-     :body {:articles articles}}))
+     :body feed}))
 
 (defn create-article
   "Create an article"
@@ -209,3 +210,9 @@
     (if (nil? p)
       {:status 404}
       {:status 200})))
+
+(defn get-tags
+  [handler]
+  (let [tags (tag/get-tags (:tag-controller handler))]
+    {:status 200
+     :body {:tags tags}}))

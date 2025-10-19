@@ -231,8 +231,8 @@ offset ?", (:id auth-user), limit, offset] query-options)]
 (defn article-feed
   [database filters auth-user]
   (let [limit (or (:limit filters) 20)
-        offset (or (:offset filters) 0)]
-    (when-let [articles (jdbc/execute! (:datasource database) ["select a.slug, a.title, a.description,
+        offset (or (:offset filters) 0)
+        articles (jdbc/execute! (:datasource database) ["select a.slug, a.title, a.description,
 a.createdat, a.updatedat, u.username, u.bio, u.image,
 true as following,
 case when g.article is null then false else true end as favorited,
@@ -250,7 +250,12 @@ where f.user_id = ?
 order by case when a.updatedat is not null then a.updatedat else a.createdat end desc
 limit ?
 offset ?", (:id auth-user), limit, offset] query-options)]
-      (map db-record->model articles))))
+    {:articles (if (nil? articles)
+                 []
+                 (map db-record->model articles))
+     :articlesCount (if (nil? articles)
+                      0
+                      (count articles))}))
 
 (defn favorite-article
   [database slug auth-user]
@@ -269,6 +274,11 @@ where user_id = ? and article in
 (select id from articles
 where slug = ?)" , (:id auth-user), slug])
   (get-article-by-slug database slug auth-user))
+
+(defn get-tags
+  [database]
+  (let [tags (jdbc/execute! (:datasource database) ["select tag from tags"] query-options)]
+    (map :tag tags)))
 
 (defn migrate
   "Migrate the db"

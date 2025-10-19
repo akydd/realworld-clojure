@@ -56,10 +56,22 @@
 
 (defn create-article
   "Save a test article to the db."
-  [db author-id]
-  (let [article (mg/generate article/article-schema)
-        slug (article/str->slug (:title article))]
-    (sql/insert! db :articles (assoc article :author author-id :slug slug) update-options)))
+  ([db author-id]
+   (let [input (mg/generate article/article-schema)
+         slug (article/str->slug (:title input))
+         article (assoc input
+                        :author author-id
+                        :slug slug)]
+     (sql/insert! db :articles article update-options)))
+  ([db author-id options]
+   (let [input (mg/generate article/article-schema)
+         slug (article/str->slug (:title input))
+         article (-> input
+                     (assoc
+                      :slug slug
+                      :author author-id)
+                     (merge options))]
+     (sql/insert! db :articles article update-options))))
 
 (defn create-comment
   [db article-id author-id]

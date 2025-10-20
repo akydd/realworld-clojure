@@ -127,7 +127,7 @@
   [handler params auth-user]
   (let [filters (params->filters params)
         feed (article/article-feed (:article-controller handler) filters auth-user)]
-    {:status 200
+    {:status (if (:errors feed) 422 200)
      :body feed}))
 
 (defn create-article

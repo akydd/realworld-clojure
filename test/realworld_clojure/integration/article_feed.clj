@@ -1,7 +1,7 @@
 (ns realworld-clojure.integration.article-feed
   (:require
    [clojure.test :refer [deftest testing is]]
-   [realworld-clojure.integration.common :refer [article-feed-request get-login-token profiles-equal? article-matches-feed? article-feed-schema multiple-auth-article-schema]]
+   [realworld-clojure.integration.common :refer [article-feed-request get-login-token profiles-equal? article-matches-feed? multiple-auth-article-schema]]
    [realworld-clojure.utils :as test-utils]
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
@@ -196,6 +196,28 @@
         (is (= (:slug a3) (:slug (first articles))))
         (is (= (:slug a2) (:slug (second articles)))))))
 
+  (testing "default limit"
+    (test-utils/with-system
+      [sut (core/new-system (config/read-test-config))]
+      (let [db (get-in sut [:database :datasource])
+            author (test-utils/create-user db)
+            user (test-utils/create-user db)
+            _ (test-utils/create-follows db user author)
+            _ (dotimes [_ 25]
+                (test-utils/create-article db (:id author)))
+            token (get-login-token user)
+            r (article-feed-request "" token)
+            body (-> r
+                     (:body)
+                     (json/parse-string true))
+            articles (:articles body)]
+        (is (= 200 (:status r)))
+        (is (true? (m/validate multiple-auth-article-schema body)) (->> body
+                                                                        (m/explain multiple-auth-article-schema)
+                                                                        (me/humanize)))
+        (is (= 20 (:articlesCount body)))
+        (is (= 20 (count articles))))))
+
   (testing "invalid limit"
     (test-utils/with-system
       [sut (core/new-system (config/read-test-config))]
@@ -203,10 +225,7 @@
             author (test-utils/create-user db)
             user (test-utils/create-user db)
             _ (test-utils/create-follows db user author)
-            now (jt/local-date-time)
-            a1 (test-utils/create-article db (:id author) {:createdat (jt/- now (jt/days 2))})
-            a2 (test-utils/create-article db (:id author) {:createdat (jt/- now (jt/days 1))})
-            a3 (test-utils/create-article db (:id author) {:createdat now})
+            _ (test-utils/create-article db (:id author))
             token (get-login-token user)
             r (article-feed-request "?limit=0" token)]
         (is (= 422 (:status r))))))
@@ -244,10 +263,7 @@
             author (test-utils/create-user db)
             user (test-utils/create-user db)
             _ (test-utils/create-follows db user author)
-            now (jt/local-date-time)
-            a1 (test-utils/create-article db (:id author) {:createdat (jt/- now (jt/days 2))})
-            a2 (test-utils/create-article db (:id author) {:createdat (jt/- now (jt/days 1))})
-            a3 (test-utils/create-article db (:id author) {:createdat now})
+            _ (test-utils/create-article db (:id author))
             token (get-login-token user)
             r (article-feed-request "?offset=-1" token)]
         (is (= 422 (:status r)))))))

@@ -91,7 +91,7 @@ a.createdat, a.updatedat, b.username, b.bio, b.image,
 from favorites as f
 where f.article = a.id) as favoritescount
 from articles as a
-left join users as b
+inner join users as b
 on a.author = b.id
 where a.slug = ?", slug] query-options)]
      (db-record->model db-article)))
@@ -105,7 +105,7 @@ case when g.follows is not null then true else false end as following,
 from favorites as f
 where f.article = a.id) as favoritescount
 from articles as a
-left join users as b
+inner join users as b
 on a.author = b.id
 left join favorites as favs
 on favs.user_id = ? and favs.article = a.id
@@ -145,7 +145,7 @@ where a.slug = ?", (:id auth-user), (:id auth-user), slug] query-options)]
 u.username, u.bio, u.image,
 case when f.follows is null then false else true end as following
 from comments as c
-left join users as u
+inner join users as u
 on c.author = u.id
 left join follows as f
 on f.user_id = ? and f.follows = c.author
@@ -192,41 +192,63 @@ where a.slug=?", (:id auth-user), slug] query-options)]
   [database id]
   (sql/delete! (:datasource database) :comments {:id id}))
 
+(defn- articles->multiple-articles
+  [articles]
+  {:articles (if (nil? articles)
+               []
+               (map db-record->model articles))
+   :articlesCount (if (nil? articles)
+                    0
+                    (count articles))})
+
+(defn- join-and-filter-user
+  [filters]
+  (str " inner join users as b on a.author = b.id "
+       (when (:author filters)
+         (str " and b.username='" (:author filters) "' "))))
+
+(defn- join-and-filter-favorite
+  [filters]
+  (when (:favorited filters)
+    (str " inner join favorites as i on i.article = a.id inner join users as j on j.username='" (:favorited filters) "' and i.user_id = j.id ")))
+
 (defn list-articles
   ([database filters]
    (let [limit (or (:limit filters) 20)
-         offset (or (:offset filters) 0)]
-     (when-let [articles (jdbc/execute! (:datasource database) ["select a.slug, a.title, a.description,
+         offset (or (:offset filters) 0)
+         articles (jdbc/execute! (:datasource database) [(str "select a.slug, a.title, a.description,
 a.createdat, a.updatedat, b.username, b.bio, b.image,
 (select count(*)
 from favorites as f
 where f.article = a.id) as favoritescount
-from articles as a
-left join users as b
-on a.author = b.id
+from articles as a"
+                                                              (join-and-filter-user filters)
+                                                              (join-and-filter-favorite filters)
+                                                              "order by case when a.updatedat is not null then a.updatedat else a.createdat end desc
 limit ?
-offset ?", limit, offset] query-options)]
-       (map db-record->model articles))))
+offset ?"), limit, offset] query-options)]
+     (articles->multiple-articles articles)))
   ([database filters auth-user]
    (let [limit (or (:limit filters) 20)
-         offset (or (:offset filters) 0)]
-     (when-let [articles (jdbc/execute! (:datasource database) ["select a.slug, a.title, a.description,
-a.createdat, a.updatedat, b.username, b.bio, b.image
-case when (
-select count(*)
-from follows f
-where f.user_id = ?
-and f.follows = a.author
-) > 0 then true else false end as following,
+         offset (or (:offset filters) 0)
+         articles (jdbc/execute! (:datasource database) [(str "select a.slug, a.title, a.description,
+a.createdat, a.updatedat, b.username, b.bio, b.image,
+case when g.follows is null then false else true end as following,
+case when h.article is null then false else true end as favorited,
 (select count(*)
 from favorites as f
 where f.article = a.id) as favoritescount
-from articles as a
-left join users as b
-on a.author = b.id
+from articles as a"
+                                                              (join-and-filter-user filters)
+                                                              (join-and-filter-favorite filters)
+                                                              "left join follows as g
+on g.user_id = ? and g.follows = a.author
+left join favorites as h
+on h.user_id = ? and h.article = a.id
+order by case when a.updatedat is not null then a.updatedat else a.createdat end desc
 limit ?
-offset ?", (:id auth-user), limit, offset] query-options)]
-       (map db-record->model articles)))))
+offset ?"), (:id auth-user), (:id auth-user), limit, offset] query-options)]
+     (articles->multiple-articles articles))))
 
 (defn article-feed
   [database filters auth-user]
@@ -250,12 +272,7 @@ where f.user_id = ?
 order by case when a.updatedat is not null then a.updatedat else a.createdat end desc
 limit ?
 offset ?", (:id auth-user), limit, offset] query-options)]
-    {:articles (if (nil? articles)
-                 []
-                 (map db-record->model articles))
-     :articlesCount (if (nil? articles)
-                      0
-                      (count articles))}))
+    (articles->multiple-articles articles)))
 
 (defn favorite-article
   [database slug auth-user]

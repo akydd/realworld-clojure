@@ -9,9 +9,6 @@
    [buddy.hashers :as hashers]
    [realworld-clojure.domain.comment :as comment]))
 
-(def query-options
-  {:builder-fn o/as-unqualified-lower-maps})
-
 (def update-options
   {:return-keys true
    :builder-fn o/as-unqualified-lower-maps})
@@ -19,7 +16,7 @@
 (defn clear-ds
   "Delete all data from datasource"
   [ds]
-  (sql/query ds ["truncate comments, articles, users cascade"]))
+  (sql/query ds ["truncate favorites, follows, comments, articles, tags, users cascade"]))
 
 (defmacro with-system
   [[bound-var binding-expr] & body]

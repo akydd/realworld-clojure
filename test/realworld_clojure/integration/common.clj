@@ -131,6 +131,12 @@
   ([filter-str token]
    @(http/get (str base-url "/articles/feed" filter-str) {:headers (get-headers token)})))
 
+(defn list-articles-request
+  ([filter-str]
+   @(http/get (str base-url "/articles" filter-str) {:headers (get-headers)}))
+  ([filter-str token]
+   @(http/get (str base-url "/articles" filter-str) {:headers (get-headers token)})))
+
 ;; helper comparison functions
 
 (defn keys-match?
@@ -192,9 +198,19 @@
    [:favoritescount [:int]]
    [:author #'no-auth-profile-schema]])
 
+(def no-auth-article-feed-schema
+  [:map {:closed true}
+   [:slug [:string {:min 1}]]
+   [:title [:string {:min 1}]]
+   [:description [:string {:min 1}]]
+   [:createdat [:string {:min 1}]]
+   [:updatedat {:optional true} [:string {:min 1}]]
+   [:favoritescount [:int]]
+   [:author #'no-auth-profile-schema]])
+
 (def multiple-no-auth-article-schema
   [:map {:closed true}
-   [:articles [:vector {:min 0} #'no-auth-article-schema]]
+   [:articles [:vector {:min 0} #'no-auth-article-feed-schema]]
    [:articlesCount [:int {:min 0}]]])
 
 (def auth-article-schema
@@ -239,15 +255,4 @@
    [:createdat [:string {:min 1}]]
    [:updatedat [:string {:min 1}]]
    [:body [:string {:min 1}]]
-   [:author #'auth-profile-schema]])
-
-(def article-feed-schema
-  [:map {:closed true}
-   [:slug [:string {:min 1}]]
-   [:title [:string {:min 1}]]
-   [:description [:string {:min 1}]]
-   [:createdat [:string {:min 1}]]
-   [:updatedat {:optional true} [:string {:min 1}]]
-   [:favorited [:boolean]]
-   [:favoritescount [:int {:min 0}]]
    [:author #'auth-profile-schema]])

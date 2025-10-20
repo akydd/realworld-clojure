@@ -117,11 +117,11 @@
   "Get list of articles, filtered"
   [handler params auth-user]
   (let [filters (params->filters params)
-        articles (if (nil? auth-user)
-                   (article/list-articles (:article-controller handler) filters)
-                   (article/list-articles (:article-controller handler) filters auth-user))]
-    {:status 200
-     :body {:articles articles}}))
+        feed (if (nil? auth-user)
+               (article/list-articles (:article-controller handler) filters)
+               (article/list-articles (:article-controller handler) filters auth-user))]
+    {:status (if (:errors feed) 422 200)
+     :body feed}))
 
 (defn article-feed
   [handler params auth-user]

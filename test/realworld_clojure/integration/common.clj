@@ -137,6 +137,10 @@
   ([filter-str token]
    @(http/get (str base-url "/articles" filter-str) {:headers (get-headers token)})))
 
+(defn get-tags-request
+  []
+  @(http/get (str base-url "/tags") {:headers (get-headers)}))
+
 ;; helper comparison functions
 
 (defn keys-match?

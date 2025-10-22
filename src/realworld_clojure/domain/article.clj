@@ -10,7 +10,8 @@
   [:map {:closed true}
    [:title [:string {:min 1}]]
    [:description [:string {:min 1}]]
-   [:body [:string {:min 1}]]])
+   [:body [:string {:min 1}]]
+   [:tag-list {:optional true} [:vector {:min 0} [:string {:min 1}]]]])
 
 (defrecord ArticleController [database])
 

@@ -47,6 +47,38 @@
         (is (= 1 (count articles)))
         (is (= (:username author-one) (get-in (first articles) [:author :username]))))))
 
+  (testing "favorited filter, no auth"
+    (test-utils/with-system
+      [sut (core/new-system (config/read-test-config))]
+      (let [db (get-in sut [:database :datasource])
+            author-one (test-utils/create-user db)
+            now (jt/local-date-time)
+            yesterday (jt/- now (jt/days 1))
+            a-one-one (test-utils/create-article db (:id author-one) {:createdat now})
+            a-one-two (test-utils/create-article db (:id author-one) {:createdat now})
+            author-two (test-utils/create-user db)
+            a-two-one (test-utils/create-article db (:id author-two) {:createdat yesterday})
+            a-two-two (test-utils/create-article db (:id author-two) {:createdat yesterday})
+            user-one (test-utils/create-user db)
+            user-two (test-utils/create-user db)
+            _ (test-utils/fav-article db user-one a-one-one)
+            _ (test-utils/fav-article db user-one a-two-two)
+            _ (test-utils/fav-article db user-two a-one-two)
+            _ (test-utils/fav-article db user-two a-two-one)
+            r (list-articles-request (str "?favorited=" (:username user-one)))
+            body (-> r
+                     (:body)
+                     (json/parse-string true))
+            articles (:articles body)]
+        (is (= 200 (:status r)))
+        (is (true? (m/validate multiple-no-auth-article-schema body)) (->> body
+                                                                           (m/explain multiple-no-auth-article-schema)
+                                                                           (me/humanize)))
+        (is (= 2 (:articlesCount body)))
+        (is (= 2 (count articles)))
+        (is (= (:title a-one-one) (:title (first articles))))
+        (is (= (:title a-two-two) (:title (second articles)))))))
+
   (testing "orders articles by most recently created, no auth"
     (test-utils/with-system
       [sut (core/new-system (config/read-test-config))]

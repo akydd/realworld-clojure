@@ -117,7 +117,10 @@ where a.slug = ?", (:id auth-user), (:id auth-user), slug] query-options)]
 (defn create-article
   "Insert a record into the articles table"
   [database article auth-user]
-  (let [a (assoc article :author (:id auth-user))]
+  (let [tags (:tag-list article)
+        a (-> article
+              (assoc :author (:id auth-user))
+              (dissoc :tag-list))]
     (try
       (sql/insert! (:datasource database) :articles a update-options)
       (catch org.postgresql.util.PSQLException e

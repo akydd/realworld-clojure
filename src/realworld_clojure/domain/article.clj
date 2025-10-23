@@ -11,7 +11,7 @@
    [:title [:string {:min 1}]]
    [:description [:string {:min 1}]]
    [:body [:string {:min 1}]]
-   [:tag-list {:optional true} [:vector {:min 0} [:string {:min 1}]]]])
+   [:tag-list {:optional true} [:vector {:min 1} [:string {:min 1}]]]])
 
 (defrecord ArticleController [database])
 
@@ -33,7 +33,7 @@
   [controller article auth-user]
   (if (m/validate article-schema article)
     (let [a (assoc article :slug (str->slug (:title article)))]
-      (db/create-article (:database controller) a auth-user))
+      (db/create-article-with-tags (:database controller) a auth-user))
     {:errors (me/humanize (m/explain article-schema article))}))
 
 (def article-update-schema

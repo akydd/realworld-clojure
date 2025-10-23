@@ -227,7 +227,8 @@
    [:updatedat {:optional true} [:string {:min 1}]]
    [:favorited [:boolean]]
    [:favoritescount [:int]]
-   [:author #'auth-profile-schema]])
+   [:author #'auth-profile-schema]
+   [:tag-list {:optional true} [:vector {:min 1} :string]]])
 
 (def auth-article-feed-schema
   [:map {:closed true}

@@ -64,8 +64,8 @@
         (jdbc/execute-one! db ["select * from tags where tag=?" tag] query-options)
         (throw (ex-info "db error" {:type :unknown :state (.getSQLState e)} e))))))
 
-(defn link-article-and-tag [db saved-article saved-tag]
-  (jdbc/execute-one! db ["insert into article_tags (article, tag) values (?, ?) on conflict do nothing" (:id saved-article) (:id saved-tag)] update-options))
+(defn link-article-and-tag [db article tag]
+  (jdbc/execute-one! db ["insert into article_tags (article, tag) values (?, ?) on conflict do nothing" (:id article) (:id tag)] update-options))
 
 (defn create-article
   "Save a test article to the db.
@@ -95,10 +95,16 @@
                       :author author-id)
                      (merge options)
                      (dissoc :tag-list))
-         saved-article (sql/insert! db :articles article update-options)
-         saved-tags (insert-tags db tags)]
-     (sql/insert-multi! db :article_tags (map #(assoc {:article (:id saved-article)} :tag (:id %)) saved-tags))
+         saved-article (sql/insert! db :articles article update-options)]
+     (doseq [t tags]
+       (let [saved-tag (insert-tag db t)]
+         (link-article-and-tag db saved-article saved-tag)))
      (assoc saved-article :tag-list tags))))
+
+(defn create-article-in-tx
+  [db author-id]
+  (jdbc/with-transaction [tx db]
+    (create-article tx author-id)))
 
 (defn create-comment
   [db article-id author-id]

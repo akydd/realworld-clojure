@@ -73,7 +73,24 @@ values (?, ?) on conflict do nothing", (:id auth-user) (:id user)]))
   [database auth-user user]
   (sql/delete! (:datasource database) :follows {:user_id (:id auth-user) :follows (:id user)}))
 
-(defn db-record->model
+(defn- add-tag-list
+  [article]
+  (if (:tag article)
+    (dissoc (assoc article :tag-list (vector (:tag article))) :tag)
+    article))
+
+(defn- roll-up-tags
+  [articles]
+  (reduce (fn [acc article]
+            (let [slug (:slug article)
+                  existing-article (get-in acc [slug])]
+              (if (nil? existing-article)
+                (assoc acc slug (add-tag-list article))
+                (if-not (empty? (:tag-list existing-article))
+                  (update-in acc [slug :tag-list] conj (:tag article))
+                  (assoc-in acc [slug :tag-list] (vector (:tag article))))))) {} articles))
+
+(defn- db-record->model
   [m]
   (let [ks (if (contains? m :following)
              [:following :username :bio :image]
@@ -84,23 +101,31 @@ values (?, ?) on conflict do nothing", (:id auth-user) (:id user)]))
 (defn get-article-by-slug
   "Get an article by slug."
   ([database slug]
-   (when-let [db-article
-              (jdbc/execute-one! (:datasource database) ["select a.slug, a.title, a.description, a.body,
-a.createdat, a.updatedat, b.username, b.bio, b.image,
+   (when-let [db-articles
+              (jdbc/execute! (:datasource database) ["select a.slug, a.title, a.description, a.body,
+a.createdat, a.updatedat, b.username, b.bio, b.image, t.tag,
 (select count(*)
 from favorites as f
 where f.article = a.id) as favoritescount
 from articles as a
 inner join users as b
 on a.author = b.id
+left join article_tags h
+on h.id = a.id
+inner join tags t
+on t.id = h.tag
 where a.slug = ?", slug] query-options)]
-     (db-record->model db-article)))
+     (-> db-articles
+         (roll-up-tags)
+         (get-in [slug])
+         (db-record->model))))
   ([database slug auth-user]
-   (when-let [db-article
-              (jdbc/execute-one! (:datasource database) ["select a.slug, a.title, a.description, a.body,
+   (when-let [db-articles
+              (jdbc/execute! (:datasource database) ["select a.slug, a.title, a.description, a.body,
 a.createdat, a.updatedat, b.username, b.bio, b.image,
 case when favs.article is not null then true else false end as favorited,
 case when g.follows is not null then true else false end as following,
+t.tag,
 (select count(*)
 from favorites as f
 where f.article = a.id) as favoritescount
@@ -111,21 +136,51 @@ left join favorites as favs
 on favs.user_id = ? and favs.article = a.id
 left join follows as g
 on g.user_id = ? and g.follows = a.author
+left join article_tags h
+on h.article = a.id
+inner join tags t
+on t.id = h.tag
 where a.slug = ?", (:id auth-user), (:id auth-user), slug] query-options)]
-     (db-record->model db-article))))
+     (-> db-articles
+         (roll-up-tags)
+         (get-in [slug])
+         (db-record->model)))))
 
-(defn create-article
-  "Insert a record into the articles table"
-  [database article auth-user]
-  (let [tags (:tag-list article)
-        a (-> article
+(defn- insert-tag
+  [tx tag]
+  (try
+    (jdbc/execute-one! tx ["insert into tags (tag) values (?)" tag] update-options)
+    (catch org.postgresql.util.PSQLException e
+      (if (= "23505" (.getSQLState e))
+        (jdbc/execute-one! tx ["select * from tags where tag=?" tag] query-options)
+        (throw (ex-info "db error" {:type :unknown :state (.getSQLState e)} e))))))
+
+(defn- link-article-and-tag [tx article tag]
+  (jdbc/execute-one! tx ["insert into article_tags (article, tag) values (?, ?) on conflict do nothing" (:id article) (:id tag)] update-options))
+
+(defn- create-article
+  "Save sn article to the db. This does not handle tags.
+  To save an article and tags, use create-article-with-tags."
+  [tx article auth-user]
+  (let [a (-> article
               (assoc :author (:id auth-user))
               (dissoc :tag-list))]
     (try
-      (sql/insert! (:datasource database) :articles a update-options)
+      (sql/insert! tx :articles a update-options)
       (catch org.postgresql.util.PSQLException e
-        (handle-psql-exception e)))
-    (get-article-by-slug database (:slug article) auth-user)))
+        (handle-psql-exception e)))))
+
+(defn create-article-with-tags
+  [database article-with-tags auth-user]
+  (jdbc/with-transaction [tx (:datasource database)]
+    (let [tags (:tag-list article-with-tags)
+          article (dissoc article-with-tags :tag-list)
+          saved-article (create-article tx article auth-user)]
+      (doseq [t tags]
+        (let [saved-tag (insert-tag tx t)]
+          (link-article-and-tag tx saved-article saved-tag)))))
+  ;; This fetch needs to happen after the transaction above has completed.
+  (get-article-by-slug database (:slug article-with-tags) auth-user))
 
 (defn update-article
   "Update a record in the articles table"

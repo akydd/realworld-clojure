@@ -61,16 +61,26 @@
           input (assoc (mg/generate article/article-schema) :tag-list [])
           user (test-utils/create-user db)
           token (get-login-token user)
+          r (create-article-request input token)]
+      (is (= 422 (:status r))))))
+
+(deftest success-new-tags
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          new-tags ["tag-one" "tag-two"]
+          input (assoc (mg/generate article/article-schema) :tag-list new-tags)
+          user (test-utils/create-user db)
+          token (get-login-token user)
           r (create-article-request input token)
-          body (-> r
-                   (:body)
-                   (json/parse-string true))
-          article (:article body)]
+          article (-> r
+                      (:body)
+                      (json/parse-string true)
+                      (:article))]
       (is (= 200 (:status r)))
       (is (true? (m/validate auth-article-schema article)) (->> article
                                                                 (m/explain auth-article-schema)
-                                                                (me/humanize))))))
-
-(deftest success-existing-tags)
+                                                                (me/humanize)))
+      (is (= new-tags (:tag-list article))))))
 
 (deftest success-new-and-existing-tags)

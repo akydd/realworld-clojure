@@ -159,7 +159,7 @@
 
 (defn article-matches-feed?
   [article feed]
-  (let [ks [:title :description :createat :updatedat]]
+  (let [ks [:title :description :createat :updatedat :tag-list]]
     (keys-match? article feed ks)))
 
 (defn slug-is-correct?

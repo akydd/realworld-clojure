@@ -1,47 +1,46 @@
 (ns realworld-clojure.integration.delete-comment
   (:require
-   [clojure.test :refer [deftest testing is]]
+   [clojure.test :refer [deftest is]]
    [realworld-clojure.integration.common :refer [delete-comment-request get-login-token get-comments-request]]
    [realworld-clojure.utils :as test-utils]
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
    [cheshire.core :as json]))
 
-(deftest delete-comment
-  (testing "no auth"
-    (test-utils/with-system
-      [sut (core/new-system (config/read-test-config))]
-      (let [r (delete-comment-request "slug" 2)]
-        (is (= 401 (:status r))))))
+(deftest no-auth
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [r (delete-comment-request "slug" 2)]
+      (is (= 401 (:status r))))))
 
-  (testing "slug not found"
-    (test-utils/with-system
-      [sut (core/new-system (config/read-test-config))]
-      (let [db (get-in sut [:database :datasource])
-            user (test-utils/create-user db)
-            token (get-login-token user)
-            r (delete-comment-request "no-article-here" 1 token)]
-        (is (= 404 (:status r))))))
+(deftest article-not-found
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          user (test-utils/create-user db)
+          token (get-login-token user)
+          r (delete-comment-request "no-article-here" 1 token)]
+      (is (= 404 (:status r))))))
 
-  (testing "unparsable comment id"
-    (test-utils/with-system
-      [sut (core/new-system (config/read-test-config))]
-      (let [db (get-in sut [:database :datasource])
-            user (test-utils/create-user db)
-            article (test-utils/create-article db (:id user))
-            token (get-login-token user)
-            r (delete-comment-request (:slug article) "not-an-int" token)]
-        (is (= 404 (:status r))))))
+(deftest unparsable-comment-id
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          user (test-utils/create-user db)
+          article (test-utils/create-article db (:id user))
+          token (get-login-token user)
+          r (delete-comment-request (:slug article) "not-an-int" token)]
+      (is (= 404 (:status r))))))
 
-  (testing "comment not found"
-    (test-utils/with-system
-      [sut (core/new-system (config/read-test-config))]
-      (let [db (get-in sut [:database :datasource])
-            user (test-utils/create-user db)
-            article (test-utils/create-article db (:id user))
-            token (get-login-token user)
-            r (delete-comment-request (:slug article) 3 token)]
-        (is (= 404 (:status r)))))))
+(deftest comment-id-not-found
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          user (test-utils/create-user db)
+          article (test-utils/create-article db (:id user))
+          token (get-login-token user)
+          r (delete-comment-request (:slug article) 3 token)]
+      (is (= 404 (:status r))))))
 
 (deftest success
   (test-utils/with-system

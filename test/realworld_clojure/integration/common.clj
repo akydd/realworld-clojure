@@ -200,7 +200,8 @@
    [:createdat [:string {:min 1}]]
    [:updatedat {:optional true} [:string {:min 1}]]
    [:favoritescount [:int]]
-   [:author #'no-auth-profile-schema]])
+   [:author #'no-auth-profile-schema]
+   [:tag-list {:optional true} [:vector {:min 1} :string]]])
 
 (def no-auth-article-feed-schema
   [:map {:closed true}

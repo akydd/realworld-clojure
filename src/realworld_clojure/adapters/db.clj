@@ -101,8 +101,8 @@ values (?, ?) on conflict do nothing", (:id auth-user) (:id user)]))
 (defn get-article-by-slug
   "Get an article by slug."
   ([database slug]
-   (when-let [db-articles
-              (jdbc/execute! (:datasource database) ["select a.slug, a.title, a.description, a.body,
+   (let [db-articles
+         (jdbc/execute! (:datasource database) ["select a.slug, a.title, a.description, a.body,
 a.createdat, a.updatedat, b.username, b.bio, b.image, t.tag,
 (select count(*)
 from favorites as f
@@ -111,17 +111,17 @@ from articles as a
 inner join users as b
 on a.author = b.id
 left join article_tags h
-on h.id = a.id
-inner join tags t
+on h.article = a.id
+left join tags t
 on t.id = h.tag
 where a.slug = ?", slug] query-options)]
-     (-> db-articles
-         (roll-up-tags)
-         (get-in [slug])
-         (db-record->model))))
+     (when (seq db-articles) (-> db-articles
+                                 (roll-up-tags)
+                                 (get-in [slug])
+                                 (db-record->model)))))
   ([database slug auth-user]
-   (when-let [db-articles
-              (jdbc/execute! (:datasource database) ["select a.slug, a.title, a.description, a.body,
+   (let [db-articles
+         (jdbc/execute! (:datasource database) ["select a.slug, a.title, a.description, a.body,
 a.createdat, a.updatedat, b.username, b.bio, b.image,
 case when favs.article is not null then true else false end as favorited,
 case when g.follows is not null then true else false end as following,
@@ -138,13 +138,13 @@ left join follows as g
 on g.user_id = ? and g.follows = a.author
 left join article_tags h
 on h.article = a.id
-inner join tags t
+left join tags t
 on t.id = h.tag
 where a.slug = ?", (:id auth-user), (:id auth-user), slug] query-options)]
-     (-> db-articles
-         (roll-up-tags)
-         (get-in [slug])
-         (db-record->model)))))
+     (when (seq db-articles) (-> db-articles
+                                 (roll-up-tags)
+                                 (get-in [slug])
+                                 (db-record->model))))))
 
 (defn- insert-tag
   [tx tag]
@@ -194,7 +194,12 @@ where a.slug = ?", (:id auth-user), (:id auth-user), slug] query-options)]
 (defn delete-article
   "Delete a record from the articles table"
   [database slug]
-  (sql/delete! (:datasource database) :articles {:slug slug}))
+  (jdbc/with-transaction [tx (:datasource database)]
+    (when-let [article (first (sql/find-by-keys tx :articles {:slug slug} query-options))]
+      (sql/delete! tx :favorites {:article (:id article)})
+      (sql/delete! tx :article_tags {:article (:id article)})
+      (sql/delete! tx :comments {:article (:id article)})
+      (sql/delete! tx :articles {:id (:id article)}))))
 
 (defn get-comment
   "Get a single comment by id."

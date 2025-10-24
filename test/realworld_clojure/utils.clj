@@ -67,44 +67,39 @@
 (defn link-article-and-tag [db article tag]
   (jdbc/execute-one! db ["insert into article_tags (article, tag) values (?, ?) on conflict do nothing" (:id article) (:id tag)] update-options))
 
-(defn create-article
+(defn- create-artice-for-input
   "Save a test article to the db.
   This takes 3 steps. 1) save the article,
   2) save the tags, 3) link articles and tags."
-  ([db author-id]
-   (let [input (mg/generate article/article-schema)
-         tags (:tag-list input)
-         slug (article/str->slug (:title input))
-         article (-> input
-                     (assoc
-                      :author author-id
-                      :slug slug)
-                     (dissoc :tag-list))
-         saved-article (sql/insert! db :articles article update-options)]
-     (doseq [t tags]
-       (let [saved-tag (insert-tag db t)]
-         (link-article-and-tag db saved-article saved-tag)))
-     (assoc saved-article :tag-list tags)))
-  ([db author-id options]
-   (let [input (mg/generate article/article-schema)
-         tags (:tag-list input)
-         slug (article/str->slug (:title input))
-         article (-> input
-                     (assoc
-                      :slug slug
-                      :author author-id)
-                     (merge options)
-                     (dissoc :tag-list))
-         saved-article (sql/insert! db :articles article update-options)]
-     (doseq [t tags]
-       (let [saved-tag (insert-tag db t)]
-         (link-article-and-tag db saved-article saved-tag)))
-     (assoc saved-article :tag-list tags))))
+  [db author-id input]
+  (let [tags (:tag-list input)
+        slug (article/str->slug (:title input))
+        article (-> input
+                    (assoc
+                     :author author-id
+                     :slug slug)
+                    (dissoc :tag-list))
+        saved-article (sql/insert! db :articles article update-options)]
+    (doseq [t tags]
+      (let [saved-tag (insert-tag db t)]
+        (link-article-and-tag db saved-article saved-tag)))
+    (if (empty? tags)
+      saved-article
+      (assoc saved-article :tag-list tags))))
 
-(defn create-article-in-tx
-  [db author-id]
-  (jdbc/with-transaction [tx db]
-    (create-article tx author-id)))
+(defn- create-article-with-generated-data
+  ([db author-id]
+   (create-artice-for-input db author-id (mg/generate article/article-schema)))
+  ([db author-id options]
+   (create-artice-for-input db author-id (merge (mg/generate article/article-schema) options))))
+
+(defn create-article
+  ([db author-id]
+   (jdbc/with-transaction [tx db]
+     (create-article-with-generated-data tx author-id)))
+  ([db author-id options]
+   (jdbc/with-transaction [tx db]
+     (create-article-with-generated-data tx author-id options))))
 
 (defn create-comment
   [db article-id author-id]

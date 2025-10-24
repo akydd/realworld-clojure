@@ -22,9 +22,12 @@
             user (test-utils/create-user db)
             article (test-utils/create-article db (:id user))
             r (get-comments-request (:slug article))
-            comments (:comments (json/parse-string (:body r) true))]
+            comments (-> r
+                         (:body)
+                         (json/parse-string true)
+                         (:comments))]
         (is (= 200 (:status r)))
-        (is (zero? (count comments))))))
+        (is (empty? comments)))))
 
   (testing "no auth"
     (test-utils/with-system

@@ -158,9 +158,12 @@
     (keys-match? article input ks)))
 
 (defn article-matches-feed?
-  [article feed]
-  (let [ks [:title :description :createat :updatedat :tag-list]]
-    (keys-match? article feed ks)))
+  [article author feed]
+  (let [article-ks [:title :description :createat :updatedat :tag-list]]
+    (and
+     (keys-match? article feed article-ks)
+     (profiles-equal? author (:author feed))
+     (true? (get-in feed [:author :following])))))
 
 (defn slug-is-correct?
   [article]
@@ -240,7 +243,8 @@
    [:updatedat {:optional true} [:string {:min 1}]]
    [:favorited [:boolean]]
    [:favoritescount [:int]]
-   [:author #'auth-profile-schema]])
+   [:author #'auth-profile-schema]
+   [:tag-list {:optional true} [:vector {:min 1} :string]]])
 
 (def multiple-auth-article-schema
   [:map {:closed true}

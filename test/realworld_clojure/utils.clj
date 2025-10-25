@@ -85,7 +85,7 @@
         (link-article-and-tag db saved-article saved-tag)))
     (if (empty? tags)
       saved-article
-      (assoc saved-article :tag-list tags))))
+      (assoc saved-article :tag-list (sort tags)))))
 
 (defn- create-article-with-generated-data
   ([db author-id]
@@ -95,11 +95,9 @@
 
 (defn create-article
   ([db author-id]
-   (jdbc/with-transaction [tx db]
-     (create-article-with-generated-data tx author-id)))
+   (create-article-with-generated-data db author-id))
   ([db author-id options]
-   (jdbc/with-transaction [tx db]
-     (create-article-with-generated-data tx author-id options))))
+   (create-article-with-generated-data db author-id options)))
 
 (defn create-comment
   [db article-id author-id]

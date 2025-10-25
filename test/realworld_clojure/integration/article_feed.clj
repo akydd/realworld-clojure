@@ -8,7 +8,8 @@
    [cheshire.core :as json]
    [malli.core :as m]
    [malli.error :as me]
-   [java-time.api :as jt]))
+   [java-time.api :as jt]
+   [clojure.pprint :as pp]))
 
 (deftest no-auth
   (test-utils/with-system
@@ -36,6 +37,19 @@
       (is (zero? (count articles)))
       (is (zero? (:articlesCount body))))))
 
+;; TODO: turn this into a custom assertion.
+(defn- validate-response [response expected-articles expected-authors]
+  (let [body (-> response
+                 (:body)
+                 (json/parse-string true))]
+    (is (= 200 (:status response)))
+    (is (true? (m/validate multiple-auth-article-schema body)) (->> body
+                                                                    (m/explain multiple-auth-article-schema)
+                                                                    (me/humanize)))
+    ;;(is (= expected-articles (:articles body)))
+    (is (= (count expected-articles) (:articlesCount body)))
+    (is (every? true? (map article-matches-feed? expected-articles expected-authors (:articles body))) (str "Expected articles: " (pp/pprint expected-articles) " but got " (pp/pprint (:articles body))))))
+
 (deftest following-user-with-no-articles
   (test-utils/with-system
     [sut (core/new-system (config/read-test-config))]
@@ -45,17 +59,106 @@
           user-three (test-utils/create-user db)
           _ (test-utils/create-article db (:id user-one))
           _ (test-utils/create-follows db user-two user-three)
+          r (article-feed-request "" (get-login-token user-two))]
+      (validate-response r [] []))))
+
+(deftest following-user-one-article-no-tags
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          user-one (test-utils/create-user db)
+          user-two (test-utils/create-user db)
+          user-three (test-utils/create-user db)
+          _ (test-utils/create-article db (:id user-one))
+          article (test-utils/create-article db (:id user-three) {:tag-list []})
+          _ (test-utils/create-follows db user-two user-three)
+          r (article-feed-request "" (get-login-token user-two))]
+      (validate-response r [article] [user-three]))))
+
+(deftest following-user-multiple-articles-no-tags
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          user-one (test-utils/create-user db)
+          user-two (test-utils/create-user db)
+          user-three (test-utils/create-user db)
+          _ (test-utils/create-article db (:id user-one))
+          now (jt/local-date-time)
+          article-one (test-utils/create-article db (:id user-three) {:title "article-one"
+                                                                      :tag-list []
+                                                                      :createdat (jt/- now (jt/days 1))})
+          article-two (test-utils/create-article db (:id user-three) {:title "article-two"
+                                                                      :tag-list []
+                                                                      :createdat now})
+          _ (test-utils/create-follows db user-two user-three)
+          r (article-feed-request "" (get-login-token user-two))]
+      (validate-response r [article-two article-one] [user-three user-three]))))
+
+(deftest following-user-one-article-one-tag
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          user-one (test-utils/create-user db)
+          user-two (test-utils/create-user db)
+          user-three (test-utils/create-user db)
+          _ (test-utils/create-article db (:id user-one))
+          article (test-utils/create-article db (:id user-three) {:tag-list ["one-tag"]})
+          _ (test-utils/create-follows db user-two user-three)
           token (get-login-token user-two)
-          r (article-feed-request "" token)
-          body (-> r
-                   (:body)
-                   (json/parse-string true))]
-      (is (= 200 (:status r)))
-      (is (true? (m/validate multiple-auth-article-schema body)) (->> body
-                                                                      (m/explain multiple-auth-article-schema)
-                                                                      (me/humanize)))
-      (is (zero? (count (:articles body))))
-      (is (zero? (:articlesCount body))))))
+          r (article-feed-request "" token)]
+      (validate-response r [article] [user-three]))))
+
+(deftest following-user-multiple-articles-one-tag-same
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          user-one (test-utils/create-user db)
+          user-two (test-utils/create-user db)
+          user-three (test-utils/create-user db)
+          _ (test-utils/create-article db (:id user-one))
+          now (jt/local-date-time)
+          article-one (test-utils/create-article db (:id user-three) {:title "article-one"
+                                                                      :tag-list ["my-tag"]
+                                                                      :createdat (jt/- now (jt/days 1))})
+          article-two (test-utils/create-article db (:id user-three) {:title "article-two"
+                                                                      :tag-list ["my-tag"]
+                                                                      :createdat now})
+          _ (test-utils/create-follows db user-two user-three)
+          r (article-feed-request "" (get-login-token user-two))]
+      (validate-response r [article-two article-one] [user-three user-three]))))
+
+(deftest following-user-multiple-articles-one-tag-different
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          user-one (test-utils/create-user db)
+          user-two (test-utils/create-user db)
+          user-three (test-utils/create-user db)
+          _ (test-utils/create-article db (:id user-one))
+          now (jt/local-date-time)
+          article-one (test-utils/create-article db (:id user-three) {:title "article-one"
+                                                                      :tag-list ["my-tag"]
+                                                                      :createdat (jt/- now (jt/days 1))})
+          article-two (test-utils/create-article db (:id user-three) {:title "article-two"
+                                                                      :tag-list ["my-other-tag"]
+                                                                      :createdat now})
+          _ (test-utils/create-follows db user-two user-three)
+          r (article-feed-request "" (get-login-token user-two))]
+      (validate-response r [article-two article-one] [user-three user-three]))))
+
+(deftest following-user-one-article-multiple-tags
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          user-one (test-utils/create-user db)
+          user-two (test-utils/create-user db)
+          user-three (test-utils/create-user db)
+          _ (test-utils/create-article db (:id user-one))
+          article (test-utils/create-article db (:id user-three) {:tag-list ["one-tag" "two-tag" "three-tag"]})
+          _ (test-utils/create-follows db user-two user-three)
+          token (get-login-token user-two)
+          r (article-feed-request "" token)]
+      (validate-response r [article] [user-three]))))
 
 (deftest following-multiple-authors
   (test-utils/with-system
@@ -66,25 +169,12 @@
           user (test-utils/create-user db)
           _ (test-utils/create-follows db user author-one)
           _ (test-utils/create-follows db user author-two)
-          a1 (test-utils/create-article db (:id author-one))
-          a2 (test-utils/create-article db (:id author-two))
+          now (jt/local-date-time)
+          a1 (test-utils/create-article db (:id author-one) {:createdat (jt/- now (jt/days 1))})
+          a2 (test-utils/create-article db (:id author-two) {:createdat now})
           token (get-login-token user)
-          r (article-feed-request "" token)
-          body (-> r
-                   (:body)
-                   (json/parse-string true))
-          articles (:articles body)]
-      (is (= 200 (:status r)))
-      (is (true? (m/validate multiple-auth-article-schema body)) (->> body
-                                                                      (m/explain multiple-auth-article-schema)
-                                                                      (me/humanize)))
-      (is (every? #(get-in % [:author :following]) articles))
-      (is (= 2 (count articles)))
-      (is (= 2 (:articlesCount body)))
-      (is (true? (profiles-equal? author-one (:author (second articles)))))
-      (is (true? (article-matches-feed? a1 (second articles))))
-      (is (true? (profiles-equal? author-two (:author (first articles)))))
-      (is (true? (article-matches-feed? a2 (first articles)))))))
+          r (article-feed-request "" token)]
+      (validate-response r [a2 a1] [author-two author-one]))))
 
 (deftest order-by-most-recently-created
   (test-utils/with-system

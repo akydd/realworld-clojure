@@ -313,12 +313,18 @@ limit ?
 offset ?"), (:id auth-user), (:id auth-user), limit, offset] query-options)]
      (articles->multiple-articles articles))))
 
+(defn- sort-tag-list
+  [article]
+  (if (seq (:tag-list article))
+    (update article :tag-list sort)
+    article))
+
 (defn article-feed
   [database filters auth-user]
   (let [limit (or (:limit filters) 20)
         offset (or (:offset filters) 0)
         articles (jdbc/execute! (:datasource database) ["select a.slug, a.title, a.description,
-a.createdat, a.updatedat, u.username, u.bio, u.image,
+a.createdat, a.updatedat, u.username, u.bio, u.image, t.tag,
 true as following,
 case when g.article is null then false else true end as favorited,
 (select count(*)
@@ -331,11 +337,19 @@ inner join users as u
 on a.author = u.id
 left join favorites as g
 on g.user_id = f.user_id and g.article = a.id
+left join article_tags h
+on h.article = a.id
+left join tags t
+on t.id = h.tag
 where f.user_id = ?
 order by case when a.updatedat is not null then a.updatedat else a.createdat end desc
 limit ?
 offset ?", (:id auth-user), limit, offset] query-options)]
-    (articles->multiple-articles articles)))
+    (->> articles
+         (roll-up-tags)
+         (vals)
+         (map sort-tag-list)
+         articles->multiple-articles)))
 
 (defn favorite-article
   [database slug auth-user]

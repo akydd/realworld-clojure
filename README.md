@@ -1,6 +1,6 @@
 # realworld-clojure
 
-FIXME: description
+Implementation of the realworld server API.
 
 ## Installation
 
@@ -20,13 +20,33 @@ FIXME: listing of options this app accepts.
 
 ...
 
-### Bugs
+## Design Decisions
+The spec specifies that all returned timestamps are formatted as `2016-02-18T03:22:56.637Z`.
 
-...
+Two things needed to happen for this to work.
 
-### Any Other Sections
-### That You Think
-### Might be Useful
+### JDBC and DB
+The jdbc driver and db had to work together so that timestamps from the db were returned in utc, and not formatted for the local time zone. This was accomplished with the following design decisions:
+
+* use column type timestamptz to store dates
+* set jdbc driver to return `java.time.Instant` values from the db:
+```clojure
+(ns ...
+   (:require ...
+             [next.jdbc.date-time :as dt]
+             ...))
+
+(dt/read-as-instant)
+```
+
+### JSON formatting
+By default the ring `wrap-json-response` middleware formats timestamps with the nulliseconds
+truncated, like `2016-02-18T03:22:56Z`. Examining the source code revealed that the code called
+by the middleware, `json/generate-string`, also accepts a `:date-format` option:
+```clojure
+(wrap-json-response {:date-format "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"})
+```
+Here `'Z'` was used instead of just `Z` since the timestamps returned were already utc.
 
 ## License
 

@@ -48,7 +48,7 @@
                                                                     (me/humanize)))
     ;;(is (= expected-articles (:articles body)))
     (is (= (count expected-articles) (:articlesCount body)))
-    (is (every? true? (map article-matches-feed? expected-articles expected-authors (:articles body))) (str "Expected articles: " (pp/pprint expected-articles) " but got " (pp/pprint (:articles body))))))
+    (is (every? true? (map article-matches-feed? expected-articles expected-authors (:articles body))) (str "Expected articles: " (with-out-str (pp/pprint expected-articles)) " but got " (with-out-str (pp/pprint (:articles body)))))))
 
 (deftest following-user-with-no-articles
   (test-utils/with-system

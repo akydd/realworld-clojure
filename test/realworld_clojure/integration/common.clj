@@ -1,9 +1,11 @@
 (ns realworld-clojure.integration.common
   (:require
    [cheshire.core :as json]
+   [clojure.test :refer [is]]
    [realworld-clojure.config-test :as config]
    [org.httpkit.client :as http]
-   [clojure.string :as str]))
+   [clojure.string :as str]
+   [java-time.api :as jt]))
 
 (def port (get-in (config/read-test-config) [:server :port]))
 (def host "http://localhost")
@@ -145,7 +147,7 @@
 
 (defn keys-match?
   [a b ks]
-  (= (select-keys a ks) (select-keys b ks)))
+  (is (= (select-keys a ks) (select-keys b ks))))
 
 (defn profiles-equal?
   [a b]
@@ -157,13 +159,44 @@
   (let [ks [:title :description :body]]
     (keys-match? article input ks)))
 
+(defn instance->str [i]
+  (-> i
+      (jt/truncate-to :millis)
+      (.toString)))
+
 (defn article-matches-feed?
   [article author feed]
-  (let [article-ks [:title :description :createat :updatedat :tag-list]]
+  (let [article-ks [:title :description :slug :tag-list]
+        ;; article's timestamps, returned from the db, are javaa.sql.Timestamps.
+        ;; But the timestamps in feed, returned from parsing the json, are strings.
+        ;; To compare them, convert article's timestamps to strings.
+        expected-created-at (instance->str (:createdat article))
+        expected-updated-at (when (some? (:updatedat article))
+                              (instance->str (:updatedat article)))]
     (and
      (keys-match? article feed article-ks)
+     (is (= expected-created-at (:createdat feed)))
+     (when (some? (:updatedat article))
+       (is (= expected-updated-at (:updatedat feed))))
      (profiles-equal? author (:author feed))
-     (true? (get-in feed [:author :following])))))
+     (is (true? (get-in feed [:author :following]))))))
+
+(defn article-matches-article?
+  [a author b]
+  (let [article-ks [:title :body :description :slug :tag-list]
+        ;; article's timestamps, returned from the db, are javaa.sql.Timestamps.
+        ;; But the timestamps in feed, returned from parsing the json, are strings.
+        ;; To compare them, convert article's timestamps to strings.
+        expected-created-at (instance->str (:createdat a))
+        expected-updated-at (when (some? (:updatedat a))
+                              (instance->str (:updatedat a)))]
+    (and
+     (keys-match? a b article-ks)
+     (is (= expected-created-at (:createdat b)))
+     (when (some? (:updatedat b))
+       (is (= expected-updated-at (:updatedat b))))
+     (profiles-equal? author (:author b))
+     (is (true? (get-in b [:author :following]))))))
 
 (defn slug-is-correct?
   [article]

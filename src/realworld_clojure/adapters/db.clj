@@ -2,6 +2,7 @@
   (:require [next.jdbc :as jdbc]
             [next.jdbc.sql :as sql]
             [next.jdbc.optional :as o]
+            [next.jdbc.date-time :as dt]
             [com.stuartsierra.component :as component]
             [ragtime.repl :as ragtime-repl]
             [ragtime.jdbc :as ragtime-jdbc]
@@ -98,12 +99,19 @@ values (?, ?) on conflict do nothing", (:id auth-user) (:id user)]))
         author (select-keys m ks)]
     (assoc (reduce dissoc m ks) :author author)))
 
+(defn- sort-tag-list
+  [article]
+  (if (seq (:tag-list article))
+    (update article :tag-list sort)
+    article))
+
 (defn get-article-by-slug
   "Get an article by slug."
   ([database slug]
    (let [db-articles
          (jdbc/execute! (:datasource database) ["select a.slug, a.title, a.description, a.body,
-a.createdat, a.updatedat, b.username, b.bio, b.image, t.tag,
+a.createdat, a.updatedat,
+b.username, b.bio, b.image, t.tag,
 (select count(*)
 from favorites as f
 where f.article = a.id) as favoritescount
@@ -118,11 +126,13 @@ where a.slug = ?", slug] query-options)]
      (when (seq db-articles) (-> db-articles
                                  (roll-up-tags)
                                  (get-in [slug])
-                                 (db-record->model)))))
+                                 (db-record->model)
+                                 (sort-tag-list)))))
   ([database slug auth-user]
    (let [db-articles
          (jdbc/execute! (:datasource database) ["select a.slug, a.title, a.description, a.body,
-a.createdat, a.updatedat, b.username, b.bio, b.image,
+a.createdat, a.updatedat,
+b.username, b.bio, b.image,
 case when favs.article is not null then true else false end as favorited,
 case when g.follows is not null then true else false end as following,
 t.tag,
@@ -144,7 +154,8 @@ where a.slug = ?", (:id auth-user), (:id auth-user), slug] query-options)]
      (when (seq db-articles) (-> db-articles
                                  (roll-up-tags)
                                  (get-in [slug])
-                                 (db-record->model))))))
+                                 (db-record->model)
+                                 (sort-tag-list))))))
 
 (defn- insert-tag
   [tx tag]
@@ -204,7 +215,9 @@ where a.slug = ?", (:id auth-user), (:id auth-user), slug] query-options)]
 (defn get-comment
   "Get a single comment by id."
   [database id auth-user]
-  (when-let [c (jdbc/execute-one! (:datasource database) ["select c.id, c.createdat, c.updatedat, c.body,
+  (when-let [c (jdbc/execute-one! (:datasource database) ["select c.id,
+c.createdat, c.updatedat,
+c.body,
 u.username, u.bio, u.image,
 case when f.follows is null then false else true end as following
 from comments as c
@@ -227,7 +240,8 @@ where slug = ?", (:body comment), (:id auth-user), slug] update-options)]
 (defn get-article-comments
   "Get all comments for an article"
   ([database slug]
-   (when-let [cs (jdbc/execute! (:datasource database) ["select c.id, c.body, c.createdat, c.updatedat,
+   (when-let [cs (jdbc/execute! (:datasource database) ["select c.id, c.body,
+c.createdat, c.updatedat,
 u.username, u.bio, u.image
 from articles as a
 inner join comments as c
@@ -237,7 +251,8 @@ on c.author = u.id
 where a.slug=?", slug] query-options)]
      (map db-record->model cs)))
   ([database slug auth-user]
-   (when-let [cs (jdbc/execute! (:datasource database) ["select c.id, c.body, c.createdat, c.updatedat,
+   (when-let [cs (jdbc/execute! (:datasource database) ["select c.id, c.body,
+c.createdat, c.updatedat,
 u.username, u.bio, u.image,
 case when f.follows is null then false else true end as following
 from articles as a
@@ -280,7 +295,8 @@ where a.slug=?", (:id auth-user), slug] query-options)]
    (let [limit (or (:limit filters) 20)
          offset (or (:offset filters) 0)
          articles (jdbc/execute! (:datasource database) [(str "select a.slug, a.title, a.description,
-a.createdat, a.updatedat, b.username, b.bio, b.image,
+a.createdat, a.updatedat,
+b.username, b.bio, b.image,
 (select count(*)
 from favorites as f
 where f.article = a.id) as favoritescount
@@ -295,7 +311,8 @@ offset ?"), limit, offset] query-options)]
    (let [limit (or (:limit filters) 20)
          offset (or (:offset filters) 0)
          articles (jdbc/execute! (:datasource database) [(str "select a.slug, a.title, a.description,
-a.createdat, a.updatedat, b.username, b.bio, b.image,
+a.createdat, a.updatedat,
+b.username, b.bio, b.image,
 case when g.follows is null then false else true end as following,
 case when h.article is null then false else true end as favorited,
 (select count(*)
@@ -313,18 +330,13 @@ limit ?
 offset ?"), (:id auth-user), (:id auth-user), limit, offset] query-options)]
      (articles->multiple-articles articles))))
 
-(defn- sort-tag-list
-  [article]
-  (if (seq (:tag-list article))
-    (update article :tag-list sort)
-    article))
-
 (defn article-feed
   [database filters auth-user]
   (let [limit (or (:limit filters) 20)
         offset (or (:offset filters) 0)
         articles (jdbc/execute! (:datasource database) ["select a.slug, a.title, a.description,
-a.createdat, a.updatedat, u.username, u.bio, u.image, t.tag,
+a.createdat, a.updatedat,
+u.username, u.bio, u.image, t.tag,
 true as following,
 case when g.article is null then false else true end as favorited,
 (select count(*)
@@ -389,6 +401,7 @@ where slug = ?)" , (:id auth-user), slug])
 
   (start [component]
     (println "Starting database with" dbspec)
+    (dt/read-as-instant)
     (let [ds (jdbc/get-datasource dbspec)
           migration-config {:datastore (ragtime-jdbc/sql-database dbspec)
                             :migrations (ragtime-jdbc/load-resources "migrations")}]

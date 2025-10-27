@@ -68,7 +68,7 @@
           (core/wrap-routes wrap-auth-user database)
           (core/wrap-routes wrap-authentication backend)))
         wrap-exception
-        wrap-json-response
+        (wrap-json-response {:date-format "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"})
         (wrap-content-type "text/json")
         (wrap-json-body {:keywords? true}))))
 

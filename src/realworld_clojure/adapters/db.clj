@@ -159,12 +159,11 @@ where a.slug = ?", (:id auth-user), (:id auth-user), slug] query-options)]
 
 (defn- insert-tag
   [tx tag]
-  (try
-    (jdbc/execute-one! tx ["insert into tags (tag) values (?)" tag] update-options)
-    (catch org.postgresql.util.PSQLException e
-      (if (= "23505" (.getSQLState e))
-        (jdbc/execute-one! tx ["select * from tags where tag=?" tag] query-options)
-        (throw (ex-info "db error" {:type :unknown :state (.getSQLState e)} e))))))
+  (let [existing-tag
+        (jdbc/execute-one! tx ["select * from tags where tag=?" tag] query-options)]
+    (if (some? existing-tag)
+      existing-tag
+      (jdbc/execute-one! tx ["insert into tags (tag) values (?)" tag] update-options))))
 
 (defn- link-article-and-tag [tx article tag]
   (jdbc/execute-one! tx ["insert into article_tags (article, tag) values (?, ?) on conflict do nothing" (:id article) (:id tag)] update-options))

@@ -184,7 +184,7 @@ where a.slug = ?", (:id auth-user), (:id auth-user), slug] query-options)]
 (defn create-article-with-tags
   [database article-with-tags auth-user]
   (jdbc/with-transaction [tx (:datasource database)]
-    (let [tags (:tag-list article-with-tags)
+    (let [tags (distinct (:tag-list article-with-tags))
           article (dissoc article-with-tags :tag-list)
           saved-article (create-article tx article auth-user)]
       (doseq [t tags]

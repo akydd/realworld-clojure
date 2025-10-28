@@ -1,7 +1,7 @@
 (ns realworld-clojure.integration.article-feed
   (:require
    [clojure.test :refer [deftest is]]
-   [realworld-clojure.integration.common :refer [article-feed-request get-login-token profiles-equal? article-matches-feed? multiple-auth-article-schema]]
+   [realworld-clojure.integration.common :refer [article-feed-request get-login-token articles-match-feed? multiple-auth-article-schema]]
    [realworld-clojure.utils :as test-utils]
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
@@ -48,7 +48,7 @@
                                                                     (me/humanize)))
     ;;(is (= expected-articles (:articles body)))
     (is (= (count expected-articles) (:articlesCount body)))
-    (is (every? true? (map article-matches-feed? expected-articles expected-authors (:articles body))) (str "Expected articles: " (with-out-str (pp/pprint expected-articles)) " but got " (with-out-str (pp/pprint (:articles body)))))))
+    (articles-match-feed? expected-articles expected-authors (:articles body))))
 
 (deftest following-user-with-no-articles
   (test-utils/with-system

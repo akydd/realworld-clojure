@@ -147,24 +147,28 @@
 
 (defn keys-match?
   [a b ks]
-  (is (= (select-keys a ks) (select-keys b ks))))
+  (doseq [k ks]
+    (is (= (k a) (k b)) (str "Expected " (k a) " but got " (k b)))))
 
 (defn profiles-equal?
   [a b]
-  (let [ks [:username :bio :image]]
-    (keys-match? a b ks)))
+  (is (= (:username a) (:username b)) "usernames do not match")
+  (is (= (:bio a) (:bio b)) "bios do not match")
+  (is (= (:image a) (:image b)) "images do not match"))
 
-(defn article-matches-input?
+(defn validate-article-vs-input
   [article input]
-  (let [ks [:title :description :body]]
-    (keys-match? article input ks)))
+  (is (= (:title article) (:title input)) "titles do not match")
+  (is (= (:description article) (:description input)) "descriptions do not match")
+  (is (= (:body article) (:body input)) "bodies do not match")
+  (is (= (:tag-list article) (seq (sort (distinct (:tag-list input))))) "tag lists do not match"))
 
 (defn instance->str [i]
   (-> i
       (jt/truncate-to :millis)
       (.toString)))
 
-(defn article-matches-feed?
+(defn articles-match-feed?
   [article author feed]
   (let [article-ks [:title :description :slug :tag-list]
         ;; article's timestamps, returned from the db, are javaa.sql.Timestamps.
@@ -198,11 +202,11 @@
      (profiles-equal? author (:author b))
      (is (true? (get-in b [:author :following]))))))
 
-(defn slug-is-correct?
+(defn validate-slug
   [article]
-  (= (:slug article) (-> (:title article)
-                         str/lower-case
-                         (str/replace #"W+" "-"))))
+  (is (= (:slug article) (-> (:title article)
+                             str/lower-case
+                             (str/replace #"W+" "-"))) "slug is incorrect"))
 
 ;; Response schemas, used for validation.
 

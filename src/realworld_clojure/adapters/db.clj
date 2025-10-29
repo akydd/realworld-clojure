@@ -74,23 +74,6 @@ values (?, ?) on conflict do nothing", (:id auth-user) (:id user)]))
   [database auth-user user]
   (sql/delete! (:datasource database) :follows {:user_id (:id auth-user) :follows (:id user)}))
 
-(defn- add-tag-list
-  [article]
-  (if (:tag article)
-    (dissoc (assoc article :tag-list (vector (:tag article))) :tag)
-    article))
-
-(defn- roll-up-tags
-  [articles]
-  (reduce (fn [acc article]
-            (let [slug (:slug article)
-                  existing-article (get-in acc [slug])]
-              (if (nil? existing-article)
-                (assoc acc slug (add-tag-list article))
-                (if-not (empty? (:tag-list existing-article))
-                  (update-in acc [slug :tag-list] conj (:tag article))
-                  (assoc-in acc [slug :tag-list] (vector (:tag article))))))) {} articles))
-
 (defn- sqlarray->vec
   [s]
   (vec (.getArray s)))
@@ -108,12 +91,6 @@ values (?, ?) on conflict do nothing", (:id auth-user) (:id user)]))
              [:username :bio :image])
         author (select-keys m ks)]
     (assoc (reduce dissoc m ks) :author author)))
-
-(defn- sort-tag-list
-  [article]
-  (if (seq (:tag-list article))
-    (update article :tag-list sort)
-    article))
 
 (defn get-article-by-slug
   "Get an article by slug."
@@ -136,12 +113,9 @@ on t.id = h.tag
 where a.slug = ?
 group by a.id, a.slug, a.title, a.description, a.body, a.createdat, a.updatedat, b.username, b.bio, b.image", slug] query-options)]
      (when (seq db-articles) (-> db-articles
-                                 ;;(roll-up-tags)
-                                 ;;(get-in [slug])
                                  (db-record->model)
-                                 (extract-tags)
-                                 ;;(sort-tag-list)
-                                 ))))
+                                 (extract-tags)))))
+
   ([database slug auth-user]
    (let [db-articles
          (jdbc/execute-one! (:datasource database) ["select a.slug, a.title, a.description, a.body,
@@ -168,12 +142,8 @@ where a.slug = ?
 group by a.id, a.slug, a.title, a.description, a.body, a.createdat, a.updatedat, b.username, b.bio, b.image, favorited, following
 ", (:id auth-user), (:id auth-user), slug] query-options)]
      (when (seq db-articles) (-> db-articles
-                                 ;;(roll-up-tags)
-                                 ;;(get-in [slug])
                                  (db-record->model)
-                                 (extract-tags)
-                                 ;;(sort-tag-list)
-                                 )))))
+                                 (extract-tags))))))
 
 (defn- insert-tag
   [tx tag]
@@ -353,7 +323,8 @@ offset ?"), (:id auth-user), (:id auth-user), limit, offset] query-options)]
         offset (or (:offset filters) 0)
         articles (jdbc/execute! (:datasource database) ["select a.slug, a.title, a.description,
 a.createdat, a.updatedat,
-u.username, u.bio, u.image, t.tag,
+u.username, u.bio, u.image,
+array_remove(array_agg(t.tag order by t.tag), null) as taglist,
 true as following,
 case when g.article is null then false else true end as favorited,
 (select count(*)
@@ -371,13 +342,13 @@ on h.article = a.id
 left join tags t
 on t.id = h.tag
 where f.user_id = ?
+group by a.slug, a.title, a.description, a.createdat, a.updatedat, u.username, u.bio, u.image,
+following, favorited, favoritescount
 order by case when a.updatedat is not null then a.updatedat else a.createdat end desc
 limit ?
 offset ?", (:id auth-user), limit, offset] query-options)]
     (->> articles
-         (roll-up-tags)
-         (vals)
-         (map sort-tag-list)
+         (map extract-tags)
          articles->multiple-articles)))
 
 (defn favorite-article

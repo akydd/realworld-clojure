@@ -8,8 +8,7 @@
    [cheshire.core :as json]
    [malli.core :as m]
    [malli.error :as me]
-   [java-time.api :as jt]
-   [clojure.pprint :as pp]))
+   [java-time.api :as jt]))
 
 (deftest no-auth
   (test-utils/with-system
@@ -190,20 +189,8 @@
           a2 (test-utils/create-article db (:id author) {:createdat (jt/- now (jt/days 1))})
           a3 (test-utils/create-article db (:id author) {:createdat now})
           token (get-login-token user)
-          r (article-feed-request "" token)
-          body (-> r
-                   (:body)
-                   (json/parse-string true))
-          articles (:articles body)]
-      (is (= 200 (:status r)))
-      (is (true? (m/validate multiple-auth-article-schema body)) (->> body
-                                                                      (m/explain multiple-auth-article-schema)
-                                                                      (me/humanize)))
-      (is (= 3 (:articlesCount body)))
-      (is (= 3 (count articles)))
-      (is (= (:slug a3) (:slug (first articles))))
-      (is (= (:slug a2) (:slug (second articles))))
-      (is (= (:slug a1) (:slug (nth articles 2)))))))
+          r (article-feed-request "" token)]
+      (validate-response r [a3 a2 a1] [author author author]))))
 
 (deftest order-by-most-recently-updated
   (test-utils/with-system
@@ -217,20 +204,9 @@
           a2 (test-utils/create-article db (:id author) {:updatedat (jt/- now (jt/days 1))})
           a3 (test-utils/create-article db (:id author) {:updatedat now})
           token (get-login-token user)
-          r (article-feed-request "" token)
-          body (-> r
-                   (:body)
-                   (json/parse-string true))
-          articles (:articles body)]
+          r (article-feed-request "" token)]
       (is (= 200 (:status r)))
-      (is (true? (m/validate multiple-auth-article-schema body)) (->> body
-                                                                      (m/explain multiple-auth-article-schema)
-                                                                      (me/humanize)))
-      (is (= 3 (:articlesCount body)))
-      (is (= 3 (count articles)))
-      (is (= (:slug a3) (:slug (first articles))))
-      (is (= (:slug a2) (:slug (second articles))))
-      (is (= (:slug a1) (:slug (nth articles 2)))))))
+      (validate-response r [a3 a2 a1] [author author author]))))
 
 (deftest order-by-most-recently-updated-then-created
   (test-utils/with-system
@@ -245,20 +221,8 @@
           a2 (test-utils/create-article db (:id author) {:createdat (jt/- now (jt/days 2))})
           a3 (test-utils/create-article db (:id author) {:createdat (jt/- now (jt/days 1))})
           token (get-login-token user)
-          r (article-feed-request "" token)
-          body (-> r
-                   (:body)
-                   (json/parse-string true))
-          articles (:articles body)]
-      (is (= 200 (:status r)))
-      (is (true? (m/validate multiple-auth-article-schema body)) (->> body
-                                                                      (m/explain multiple-auth-article-schema)
-                                                                      (me/humanize)))
-      (is (= 3 (:articlesCount body)))
-      (is (= 3 (count articles)))
-      (is (= (:slug a1) (:slug (first articles))))
-      (is (= (:slug a3) (:slug (second articles))))
-      (is (= (:slug a2) (:slug (nth articles 2)))))))
+          r (article-feed-request "" token)]
+      (validate-response r [a1 a3 a2] [author author author]))))
 
 (deftest valid-limit-filter
   (test-utils/with-system
@@ -272,19 +236,8 @@
           a2 (test-utils/create-article db (:id author) {:createdat (jt/- now (jt/days 1))})
           a3 (test-utils/create-article db (:id author) {:createdat now})
           token (get-login-token user)
-          r (article-feed-request "?limit=2" token)
-          body (-> r
-                   (:body)
-                   (json/parse-string true))
-          articles (:articles body)]
-      (is (= 200 (:status r)))
-      (is (true? (m/validate multiple-auth-article-schema body)) (->> body
-                                                                      (m/explain multiple-auth-article-schema)
-                                                                      (me/humanize)))
-      (is (= 2 (:articlesCount body)))
-      (is (= 2 (count articles)))
-      (is (= (:slug a3) (:slug (first articles))))
-      (is (= (:slug a2) (:slug (second articles)))))))
+          r (article-feed-request "?limit=2" token)]
+      (validate-response r [a3 a2] [author author]))))
 
 (deftest default-limit
   (test-utils/with-system
@@ -332,19 +285,8 @@
           a2 (test-utils/create-article db (:id author) {:createdat (jt/- now (jt/days 1))})
           a3 (test-utils/create-article db (:id author) {:createdat now})
           token (get-login-token user)
-          r (article-feed-request "?offset=1" token)
-          body (-> r
-                   (:body)
-                   (json/parse-string true))
-          articles (:articles body)]
-      (is (= 200 (:status r)))
-      (is (true? (m/validate multiple-auth-article-schema body)) (->> body
-                                                                      (m/explain multiple-auth-article-schema)
-                                                                      (me/humanize)))
-      (is (= 2 (:articlesCount body)))
-      (is (= 2 (count articles)))
-      (is (= (:slug a2) (:slug (first articles))))
-      (is (= (:slug a1) (:slug (second articles)))))))
+          r (article-feed-request "?offset=1" token)]
+      (validate-response r [a2 a1] [author author]))))
 
 (deftest invalid-offset-filter
   (test-utils/with-system

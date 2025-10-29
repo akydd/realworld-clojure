@@ -48,7 +48,9 @@
                                                                     (me/humanize)))
     ;;(is (= expected-articles (:articles body)))
     (is (= (count expected-articles) (:articlesCount body)))
-    (articles-match-feed? expected-articles expected-authors (:articles body))))
+    (articles-match-feed? (map (fn [a b c] {:article a
+                                            :author b
+                                            :feed c}) expected-articles expected-authors (:articles body)))))
 
 (deftest following-user-with-no-articles
   (test-utils/with-system

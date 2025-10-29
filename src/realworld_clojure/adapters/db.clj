@@ -91,6 +91,16 @@ values (?, ?) on conflict do nothing", (:id auth-user) (:id user)]))
                   (update-in acc [slug :tag-list] conj (:tag article))
                   (assoc-in acc [slug :tag-list] (vector (:tag article))))))) {} articles))
 
+(defn- sqlarray->vec
+  [s]
+  (vec (.getArray s)))
+
+(defn- extract-tags
+  [article]
+  (if (empty? (.getArray (:taglist article)))
+    (dissoc article :taglist)
+    (dissoc (assoc article :tag-list (sqlarray->vec (:taglist article))) :taglist)))
+
 (defn- db-record->model
   [m]
   (let [ks (if (contains? m :following)
@@ -109,9 +119,10 @@ values (?, ?) on conflict do nothing", (:id auth-user) (:id user)]))
   "Get an article by slug."
   ([database slug]
    (let [db-articles
-         (jdbc/execute! (:datasource database) ["select a.slug, a.title, a.description, a.body,
+         (jdbc/execute-one! (:datasource database) ["select a.slug, a.title, a.description, a.body,
 a.createdat, a.updatedat,
-b.username, b.bio, b.image, t.tag,
+b.username, b.bio, b.image,
+array_remove(array_agg(t.tag order by t.tag), null) as taglist,
 (select count(*)
 from favorites as f
 where f.article = a.id) as favoritescount
@@ -122,20 +133,23 @@ left join article_tags h
 on h.article = a.id
 left join tags t
 on t.id = h.tag
-where a.slug = ?", slug] query-options)]
+where a.slug = ?
+group by a.id, a.slug, a.title, a.description, a.body, a.createdat, a.updatedat, b.username, b.bio, b.image", slug] query-options)]
      (when (seq db-articles) (-> db-articles
-                                 (roll-up-tags)
-                                 (get-in [slug])
+                                 ;;(roll-up-tags)
+                                 ;;(get-in [slug])
                                  (db-record->model)
-                                 (sort-tag-list)))))
+                                 (extract-tags)
+                                 ;;(sort-tag-list)
+                                 ))))
   ([database slug auth-user]
    (let [db-articles
-         (jdbc/execute! (:datasource database) ["select a.slug, a.title, a.description, a.body,
+         (jdbc/execute-one! (:datasource database) ["select a.slug, a.title, a.description, a.body,
 a.createdat, a.updatedat,
 b.username, b.bio, b.image,
 case when favs.article is not null then true else false end as favorited,
 case when g.follows is not null then true else false end as following,
-t.tag,
+array_remove(array_agg(t.tag order by t.tag), null) as taglist,
 (select count(*)
 from favorites as f
 where f.article = a.id) as favoritescount
@@ -150,12 +164,16 @@ left join article_tags h
 on h.article = a.id
 left join tags t
 on t.id = h.tag
-where a.slug = ?", (:id auth-user), (:id auth-user), slug] query-options)]
+where a.slug = ?
+group by a.id, a.slug, a.title, a.description, a.body, a.createdat, a.updatedat, b.username, b.bio, b.image, favorited, following
+", (:id auth-user), (:id auth-user), slug] query-options)]
      (when (seq db-articles) (-> db-articles
-                                 (roll-up-tags)
-                                 (get-in [slug])
+                                 ;;(roll-up-tags)
+                                 ;;(get-in [slug])
                                  (db-record->model)
-                                 (sort-tag-list))))))
+                                 (extract-tags)
+                                 ;;(sort-tag-list)
+                                 )))))
 
 (defn- insert-tag
   [tx tag]

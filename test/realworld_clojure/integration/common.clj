@@ -169,21 +169,24 @@
       (.toString)))
 
 (defn articles-match-feed?
-  [article author feed]
-  (let [article-ks [:title :description :slug :tag-list]
-        ;; article's timestamps, returned from the db, are javaa.sql.Timestamps.
-        ;; But the timestamps in feed, returned from parsing the json, are strings.
-        ;; To compare them, convert article's timestamps to strings.
-        expected-created-at (instance->str (:createdat article))
-        expected-updated-at (when (some? (:updatedat article))
-                              (instance->str (:updatedat article)))]
-    (and
-     (keys-match? article feed article-ks)
-     (is (= expected-created-at (:createdat feed)))
-     (when (some? (:updatedat article))
-       (is (= expected-updated-at (:updatedat feed))))
-     (profiles-equal? author (:author feed))
-     (is (true? (get-in feed [:author :following]))))))
+  [test-cases]
+  (doseq [{:keys [article author feed]} test-cases]
+    (let [;; article's timestamps, returned from the db, are javaa.sql.Timestamps.
+            ;; But the timestamps in feed, returned from parsing the json, are strings.
+            ;; To compare them, convert article's timestamps to strings.
+          expected-created-at (instance->str (:createdat article))
+          expected-updated-at (when (some? (:updatedat article))
+                                (instance->str (:updatedat article)))]
+
+      (is (= (:title article) (:title feed)) "titles do not match")
+      (is (= (:description article) (:description feed)) "descriptions do not match")
+      (is (= (:slug article) (:slug feed)) "slugs do not match")
+      (is (= (:tag-list article) (seq (sort (distinct (:tag-list feed))))) "tag lists do not match")
+      (is (= expected-created-at (:createdat feed)) "createdats do not match")
+      (when (some? (:updatedat article))
+        (is (= expected-updated-at (:updatedat feed)) "updatedats do not match"))
+      (profiles-equal? author (:author feed))
+      (is (true? (get-in feed [:author :following])) "following should be true"))))
 
 (defn article-matches-article?
   [a author b]

@@ -281,6 +281,10 @@ where a.slug=?", (:id auth-user), slug] query-options)]
   " left join article_tags as s on a.id = s.article
 left join tags as t on t.id = s.tag ")
 
+(defn- filter-tag [filters]
+  (when (:tag filters)
+    (str " having '" (:tag filters) "' = ANY(array_agg(t.tag)) ")))
+
 (defn list-articles
   ([database filters]
    (let [limit (or (:limit filters) 20)
@@ -296,8 +300,9 @@ from articles as a"
                                                               (join-tags)
                                                               (join-and-filter-user filters)
                                                               (join-and-filter-favorite filters)
-                                                              "group by a.id, a.slug, a.title, a.description, a.createdat, a.updatedat, b.username, b.bio, b.image
-order by case when a.updatedat is not null then a.updatedat else a.createdat end desc
+                                                              "group by a.id, a.slug, a.title, a.description, a.createdat, a.updatedat, b.username, b.bio, b.image "
+                                                              (filter-tag filters)
+                                                              " order by case when a.updatedat is not null then a.updatedat else a.createdat end desc
 limit ?
 offset ?"), limit, offset] query-options)]
      (->> articles
@@ -316,16 +321,21 @@ case when h.article is null then false else true end as favorited,
 from favorites as f
 where f.article = a.id) as favoritescount
 from articles as a"
+                                                              (join-tags)
                                                               (join-and-filter-user filters)
                                                               (join-and-filter-favorite filters)
                                                               "left join follows as g
 on g.user_id = ? and g.follows = a.author
 left join favorites as h
 on h.user_id = ? and h.article = a.id
-order by case when a.updatedat is not null then a.updatedat else a.createdat end desc
+group by a.id, a.slug, a.title, a.description, a.createdat, a.updatedat, b.username, b.bio, b.image, following, favorited"
+                                                              (filter-tag filters)
+                                                              "order by case when a.updatedat is not null then a.updatedat else a.createdat end desc
 limit ?
 offset ?"), (:id auth-user), (:id auth-user), limit, offset] query-options)]
-     (articles->multiple-articles articles))))
+     (->> articles
+          (map extract-tags)
+          articles->multiple-articles))))
 
 (defn article-feed
   [database filters auth-user]

@@ -308,3 +308,7 @@
    [:updatedat [:string {:min 1}]]
    [:body [:string {:min 1}]]
    [:author #'auth-profile-schema]])
+
+(def tags-schema
+  [:map {:closed  true}
+   [:tags [:vector {:min 0} :string]]])

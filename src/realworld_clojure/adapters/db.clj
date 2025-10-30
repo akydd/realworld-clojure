@@ -391,7 +391,7 @@ where slug = ?)" , (:id auth-user), slug])
 
 (defn get-tags
   [database]
-  (let [tags (jdbc/execute! (:datasource database) ["select tag from tags"] query-options)]
+  (let [tags (jdbc/execute! (:datasource database) ["select tag from tags order by tag"] query-options)]
     (map :tag tags)))
 
 (defn migrate

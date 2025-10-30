@@ -16,27 +16,6 @@
     (let [r (article-feed-request "")]
       (is (= 401 (:status r))))))
 
-(deftest following-no-one
-  (test-utils/with-system
-    [sut (core/new-system (config/read-test-config))]
-    (let [db (get-in sut [:database :datasource])
-          author (test-utils/create-user db)
-          _ (test-utils/create-article db (:id author))
-          user (test-utils/create-user db)
-          token (get-login-token user)
-          r (article-feed-request "" token)
-          body (-> r
-                   (:body)
-                   (json/parse-string true))
-          articles (:articles body)]
-      (is (= 200 (:status r)))
-      (is (true? (m/validate multiple-auth-article-schema body)) (->> body
-                                                                      (m/explain multiple-auth-article-schema)
-                                                                      (me/humanize)))
-      (is (zero? (count articles)))
-      (is (zero? (:articlesCount body))))))
-
-;; TODO: turn this into a custom assertion.
 (defn- validate-response [response expected-articles expected-authors]
   (let [body (-> response
                  (:body)
@@ -47,9 +26,21 @@
                                                                     (me/humanize)))
     ;;(is (= expected-articles (:articles body)))
     (is (= (count expected-articles) (:articlesCount body)))
-    (articles-match-feed? (map (fn [a b c] {:article a
-                                            :author b
-                                            :feed c}) expected-articles expected-authors (:articles body)))))
+    (articles-match-feed? (map (fn [a b c d] {:article a
+                                              :author b
+                                              :feed c
+                                              :follows d}) expected-articles expected-authors (:articles body) (vec (repeat (count expected-authors) true))))))
+
+(deftest following-no-one
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          author (test-utils/create-user db)
+          _ (test-utils/create-article db (:id author))
+          user (test-utils/create-user db)
+          token (get-login-token user)
+          r (article-feed-request "" token)]
+      (validate-response r [] []))))
 
 (deftest following-user-with-no-articles
   (test-utils/with-system
@@ -299,4 +290,3 @@
           token (get-login-token user)
           r (article-feed-request "?offset=-1" token)]
       (is (= 422 (:status r))))))
-

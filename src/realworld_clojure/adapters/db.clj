@@ -277,28 +277,38 @@ where a.slug=?", (:id auth-user), slug] query-options)]
   (when (:favorited filters)
     (str " inner join favorites as i on i.article = a.id inner join users as j on j.username='" (:favorited filters) "' and i.user_id = j.id ")))
 
+(defn- join-tags []
+  " left join article_tags as s on a.id = s.article
+left join tags as t on t.id = s.tag ")
+
 (defn list-articles
   ([database filters]
    (let [limit (or (:limit filters) 20)
          offset (or (:offset filters) 0)
          articles (jdbc/execute! (:datasource database) [(str "select a.slug, a.title, a.description,
 a.createdat, a.updatedat,
+array_remove(array_agg(t.tag order by t.tag), null) as taglist,
 b.username, b.bio, b.image,
 (select count(*)
 from favorites as f
 where f.article = a.id) as favoritescount
 from articles as a"
+                                                              (join-tags)
                                                               (join-and-filter-user filters)
                                                               (join-and-filter-favorite filters)
-                                                              "order by case when a.updatedat is not null then a.updatedat else a.createdat end desc
+                                                              "group by a.id, a.slug, a.title, a.description, a.createdat, a.updatedat, b.username, b.bio, b.image
+order by case when a.updatedat is not null then a.updatedat else a.createdat end desc
 limit ?
 offset ?"), limit, offset] query-options)]
-     (articles->multiple-articles articles)))
+     (->> articles
+          (map extract-tags)
+          articles->multiple-articles)))
   ([database filters auth-user]
    (let [limit (or (:limit filters) 20)
          offset (or (:offset filters) 0)
          articles (jdbc/execute! (:datasource database) [(str "select a.slug, a.title, a.description,
 a.createdat, a.updatedat,
+array_remove(array_agg(t.tag order by t.tag), null) as taglist,
 b.username, b.bio, b.image,
 case when g.follows is null then false else true end as following,
 case when h.article is null then false else true end as favorited,

@@ -170,7 +170,7 @@
 
 (defn articles-match-feed?
   [test-cases]
-  (doseq [{:keys [article author feed]} test-cases]
+  (doseq [{:keys [article author feed follows]} test-cases]
     (let [;; article's timestamps, returned from the db, are javaa.sql.Timestamps.
             ;; But the timestamps in feed, returned from parsing the json, are strings.
             ;; To compare them, convert article's timestamps to strings.
@@ -186,7 +186,8 @@
       (when (some? (:updatedat article))
         (is (= expected-updated-at (:updatedat feed)) "updatedats do not match"))
       (profiles-equal? author (:author feed))
-      (is (true? (get-in feed [:author :following])) "following should be true"))))
+      (when (some? follows)
+        (is (= follows (get-in feed [:author :following])) "following does not match")))))
 
 (defn article-matches-article?
   [a author b]
@@ -254,7 +255,8 @@
    [:createdat [:string {:min 1}]]
    [:updatedat {:optional true} [:string {:min 1}]]
    [:favoritescount [:int]]
-   [:author #'no-auth-profile-schema]])
+   [:author #'no-auth-profile-schema]
+   [:tag-list {:optional true} [:vector {:min 1} :string]]])
 
 (def multiple-no-auth-article-schema
   [:map {:closed true}

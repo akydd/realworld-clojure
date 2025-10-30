@@ -1,7 +1,7 @@
 (ns realworld-clojure.integration.list-articles
   (:require
    [clojure.test :refer [deftest is]]
-   [realworld-clojure.integration.common :refer [list-articles-request multiple-no-auth-article-schema]]
+   [realworld-clojure.integration.common :refer [list-articles-request multiple-no-auth-article-schema multiple-auth-article-schema articles-match-feed?]]
    [realworld-clojure.utils :as test-utils]
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
@@ -24,6 +24,33 @@
       (is (zero? (:articlesCount body)))
       (is (empty? (:articles body))))))
 
+(defn- validate-response
+  ([response expected-articles expected-authors]
+   (let [body (-> response
+                  (:body)
+                  (json/parse-string true))]
+     (is (= 200 (:status response)))
+     (is (true? (m/validate multiple-no-auth-article-schema body)) (->> body
+                                                                        (m/explain multiple-no-auth-article-schema)
+                                                                        (me/humanize)))
+     (is (= (count expected-articles) (:articlesCount body)))
+     (articles-match-feed? (map (fn [a b c] {:article a
+                                             :author b
+                                             :feed c}) expected-articles expected-authors (:articles body)))))
+  ([response expected-articles expected-authors expected-follows]
+   (let [body (-> response
+                  (:body)
+                  (json/parse-string true))]
+     (is (= 200 (:status response)))
+     (is (true? (m/validate multiple-auth-article-schema body)) (->> body
+                                                                     (m/explain multiple-auth-article-schema)
+                                                                     (me/humanize)))
+     (is (= (count expected-articles) (:articlesCount body)))
+     (articles-match-feed? (map (fn [a b c d] {:article a
+                                               :author b
+                                               :feed c
+                                               :follows d}) expected-articles expected-authors (:articles body) expected-follows)))))
+
 (deftest filter-by-author-no-auth
   (test-utils/with-system
     [sut (core/new-system (config/read-test-config))]
@@ -32,20 +59,10 @@
           author-two (test-utils/create-user db)
           article-one (test-utils/create-article db (:id author-one))
           article-two (test-utils/create-article db (:id author-two))
-          r (list-articles-request (str "?author=" (:username author-one)))
-          body (-> r
-                   (:body)
-                   (json/parse-string true))
-          articles (:articles body)]
-      (is (= 200 (:status r)))
-      (is (true? (m/validate multiple-no-auth-article-schema body)) (->> body
-                                                                         (m/explain multiple-no-auth-article-schema)
-                                                                         (me/humanize)))
-      (is (= 1 (:articlesCount body)))
-      (is (= 1 (count articles)))
-      (is (= (:username author-one) (get-in (first articles) [:author :username]))))))
+          r (list-articles-request (str "?author=" (:username author-one)))]
+      (validate-response r [article-one] [author-one]))))
 
-(deftest fiter-by-favorited-no-auth
+(deftest filter-by-favorited-no-auth
   (test-utils/with-system
     [sut (core/new-system (config/read-test-config))]
     (let [db (get-in sut [:database :datasource])
@@ -63,21 +80,10 @@
           _ (test-utils/fav-article db user-one a-two-two)
           _ (test-utils/fav-article db user-two a-one-two)
           _ (test-utils/fav-article db user-two a-two-one)
-          r (list-articles-request (str "?favorited=" (:username user-one)))
-          body (-> r
-                   (:body)
-                   (json/parse-string true))
-          articles (:articles body)]
-      (is (= 200 (:status r)))
-      (is (true? (m/validate multiple-no-auth-article-schema body)) (->> body
-                                                                         (m/explain multiple-no-auth-article-schema)
-                                                                         (me/humanize)))
-      (is (= 2 (:articlesCount body)))
-      (is (= 2 (count articles)))
-      (is (= (:title a-one-one) (:title (first articles))))
-      (is (= (:title a-two-two) (:title (second articles)))))))
+          r (list-articles-request (str "?favorited=" (:username user-one)))]
+      (validate-response r [a-one-one a-two-two] [author-one author-two]))))
 
-(deftest orde-by-most-recent-no-auth
+(deftest order-by-most-recent-no-auth
   (test-utils/with-system
     [sut (core/new-system (config/read-test-config))]
     (let [db (get-in sut [:database :datasource])
@@ -88,17 +94,5 @@
           a1 (test-utils/create-article db (:id author) {:createdat (jt/- now (jt/days 2))})
           a2 (test-utils/create-article db (:id author) {:createdat (jt/- now (jt/days 1))})
           a3 (test-utils/create-article db (:id author) {:createdat now})
-          r (list-articles-request "")
-          body (-> r
-                   (:body)
-                   (json/parse-string true))
-          articles (:articles body)]
-      (is (= 200 (:status r)))
-      (is (true? (m/validate multiple-no-auth-article-schema body)) (->> body
-                                                                         (m/explain multiple-no-auth-article-schema)
-                                                                         (me/humanize)))
-      (is (= 3 (:articlesCount body)))
-      (is (= 3 (count articles)))
-      (is (= (:slug a3) (:slug (first articles))))
-      (is (= (:slug a2) (:slug (second articles))))
-      (is (= (:slug a1) (:slug (nth articles 2)))))))
+          r (list-articles-request "")]
+      (validate-response r [a3 a2 a1] [author author author]))))

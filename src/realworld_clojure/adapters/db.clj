@@ -2,6 +2,7 @@
   (:require [next.jdbc :as jdbc]
             [next.jdbc.sql :as sql]
             [next.jdbc.optional :as o]
+            [next.jdbc.result-set :as rs]
             [next.jdbc.date-time :as dt]
             [com.stuartsierra.component :as component]
             [ragtime.repl :as ragtime-repl]
@@ -10,6 +11,10 @@
 
 (def query-options
   {:builder-fn o/as-unqualified-lower-maps})
+
+(def update-options-with-nulls
+  {:return-keys true
+   :builder-fn rs/as-unqualified-lower-maps})
 
 (def update-options
   {:return-keys true
@@ -25,14 +30,16 @@
   "Insert record into user table"
   [database user]
   (try
-    (sql/insert! (:datasource database) :users user update-options)
+    (sql/insert! (:datasource database) :users user {:returning [:id :username :email
+                                                                 :bio :image]
+                                                     :builder-fn rs/as-unqualified-lower-maps})
     (catch org.postgresql.util.PSQLException e
       (handle-psql-exception e))))
 
 (defn get-user
   "Get a user record from user table"
   [database id]
-  (sql/get-by-id (:datasource database) :users id query-options))
+  (sql/get-by-id (:datasource database) :users id {:builder-fn rs/as-unqualified-lower-maps}))
 
 (defn get-user-by-email
   "Get a user record by email"

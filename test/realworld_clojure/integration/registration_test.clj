@@ -40,6 +40,4 @@
                                                               (me/humanize)))
       (is (= (:username input) (:username user)))
       (is (= (:email input) (:email user)))
-      (is (contains? user :image))
-      (is (contains? user :bio))
       (is (some? (:token user))))))

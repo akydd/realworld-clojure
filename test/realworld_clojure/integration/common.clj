@@ -33,13 +33,17 @@
    @(http/get (str base-url "/profiles/" username) {:headers (get-headers token)})))
 
 (defn login-request
-  ([user]
+  ([]
    @(http/post (str base-url "/users/login") {:headers (get-headers)
-                                              :body (json/generate-string {:user (select-keys user [:email :password])})})))
+                                              :body (json/generate-string {})}))
+  ([email password]
+   @(http/post (str base-url "/users/login") {:headers (get-headers)
+                                              :body (json/generate-string {:user {:email email
+                                                                                  :password password}})})))
 
 (defn get-login-token
   [user]
-  (let [r (login-request user)]
+  (let [r (login-request (:email user) (:password user))]
     (get-in (json/parse-string (:body r) true) [:user :token])))
 
 (defn update-user-request

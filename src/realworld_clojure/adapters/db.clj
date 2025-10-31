@@ -30,8 +30,7 @@
   "Insert record into user table"
   [database user]
   (try
-    (sql/insert! (:datasource database) :users user {:returning [:id :username :email
-                                                                 :bio :image]
+    (sql/insert! (:datasource database) :users user {:returning :all
                                                      :builder-fn rs/as-unqualified-lower-maps})
     (catch org.postgresql.util.PSQLException e
       (handle-psql-exception e))))
@@ -44,7 +43,8 @@
 (defn get-user-by-email
   "Get a user record by email"
   [database email]
-  (first (sql/find-by-keys (:datasource database) :users {:email email} query-options)))
+  (first (sql/find-by-keys (:datasource database) :users {:email email} {:returning :all
+                                                                         :builder-fn rs/as-unqualified-maps})))
 
 (defn get-profile
   "Get a user profile"
@@ -67,7 +67,8 @@ where u.username = ?", (:id auth-user), username] query-options)))
   "Update a user record"
   [database auth-user data]
   (try
-    (sql/update! (:datasource database) :users data {:id (:id auth-user)} update-options)
+    (sql/update! (:datasource database) :users data {:id (:id auth-user)} {:suffix "returning *"
+                                                                           :builder-fn rs/as-unqualified-maps})
     (catch org.postgresql.util.PSQLException e
       (handle-psql-exception e))))
 
@@ -307,7 +308,7 @@ from articles as a"
                                                               (join-tags)
                                                               (join-and-filter-user filters)
                                                               (join-and-filter-favorite filters)
-                                                              "group by a.id, a.slug, a.title, a.description, a.createdat, a.updatedat, b.username, b.bio, b.image "
+                                                              " group by a.id, a.slug, a.title, a.description, a.createdat, a.updatedat, b.username, b.bio, b.image "
                                                               (filter-tag filters)
                                                               " order by case when a.updatedat is not null then a.updatedat else a.createdat end desc
 limit ?
@@ -337,7 +338,7 @@ left join favorites as h
 on h.user_id = ? and h.article = a.id
 group by a.id, a.slug, a.title, a.description, a.createdat, a.updatedat, b.username, b.bio, b.image, following, favorited"
                                                               (filter-tag filters)
-                                                              "order by case when a.updatedat is not null then a.updatedat else a.createdat end desc
+                                                              " order by case when a.updatedat is not null then a.updatedat else a.createdat end desc
 limit ?
 offset ?"), (:id auth-user), (:id auth-user), limit, offset] query-options)]
      (->> articles

@@ -6,35 +6,47 @@
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
    [cheshire.core :as json]
-   [malli.core :as m]))
+   [malli.core :as m]
+   [malli.error :as me]))
 
-(deftest authentication
-  (testing "invalid input"
-    (test-utils/with-system
-      [sut (core/new-system (config/read-test-config))]
-      (let [r (login-request {})]
-        (is (= 422 (:status r))))))
+(deftest no-input
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [r (login-request)]
+      (is (= 422 (:status r))))))
 
-  (testing "no user found"
-    (test-utils/with-system
-      [sut (core/new-system (config/read-test-config))]
-      (let [r (login-request {:email "hi" :password "hi"})]
-        (is (= 403 (:status r))))))
+(deftest invalid-input
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [r (login-request "" "")]
+      (is (= 422 (:status r))))))
 
-  (testing "wrong password"
-    (test-utils/with-system
-      [sut (core/new-system (config/read-test-config))]
-      (let [db (get-in sut [:database :datasource])
-            user (test-utils/create-user db)
-            r (login-request (assoc user :password "hi"))]
-        (is (= 403 (:status r))))))
+(deftest no-user-found
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [r (login-request "hi" "hi:")]
+      (is (= 403 (:status r))))))
 
-  (testing "success"
-    (test-utils/with-system
-      [sut (core/new-system (config/read-test-config))]
-      (let [db (get-in sut [:database :datasource])
-            user (test-utils/create-user db)
-            r (login-request user)
-            parsed-body (json/parse-string (:body r) true)]
-        (is (= 200 (:status r)))
-        (is (true? (m/validate user-response-schema (:user parsed-body))))))))
+(deftest wrong-password
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          user (test-utils/create-user db)
+          r (login-request (:email user) "hi")]
+      (is (= 403 (:status r))))))
+
+(deftest success
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          user (test-utils/create-user db)
+          r (login-request (:email user) (:password user))
+          returned-user (-> r
+                            (:body)
+                            (json/parse-string true)
+                            (:user))]
+      (is (= 200 (:status r)))
+      (is (true? (m/validate user-response-schema returned-user)) (->> returned-user
+                                                                       (m/explain user-response-schema)
+                                                                       (me/humanize)))
+      (is (= (:username user) (:username returned-user))))))

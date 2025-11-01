@@ -5,6 +5,7 @@
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
    [malli.core :as m]
+   [malli.error :as me]
    [realworld-clojure.integration.common :refer [no-auth-profile-schema auth-profile-schema get-profile-request get-login-token profiles-equal?]]
    [cheshire.core :as json]))
 
@@ -19,8 +20,10 @@
                       (json/parse-string true)
                       (:profile))]
       (is (= 200 (:status r)))
-      (profiles-equal? user profile)
-      (is (true? (m/validate no-auth-profile-schema profile))))))
+      (is (true? (m/validate no-auth-profile-schema profile)) (->> profile
+                                                                   (m/explain no-auth-profile-schema)
+                                                                   (me/humanize)))
+      (profiles-equal? user profile))))
 
 (deftest with-auth-not-following
   (test-utils/with-system
@@ -35,8 +38,10 @@
                       (json/parse-string true)
                       (:profile))]
       (is (= 200 (:status r)))
+      (is (true? (m/validate auth-profile-schema profile)) (->> profile
+                                                                (m/explain auth-profile-schema)
+                                                                (me/humanize)))
       (profiles-equal? user profile)
-      (is (true? (m/validate auth-profile-schema profile)))
       (is (false? (:following profile))))))
 
 (deftest with-auth-following
@@ -53,6 +58,8 @@
                       (json/parse-string true)
                       (:profile))]
       (is (= 200 (:status r)))
-      (is (true? (m/validate auth-profile-schema profile)))
+      (is (true? (m/validate auth-profile-schema profile)) (->> profile
+                                                                (m/explain auth-profile-schema)
+                                                                (me/humanize)))
       (profiles-equal? user-two profile)
       (is (true? (:following profile))))))

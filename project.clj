@@ -22,7 +22,8 @@
                  [cambium/cambium.codec-simple "1.0.0"]
                  [cambium/cambium.logback.core "0.4.6"]
                  [clojure.java-time "1.4.2"]
-                 [cheshire "6.1.0"]]
+                 [cheshire "6.1.0"]
+                 [camel-snake-kebab "0.4.3"]]
 
   :main ^:skip-aot realworld-clojure.core
   :target-path "target/%s"

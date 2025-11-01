@@ -49,14 +49,14 @@
 (defn get-profile
   "Get a user profile"
   ([database username]
-   (jdbc/execute-one! (:datasource database) ["select username, bio, image from users where username = ?" username] query-options))
+   (jdbc/execute-one! (:datasource database) ["select username, bio, image from users where username = ?" username] {:builder-fn rs/as-unqualified-maps}))
   ([database username auth-user]
    (jdbc/execute-one! (:datasource database) ["select u.username, u.bio, u.image,
 case when f.follows is null then false else true end as following
 from users u
 left join follows as f
 on f.user_id = ? and f.follows = u.id
-where u.username = ?", (:id auth-user), username] query-options)))
+where u.username = ?", (:id auth-user), username] {:builder-fn rs/as-unqualified-maps})))
 
 (defn get-user-by-username
   "Get a user record by username"
@@ -119,7 +119,7 @@ on h.article = a.id
 left join tags t
 on t.id = h.tag
 where a.slug = ?
-group by a.id, a.slug, a.title, a.description, a.body, a.createdat, a.updatedat, b.username, b.bio, b.image", slug] query-options)]
+group by a.id, a.slug, a.title, a.description, a.body, a.createdat, a.updatedat, b.username, b.bio, b.image", slug] {:builder-fn rs/as-unqualified-maps})]
      (when (seq db-articles) (-> db-articles
                                  (db-record->model)
                                  (extract-tags)))))
@@ -148,7 +148,7 @@ left join tags t
 on t.id = h.tag
 where a.slug = ?
 group by a.id, a.slug, a.title, a.description, a.body, a.createdat, a.updatedat, b.username, b.bio, b.image, favorited, following
-", (:id auth-user), (:id auth-user), slug] query-options)]
+", (:id auth-user), (:id auth-user), slug] {:builder-fn rs/as-unqualified-maps})]
      (when (seq db-articles) (-> db-articles
                                  (db-record->model)
                                  (extract-tags))))))

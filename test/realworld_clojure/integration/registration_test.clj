@@ -1,6 +1,6 @@
 (ns realworld-clojure.integration.registration-test
   (:require
-   [clojure.test :refer [deftest testing is]]
+   [clojure.test :refer [deftest is]]
    [cheshire.core :as json]
    [realworld-clojure.utils :as test-utils]
    [realworld-clojure.core :as core]

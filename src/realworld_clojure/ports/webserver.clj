@@ -11,7 +11,8 @@
    [compojure.core :as core]
    [compojure.coercions :refer [as-int]]
    [org.httpkit.server :as http-server]
-   [buddy.auth.backends :as backends]))
+   [buddy.auth.backends :as backends]
+   [camel-snake-kebab.core :as csk]))
 
 (defn app-routes-no-auth [handler]
   (core/routes
@@ -68,7 +69,8 @@
           (core/wrap-routes wrap-auth-user database)
           (core/wrap-routes wrap-authentication backend)))
         wrap-exception
-        (wrap-json-response {:date-format "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"})
+        (wrap-json-response {:date-format "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
+                             :key-fn csk/->camelCaseString})
         (wrap-content-type "text/json")
         (wrap-json-body {:keywords? true}))))
 

@@ -28,17 +28,6 @@
          (clear-ds (get-in ~bound-var [:database :datasource]))
          (component/stop ~bound-var)))))
 
-(defn profile-matches-user?
-  "Returns true if the profile's fields match that of the user."
-  [profile user]
-  (let [keys [:username :bio :image]]
-    (= (select-keys profile keys) (select-keys user keys))))
-
-(defn comments-are-equal?
-  [a b]
-  (let [keys [:id :createdat :updatedat :body]]
-    (= (select-keys keys a) (select-keys keys b))))
-
 (defn create-user
   "Save a test user to the db. Returns the user with an unhashed password, for testing."
   [db]

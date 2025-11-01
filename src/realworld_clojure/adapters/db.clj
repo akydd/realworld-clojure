@@ -18,7 +18,7 @@
 
 (def update-options
   {:return-keys true
-   :builder-fn o/as-unqualified-lower-maps})
+   :builder-fn rs/as-unqualified-lower-maps})
 
 (defn- handle-psql-exception
   [e]
@@ -243,7 +243,7 @@ inner join comments as c
 on a.id = c.article
 inner join users as u
 on c.author = u.id
-where a.slug=?", slug] query-options)]
+where a.slug=? order by c.id", slug] {:builder-fn rs/as-unqualified-maps})]
      (map db-record->model cs)))
   ([database slug auth-user]
    (when-let [cs (jdbc/execute! (:datasource database) ["select c.id, c.body,
@@ -257,7 +257,7 @@ inner join users as u
 on c.author = u.id
 left join follows as f
 on f.user_id = ? and f.follows = c.author
-where a.slug=?", (:id auth-user), slug] query-options)]
+where a.slug=? order by c.id", (:id auth-user), slug] {:builder-fn rs/as-unqualified-maps})]
      (map db-record->model cs))))
 
 (defn delete-comment
@@ -312,7 +312,7 @@ from articles as a"
                                                               (filter-tag filters)
                                                               " order by case when a.updatedat is not null then a.updatedat else a.createdat end desc
 limit ?
-offset ?"), limit, offset] query-options)]
+offset ?"), limit, offset] {:builder-fn rs/as-unqualified-maps})]
      (->> articles
           (map extract-tags)
           articles->multiple-articles)))
@@ -340,7 +340,7 @@ group by a.id, a.slug, a.title, a.description, a.createdat, a.updatedat, b.usern
                                                               (filter-tag filters)
                                                               " order by case when a.updatedat is not null then a.updatedat else a.createdat end desc
 limit ?
-offset ?"), (:id auth-user), (:id auth-user), limit, offset] query-options)]
+offset ?"), (:id auth-user), (:id auth-user), limit, offset] {:builder-fn rs/as-unqualified-maps})]
      (->> articles
           (map extract-tags)
           articles->multiple-articles))))
@@ -374,7 +374,7 @@ group by a.slug, a.title, a.description, a.createdat, a.updatedat, u.username, u
 following, favorited, favoritescount
 order by case when a.updatedat is not null then a.updatedat else a.createdat end desc
 limit ?
-offset ?", (:id auth-user), limit, offset] query-options)]
+offset ?", (:id auth-user), limit, offset] {:builder-fn rs/as-unqualified-maps})]
     (->> articles
          (map extract-tags)
          articles->multiple-articles)))

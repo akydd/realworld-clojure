@@ -155,10 +155,32 @@
     (is (= (k a) (k b)) (str "Expected " (k a) " but got " (k b)))))
 
 (defn profiles-equal?
-  [a b]
-  (is (= (:username a) (:username b)) "usernames do not match")
-  (is (= (:bio a) (:bio b)) "bios do not match")
-  (is (= (:image a) (:image b)) "images do not match"))
+  [expected actual]
+  (is (= (:username expected) (:username actual)) "usernames do not match")
+  (is (= (:bio expected) (:bio actual)) "bios do not match")
+  (is (= (:image expected) (:image actual)) "images do not match"))
+
+(defn instance->str [i]
+  (-> i
+      (jt/truncate-to :millis)
+      (.toString)))
+
+(defn assert-comment-matches
+  ([expected actual author follows]
+   (let [expected-created-at (instance->str (:createdat expected))
+         expected-updated-at (instance->str (:updatedat expected))]
+     (is (= (:id expected) (:id actual)) "ids do not match")
+     (is (= expected-created-at (:createdat actual)) "createdats do not match")
+     (is (= expected-updated-at (:updatedat actual)) "updatedats do not match")
+     (is (= (:body expected) (:body actual)) "bodies do not match")
+     (profiles-equal? author (:author actual))
+     (when (some? follows)
+       (is (= follows (get-in actual [:author :following])) "follows does not match")))))
+
+(defn assert-comments-match
+  [test-cases]
+  (doseq [{:keys [expected actual author follows]} test-cases]
+    (assert-comment-matches expected actual author follows)))
 
 (defn validate-article-vs-input
   [article input]
@@ -167,31 +189,29 @@
   (is (= (:body article) (:body input)) "bodies do not match")
   (is (= (:tag-list article) (seq (sort (distinct (:tag-list input))))) "tag lists do not match"))
 
-(defn instance->str [i]
-  (-> i
-      (jt/truncate-to :millis)
-      (.toString)))
+(defn- assert-article-matches-feed [article feed author follows]
+  (let [;; article's timestamps, returned from the db, are javaa.sql.Timestamps.
+          ;; But the timestamps in feed, returned from parsing the json, are strings.
+          ;; To compare them, convert article's timestamps to strings.
+        expected-created-at (instance->str (:createdat article))
+        expected-updated-at (when (some? (:updatedat article))
+                              (instance->str (:updatedat article)))]
+
+    (is (= (:title article) (:title feed)) "titles do not match")
+    (is (= (:description article) (:description feed)) "descriptions do not match")
+    (is (= (:slug article) (:slug feed)) "slugs do not match")
+    (is (= (:tag-list article) (seq (sort (distinct (:tag-list feed))))) "tag lists do not match")
+    (is (= expected-created-at (:createdat feed)) "createdats do not match")
+    (when (some? (:updatedat article))
+      (is (= expected-updated-at (:updatedat feed)) "updatedats do not match"))
+    (profiles-equal? author (:author feed))
+    (when (some? follows)
+      (is (= follows (get-in feed [:author :following])) "following does not match"))))
 
 (defn articles-match-feed?
   [test-cases]
   (doseq [{:keys [article author feed follows]} test-cases]
-    (let [;; article's timestamps, returned from the db, are javaa.sql.Timestamps.
-            ;; But the timestamps in feed, returned from parsing the json, are strings.
-            ;; To compare them, convert article's timestamps to strings.
-          expected-created-at (instance->str (:createdat article))
-          expected-updated-at (when (some? (:updatedat article))
-                                (instance->str (:updatedat article)))]
-
-      (is (= (:title article) (:title feed)) "titles do not match")
-      (is (= (:description article) (:description feed)) "descriptions do not match")
-      (is (= (:slug article) (:slug feed)) "slugs do not match")
-      (is (= (:tag-list article) (seq (sort (distinct (:tag-list feed))))) "tag lists do not match")
-      (is (= expected-created-at (:createdat feed)) "createdats do not match")
-      (when (some? (:updatedat article))
-        (is (= expected-updated-at (:updatedat feed)) "updatedats do not match"))
-      (profiles-equal? author (:author feed))
-      (when (some? follows)
-        (is (= follows (get-in feed [:author :following])) "following does not match")))))
+    (assert-article-matches-feed article feed author follows)))
 
 (defn article-matches-article?
   [a author b]
@@ -246,7 +266,7 @@
    [:description [:string {:min 1}]]
    [:body [:string {:min 1}]]
    [:createdat [:string {:min 1}]]
-   [:updatedat {:optional true} [:string {:min 1}]]
+   [:updatedat [:maybe :string]]
    [:favoritescount [:int]]
    [:author #'no-auth-profile-schema]
    [:tag-list {:optional true} [:vector {:min 1} :string]]])
@@ -257,7 +277,7 @@
    [:title [:string {:min 1}]]
    [:description [:string {:min 1}]]
    [:createdat [:string {:min 1}]]
-   [:updatedat {:optional true} [:string {:min 1}]]
+   [:updatedat [:maybe :string]]
    [:favoritescount [:int]]
    [:author #'no-auth-profile-schema]
    [:tag-list {:optional true} [:vector {:min 1} :string]]])
@@ -274,7 +294,7 @@
    [:description [:string {:min 1}]]
    [:body [:string {:min 1}]]
    [:createdat [:string {:min 1}]]
-   [:updatedat {:optional true} [:string {:min 1}]]
+   [:updatedat [:maybe :string]]
    [:favorited [:boolean]]
    [:favoritescount [:int]]
    [:author #'auth-profile-schema]
@@ -286,7 +306,7 @@
    [:title [:string {:min 1}]]
    [:description [:string {:min 1}]]
    [:createdat [:string {:min 1}]]
-   [:updatedat {:optional true} [:string {:min 1}]]
+   [:updatedat [:maybe :string]]
    [:favorited [:boolean]]
    [:favoritescount [:int]]
    [:author #'auth-profile-schema]

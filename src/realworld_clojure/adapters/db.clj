@@ -86,11 +86,13 @@ values (?, ?) on conflict do nothing", (:id auth-user) (:id user)]))
   [s]
   (vec (.getArray s)))
 
-(defn- extract-tags
+(defn extract-tags
   [article]
-  (if (empty? (.getArray (:taglist article)))
-    (dissoc article :taglist)
-    (dissoc (assoc article :tag-list (sqlarray->vec (:taglist article))) :taglist)))
+  (if (empty? (.getArray (:tag-list article)))
+    (dissoc article :tag-list)
+    (update article :tag-list sqlarray->vec)
+    ;;(dissoc (assoc article :tag-list (sqlarray->vec (:taglist article))) :taglist)
+    ))
 
 (defn- db-record->model
   [m]
@@ -105,12 +107,12 @@ values (?, ?) on conflict do nothing", (:id auth-user) (:id user)]))
   ([database slug]
    (let [db-articles
          (jdbc/execute-one! (:datasource database) ["select a.slug, a.title, a.description, a.body,
-a.createdat, a.updatedat,
+a.created_at, a.updatedat,
 b.username, b.bio, b.image,
-array_remove(array_agg(t.tag order by t.tag), null) as taglist,
+array_remove(array_agg(t.tag order by t.tag), null) as tag_list,
 (select count(*)
 from favorites as f
-where f.article = a.id) as favoritescount
+where f.article = a.id) as favorites_count
 from articles as a
 inner join users as b
 on a.author = b.id
@@ -119,7 +121,7 @@ on h.article = a.id
 left join tags t
 on t.id = h.tag
 where a.slug = ?
-group by a.id, a.slug, a.title, a.description, a.body, a.createdat, a.updatedat, b.username, b.bio, b.image", slug] {:builder-fn rs/as-unqualified-maps})]
+group by a.id, a.slug, a.title, a.description, a.body, a.created_at, a.updatedat, b.username, b.bio, b.image", slug] {:builder-fn rs/as-unqualified-kebab-maps})]
      (when (seq db-articles) (-> db-articles
                                  (db-record->model)
                                  (extract-tags)))))
@@ -127,14 +129,14 @@ group by a.id, a.slug, a.title, a.description, a.body, a.createdat, a.updatedat,
   ([database slug auth-user]
    (let [db-articles
          (jdbc/execute-one! (:datasource database) ["select a.slug, a.title, a.description, a.body,
-a.createdat, a.updatedat,
+a.created_at, a.updatedat,
 b.username, b.bio, b.image,
 case when favs.article is not null then true else false end as favorited,
 case when g.follows is not null then true else false end as following,
-array_remove(array_agg(t.tag order by t.tag), null) as taglist,
+array_remove(array_agg(t.tag order by t.tag), null) as tag_list,
 (select count(*)
 from favorites as f
-where f.article = a.id) as favoritescount
+where f.article = a.id) as favorites_count
 from articles as a
 inner join users as b
 on a.author = b.id
@@ -147,8 +149,8 @@ on h.article = a.id
 left join tags t
 on t.id = h.tag
 where a.slug = ?
-group by a.id, a.slug, a.title, a.description, a.body, a.createdat, a.updatedat, b.username, b.bio, b.image, favorited, following
-", (:id auth-user), (:id auth-user), slug] {:builder-fn rs/as-unqualified-maps})]
+group by a.id, a.slug, a.title, a.description, a.body, a.created_at, a.updatedat, b.username, b.bio, b.image, favorited, following
+", (:id auth-user), (:id auth-user), slug] {:builder-fn rs/as-unqualified-kebab-maps})]
      (when (seq db-articles) (-> db-articles
                                  (db-record->model)
                                  (extract-tags))))))
@@ -267,10 +269,10 @@ where a.slug=? order by c.id", (:id auth-user), slug] {:builder-fn rs/as-unquali
 
 (defn- articles->multiple-articles
   [articles]
-  {:articles (if (nil? articles)
+  {:articles (if (seq articles)
                []
                (map db-record->model articles))
-   :articlesCount (if (nil? articles)
+   :articlesCount (if (seq articles)
                     0
                     (count articles))})
 
@@ -298,19 +300,19 @@ left join tags as t on t.id = s.tag ")
    (let [limit (or (:limit filters) 20)
          offset (or (:offset filters) 0)
          articles (jdbc/execute! (:datasource database) [(str "select a.slug, a.title, a.description,
-a.createdat, a.updatedat,
-array_remove(array_agg(t.tag order by t.tag), null) as taglist,
+a.created_at, a.updatedat,
+array_remove(array_agg(t.tag order by t.tag), null) as tag_list,
 b.username, b.bio, b.image,
 (select count(*)
 from favorites as f
-where f.article = a.id) as favoritescount
+where f.article = a.id) as favorites_count
 from articles as a"
                                                               (join-tags)
                                                               (join-and-filter-user filters)
                                                               (join-and-filter-favorite filters)
-                                                              " group by a.id, a.slug, a.title, a.description, a.createdat, a.updatedat, b.username, b.bio, b.image "
+                                                              " group by a.id, a.slug, a.title, a.description, a.created_at, a.updatedat, b.username, b.bio, b.image "
                                                               (filter-tag filters)
-                                                              " order by case when a.updatedat is not null then a.updatedat else a.createdat end desc
+                                                              " order by case when a.updatedat is not null then a.updatedat else a.created_at end desc
 limit ?
 offset ?"), limit, offset] {:builder-fn rs/as-unqualified-maps})]
      (->> articles
@@ -320,14 +322,14 @@ offset ?"), limit, offset] {:builder-fn rs/as-unqualified-maps})]
    (let [limit (or (:limit filters) 20)
          offset (or (:offset filters) 0)
          articles (jdbc/execute! (:datasource database) [(str "select a.slug, a.title, a.description,
-a.createdat, a.updatedat,
+a.created_at, a.updatedat,
 array_remove(array_agg(t.tag order by t.tag), null) as taglist,
 b.username, b.bio, b.image,
 case when g.follows is null then false else true end as following,
 case when h.article is null then false else true end as favorited,
 (select count(*)
 from favorites as f
-where f.article = a.id) as favoritescount
+where f.article = a.id) as favorites_count
 from articles as a"
                                                               (join-tags)
                                                               (join-and-filter-user filters)
@@ -336,9 +338,9 @@ from articles as a"
 on g.user_id = ? and g.follows = a.author
 left join favorites as h
 on h.user_id = ? and h.article = a.id
-group by a.id, a.slug, a.title, a.description, a.createdat, a.updatedat, b.username, b.bio, b.image, following, favorited"
+group by a.id, a.slug, a.title, a.description, a.created_at, a.updatedat, b.username, b.bio, b.image, following, favorited"
                                                               (filter-tag filters)
-                                                              " order by case when a.updatedat is not null then a.updatedat else a.createdat end desc
+                                                              " order by case when a.updatedat is not null then a.updatedat else a.created_at end desc
 limit ?
 offset ?"), (:id auth-user), (:id auth-user), limit, offset] {:builder-fn rs/as-unqualified-maps})]
      (->> articles
@@ -350,14 +352,14 @@ offset ?"), (:id auth-user), (:id auth-user), limit, offset] {:builder-fn rs/as-
   (let [limit (or (:limit filters) 20)
         offset (or (:offset filters) 0)
         articles (jdbc/execute! (:datasource database) ["select a.slug, a.title, a.description,
-a.createdat, a.updatedat,
+a.created_at, a.updatedat,
 u.username, u.bio, u.image,
-array_remove(array_agg(t.tag order by t.tag), null) as taglist,
+array_remove(array_agg(t.tag order by t.tag), null) as tag_list,
 true as following,
 case when g.article is null then false else true end as favorited,
 (select count(*)
 from favorites as favs
-where favs.article = a.id) as favoritescount
+where favs.article = a.id) as favorites_count
 from follows as f
 inner join articles as a
 on a.author = f.follows
@@ -370,13 +372,13 @@ on h.article = a.id
 left join tags t
 on t.id = h.tag
 where f.user_id = ?
-group by a.slug, a.title, a.description, a.createdat, a.updatedat, u.username, u.bio, u.image,
-following, favorited, favoritescount
-order by case when a.updatedat is not null then a.updatedat else a.createdat end desc
+group by a.id, a.slug, a.title, a.description, a.created_at, a.updatedat, u.username, u.bio, u.image,
+following, favorited
+order by case when a.updatedat is not null then a.updatedat else a.created_at end desc
 limit ?
-offset ?", (:id auth-user), limit, offset] {:builder-fn rs/as-unqualified-maps})]
+offset ?", (:id auth-user), limit, offset] {:builder-fn rs/as-unqualified-kebab-maps})]
     (->> articles
-         (map extract-tags)
+         ;;(map extract-tags)
          articles->multiple-articles)))
 
 (defn favorite-article

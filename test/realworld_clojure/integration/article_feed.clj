@@ -25,7 +25,7 @@
                                                                     (m/explain multiple-auth-article-schema)
                                                                     (me/humanize)))
     ;;(is (= expected-articles (:articles body)))
-    (is (= (count expected-articles) (:articlesCount body)))
+    (is (= (count expected-articles) (:articlesCount body)) "article count is wrong")
     (articles-match-feed? (map (fn [a b c d] {:article a
                                               :author b
                                               :feed c
@@ -62,7 +62,7 @@
           user-two (test-utils/create-user db)
           user-three (test-utils/create-user db)
           _ (test-utils/create-article db (:id user-one))
-          article (test-utils/create-article db (:id user-three) {:tag-list []})
+          article (test-utils/create-article db (:id user-three) {:tagList []})
           _ (test-utils/create-follows db user-two user-three)
           r (article-feed-request "" (get-login-token user-two))]
       (validate-response r [article] [user-three]))))
@@ -78,10 +78,10 @@
           now (jt/local-date-time)
           article-one (test-utils/create-article db (:id user-three) {:title "article-one"
                                                                       :tag-list []
-                                                                      :createdat (jt/- now (jt/days 1))})
+                                                                      :created-at (jt/- now (jt/days 1))})
           article-two (test-utils/create-article db (:id user-three) {:title "article-two"
                                                                       :tag-list []
-                                                                      :createdat now})
+                                                                      :created-at now})
           _ (test-utils/create-follows db user-two user-three)
           r (article-feed-request "" (get-login-token user-two))]
       (validate-response r [article-two article-one] [user-three user-three]))))
@@ -111,10 +111,10 @@
           now (jt/local-date-time)
           article-one (test-utils/create-article db (:id user-three) {:title "article-one"
                                                                       :tag-list ["my-tag"]
-                                                                      :createdat (jt/- now (jt/days 1))})
+                                                                      :created-at (jt/- now (jt/days 1))})
           article-two (test-utils/create-article db (:id user-three) {:title "article-two"
                                                                       :tag-list ["my-tag"]
-                                                                      :createdat now})
+                                                                      :created-at now})
           _ (test-utils/create-follows db user-two user-three)
           r (article-feed-request "" (get-login-token user-two))]
       (validate-response r [article-two article-one] [user-three user-three]))))
@@ -130,10 +130,10 @@
           now (jt/local-date-time)
           article-one (test-utils/create-article db (:id user-three) {:title "article-one"
                                                                       :tag-list ["my-tag"]
-                                                                      :createdat (jt/- now (jt/days 1))})
+                                                                      :created-at (jt/- now (jt/days 1))})
           article-two (test-utils/create-article db (:id user-three) {:title "article-two"
                                                                       :tag-list ["my-other-tag"]
-                                                                      :createdat now})
+                                                                      :created-at now})
           _ (test-utils/create-follows db user-two user-three)
           r (article-feed-request "" (get-login-token user-two))]
       (validate-response r [article-two article-one] [user-three user-three]))))
@@ -162,8 +162,8 @@
           _ (test-utils/create-follows db user author-one)
           _ (test-utils/create-follows db user author-two)
           now (jt/local-date-time)
-          a1 (test-utils/create-article db (:id author-one) {:createdat (jt/- now (jt/days 1))})
-          a2 (test-utils/create-article db (:id author-two) {:createdat now})
+          a1 (test-utils/create-article db (:id author-one) {:created-at (jt/- now (jt/days 1))})
+          a2 (test-utils/create-article db (:id author-two) {:created-at now})
           token (get-login-token user)
           r (article-feed-request "" token)]
       (validate-response r [a2 a1] [author-two author-one]))))
@@ -176,9 +176,9 @@
           user (test-utils/create-user db)
           _ (test-utils/create-follows db user author)
           now (jt/local-date-time)
-          a1 (test-utils/create-article db (:id author) {:createdat (jt/- now (jt/days 2))})
-          a2 (test-utils/create-article db (:id author) {:createdat (jt/- now (jt/days 1))})
-          a3 (test-utils/create-article db (:id author) {:createdat now})
+          a1 (test-utils/create-article db (:id author) {:created-at (jt/- now (jt/days 2))})
+          a2 (test-utils/create-article db (:id author) {:created-at (jt/- now (jt/days 1))})
+          a3 (test-utils/create-article db (:id author) {:created-at now})
           token (get-login-token user)
           r (article-feed-request "" token)]
       (validate-response r [a3 a2 a1] [author author author]))))
@@ -191,9 +191,9 @@
           user (test-utils/create-user db)
           _ (test-utils/create-follows db user author)
           now (jt/local-date-time)
-          a1 (test-utils/create-article db (:id author) {:updatedat (jt/- now (jt/days 2))})
-          a2 (test-utils/create-article db (:id author) {:updatedat (jt/- now (jt/days 1))})
-          a3 (test-utils/create-article db (:id author) {:updatedat now})
+          a1 (test-utils/create-article db (:id author) {:updated-at (jt/- now (jt/days 2))})
+          a2 (test-utils/create-article db (:id author) {:updated-at (jt/- now (jt/days 1))})
+          a3 (test-utils/create-article db (:id author) {:updated-at now})
           token (get-login-token user)
           r (article-feed-request "" token)]
       (is (= 200 (:status r)))
@@ -207,10 +207,10 @@
           user (test-utils/create-user db)
           _ (test-utils/create-follows db user author)
           now (jt/local-date-time)
-          a1 (test-utils/create-article db (:id author) {:createdat (jt/- now (jt/days 3))
+          a1 (test-utils/create-article db (:id author) {:created-at (jt/- now (jt/days 3))
                                                          :updatedat now})
-          a2 (test-utils/create-article db (:id author) {:createdat (jt/- now (jt/days 2))})
-          a3 (test-utils/create-article db (:id author) {:createdat (jt/- now (jt/days 1))})
+          a2 (test-utils/create-article db (:id author) {:created-at (jt/- now (jt/days 2))})
+          a3 (test-utils/create-article db (:id author) {:created-at (jt/- now (jt/days 1))})
           token (get-login-token user)
           r (article-feed-request "" token)]
       (validate-response r [a1 a3 a2] [author author author]))))
@@ -223,9 +223,9 @@
           user (test-utils/create-user db)
           _ (test-utils/create-follows db user author)
           now (jt/local-date-time)
-          a1 (test-utils/create-article db (:id author) {:createdat (jt/- now (jt/days 2))})
-          a2 (test-utils/create-article db (:id author) {:createdat (jt/- now (jt/days 1))})
-          a3 (test-utils/create-article db (:id author) {:createdat now})
+          a1 (test-utils/create-article db (:id author) {:created-at (jt/- now (jt/days 2))})
+          a2 (test-utils/create-article db (:id author) {:created-at (jt/- now (jt/days 1))})
+          a3 (test-utils/create-article db (:id author) {:created-at now})
           token (get-login-token user)
           r (article-feed-request "?limit=2" token)]
       (validate-response r [a3 a2] [author author]))))
@@ -272,9 +272,9 @@
           user (test-utils/create-user db)
           _ (test-utils/create-follows db user author)
           now (jt/local-date-time)
-          a1 (test-utils/create-article db (:id author) {:createdat (jt/- now (jt/days 2))})
-          a2 (test-utils/create-article db (:id author) {:createdat (jt/- now (jt/days 1))})
-          a3 (test-utils/create-article db (:id author) {:createdat now})
+          a1 (test-utils/create-article db (:id author) {:created-at (jt/- now (jt/days 2))})
+          a2 (test-utils/create-article db (:id author) {:created-at (jt/- now (jt/days 1))})
+          a3 (test-utils/create-article db (:id author) {:created-at now})
           token (get-login-token user)
           r (article-feed-request "?offset=1" token)]
       (validate-response r [a2 a1] [author author]))))

@@ -72,7 +72,7 @@
         (wrap-json-response {:date-format "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
                              :key-fn csk/->camelCaseString})
         (wrap-content-type "text/json")
-        (wrap-json-body {:keywords? true}))))
+        (wrap-json-body {:key-fn csk/->kebab-case-keyword}))))
 
 (defrecord Webserver [port jwt-secret handler database server]
   component/Lifecycle

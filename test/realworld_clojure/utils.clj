@@ -2,17 +2,20 @@
   (:require
    [com.stuartsierra.component :as component]
    [next.jdbc.optional :as o]
+   [next.jdbc.result-set :as rs]
    [realworld-clojure.domain.user :as user]
    [malli.generator :as mg]
    [next.jdbc.sql :as sql]
    [realworld-clojure.domain.article :as article]
    [buddy.hashers :as hashers]
    [realworld-clojure.domain.comment :as comment]
-   [next.jdbc :as jdbc]))
+   [next.jdbc :as jdbc]
+   [camel-snake-kebab.core :as csk]))
 
 (def update-options
   {:return-keys true
-   :builder-fn o/as-unqualified-lower-maps})
+   :builder-fn rs/as-unqualified-kebab-maps
+   :column-fn csk/->snake_case_string})
 
 (defn clear-ds
   "Delete all data from datasource"
@@ -54,7 +57,7 @@
 (defn link-article-and-tag [db article tag]
   (jdbc/execute-one! db ["insert into article_tags (article, tag) values (?, ?) on conflict do nothing" (:id article) (:id tag)] update-options))
 
-(defn- create-artice-for-input
+(defn- create-article-for-input
   "Save a test article to the db.
   This takes 3 steps. 1) save the article,
   2) save the tags, 3) link articles and tags."
@@ -76,9 +79,9 @@
 
 (defn- create-article-with-generated-data
   ([db author-id]
-   (create-artice-for-input db author-id (mg/generate article/article-schema)))
+   (create-article-for-input db author-id (mg/generate article/article-schema)))
   ([db author-id options]
-   (create-artice-for-input db author-id (merge (mg/generate article/article-schema) options))))
+   (create-article-for-input db author-id (merge (mg/generate article/article-schema) options))))
 
 (defn create-article
   ([db author-id]

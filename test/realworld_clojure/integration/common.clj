@@ -149,11 +149,6 @@
 
 ;; helper comparison functions
 
-(defn keys-match?
-  [a b ks]
-  (doseq [k ks]
-    (is (= (k a) (k b)) (str "Expected " (k a) " but got " (k b)))))
-
 (defn profiles-equal?
   [expected actual]
   (is (= (:username expected) (:username actual)) "usernames do not match")
@@ -187,7 +182,7 @@
   (is (= (:title article) (:title input)) "titles do not match")
   (is (= (:description article) (:description input)) "descriptions do not match")
   (is (= (:body article) (:body input)) "bodies do not match")
-  (is (= (:tag-list article) (seq (sort (distinct (:tag-list input))))) "tag lists do not match"))
+  (is (= (:tagList article) (seq (sort (distinct (:tag-list input))))) "tag lists do not match"))
 
 (defn- assert-article-matches-feed [article feed author follows]
   (let [;; article's timestamps, returned from the db, are javaa.sql.Timestamps.
@@ -214,21 +209,26 @@
     (assert-article-matches-feed article feed author follows)))
 
 (defn article-matches-article?
-  [a author b]
-  (let [article-ks [:title :body :description :slug :tag-list]
-        ;; article's timestamps, returned from the db, are javaa.sql.Timestamps.
-        ;; But the timestamps in feed, returned from parsing the json, are strings.
-        ;; To compare them, convert article's timestamps to strings.
-        expected-created-at (instance->str (:createdat a))
-        expected-updated-at (when (some? (:updatedat a))
-                              (instance->str (:updatedat a)))]
-    (and
-     (keys-match? a b article-ks)
-     (is (= expected-created-at (:createdat b)))
-     (when (some? (:updatedat b))
-       (is (= expected-updated-at (:updatedat b))))
-     (profiles-equal? author (:author b))
-     (is (true? (get-in b [:author :following]))))))
+  ([expected-article author article-from-json]
+   (let [;; article's timestamps, returned from the db, are javaa.sql.Timestamps.
+         ;; But the timestamps in feed, returned from parsing the json, are strings.
+         ;; To compare them, convert article's timestamps to strings.
+         expected-created-at (instance->str (:created-at expected-article))
+         expected-updated-at (when (some? (:updatedat expected-article))
+                               (instance->str (:updatedat expected-article)))]
+
+     (is (= (:title expected-article) (:title article-from-json)) "titles do not match")
+     (is (= (:body expected-article) (:body article-from-json)) "bodies do not match")
+     (is (= (:description expected-article) (:description article-from-json)) "descriptions do not match")
+     (is (= (:slug expected-article) (:slug article-from-json)) "slugs do not match")
+     (is (= (:tag-list expected-article) (:tagList article-from-json)) "tag lists do not match")
+     (is (= expected-created-at (:createdAt article-from-json)) "created-ats do not match")
+     (when (some? (:updatedat article-from-json))
+       (is (= expected-updated-at (:updatedat article-from-json)) "updated-ats do not match"))
+     (profiles-equal? author (:author article-from-json))))
+  ([expected-article author article-from-json follows]
+   (article-matches-article? expected-article author article-from-json)
+   (is (= follows (get-in article-from-json [:author :following])) "follows does not match")))
 
 (defn validate-slug
   [article]
@@ -237,6 +237,8 @@
                              (str/replace #"W+" "-"))) "slug is incorrect"))
 
 ;; Response schemas, used for validation.
+;; Note that the keywords here are in camelCase, to reflect the requirement that the
+;; fieldnames returned in the json body are also camelCase.
 
 (def user-response-schema
   [:map {:closed true}
@@ -265,22 +267,22 @@
    [:title [:string {:min 1}]]
    [:description [:string {:min 1}]]
    [:body [:string {:min 1}]]
-   [:createdat [:string {:min 1}]]
+   [:createdAt [:string {:min 1}]]
    [:updatedat [:maybe :string]]
-   [:favoritescount [:int]]
+   [:favoritesCount [:int]]
    [:author #'no-auth-profile-schema]
-   [:tag-list {:optional true} [:vector {:min 1} :string]]])
+   [:tagList {:optional true} [:vector {:min 1} :string]]])
 
 (def no-auth-article-feed-schema
   [:map {:closed true}
    [:slug [:string {:min 1}]]
    [:title [:string {:min 1}]]
    [:description [:string {:min 1}]]
-   [:createdat [:string {:min 1}]]
+   [:createdAt [:string {:min 1}]]
    [:updatedat [:maybe :string]]
-   [:favoritescount [:int]]
+   [:favoritesCount [:int]]
    [:author #'no-auth-profile-schema]
-   [:tag-list {:optional true} [:vector {:min 1} :string]]])
+   [:tagList {:optional true} [:vector {:min 1} :string]]])
 
 (def multiple-no-auth-article-schema
   [:map {:closed true}
@@ -293,24 +295,24 @@
    [:title [:string {:min 1}]]
    [:description [:string {:min 1}]]
    [:body [:string {:min 1}]]
-   [:createdat [:string {:min 1}]]
+   [:createdAt [:string {:min 1}]]
    [:updatedat [:maybe :string]]
    [:favorited [:boolean]]
-   [:favoritescount [:int]]
+   [:favoritesCount [:int]]
    [:author #'auth-profile-schema]
-   [:tag-list {:optional true} [:vector {:min 1} :string]]])
+   [:tagList {:optional true} [:vector {:min 1} :string]]])
 
 (def auth-article-feed-schema
   [:map {:closed true}
    [:slug [:string {:min 1}]]
    [:title [:string {:min 1}]]
    [:description [:string {:min 1}]]
-   [:createdat [:string {:min 1}]]
+   [:createdAt [:string {:min 1}]]
    [:updatedat [:maybe :string]]
    [:favorited [:boolean]]
-   [:favoritescount [:int]]
+   [:favoritesCount [:int]]
    [:author #'auth-profile-schema]
-   [:tag-list {:optional true} [:vector {:min 1} :string]]])
+   [:tagList {:optional true} [:vector {:min 1} :string]]])
 
 (def multiple-auth-article-schema
   [:map {:closed true}

@@ -31,7 +31,10 @@
           user (test-utils/create-user db)
           article (test-utils/create-article db (:id user) {:tag-list []})
           r (get-article-request (:slug article))
-          returned-article (:article (json/parse-string (:body r) true))]
+          returned-article (-> r
+                               (:body)
+                               (json/parse-string true)
+                               (:article))]
       (is (= 200 (:status r)))
       (is (true? (m/validate no-auth-article-schema returned-article)) (->> returned-article
                                                                             (m/explain no-auth-article-schema)
@@ -52,8 +55,7 @@
       (is (true? (m/validate auth-article-schema returned-article)) (->> returned-article
                                                                          (m/explain auth-article-schema)
                                                                          (me/humanize)))
-      (is (false? (get-in returned-article [:author :following])))
-      (article-matches-article? article author returned-article))))
+      (article-matches-article? article author returned-article false))))
 
 (deftest authenticated-following-author
   (test-utils/with-system
@@ -72,8 +74,7 @@
       (is (true? (m/validate auth-article-schema returned-article)) (->> returned-article
                                                                          (m/explain auth-article-schema)
                                                                          (me/humanize)))
-      (is (true? (get-in returned-article [:author :following])))
-      (article-matches-article? article author returned-article))))
+      (article-matches-article? article author returned-article true))))
 
 (deftest single-tag
   (test-utils/with-system
@@ -109,7 +110,7 @@
       (is (true? (m/validate auth-article-schema returned-article)) (->> returned-article
                                                                          (m/explain no-auth-article-schema)
                                                                          (me/humanize)))
-      (article-matches-article? article user returned-article))))
+      (article-matches-article? article user returned-article false))))
 
 (deftest multiple-tags
   (test-utils/with-system
@@ -145,4 +146,4 @@
       (is (true? (m/validate auth-article-schema returned-article)) (->> returned-article
                                                                          (m/explain no-auth-article-schema)
                                                                          (me/humanize)))
-      (article-matches-article? article user returned-article))))
+      (article-matches-article? article user returned-article false))))

@@ -43,8 +43,7 @@
 (defn get-user-by-email
   "Get a user record by email"
   [database email]
-  (first (sql/find-by-keys (:datasource database) :users {:email email} {:returning :all
-                                                                         :builder-fn rs/as-unqualified-maps})))
+  (first (sql/find-by-keys (:datasource database) :users {:email email} {:builder-fn rs/as-unqualified-maps})))
 
 (defn get-profile
   "Get a user profile"
@@ -222,7 +221,7 @@ inner join users as u
 on c.author = u.id
 left join follows as f
 on f.user_id = ? and f.follows = c.author
-where c.id = ?", (:id auth-user) id] query-options)]
+where c.id = ?", (:id auth-user) id] {:builder-fn rs/as-unqualified-kebab-maps})]
     (db-record->model c)))
 
 (defn create-comment

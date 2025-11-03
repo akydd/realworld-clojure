@@ -302,7 +302,7 @@ where a.slug=? order by c.id", (:id auth-user), slug] {:builder-fn rs/as-unquali
    (join-and-filter-favorite filters)
    " group by a.id, a.slug, a.title, a.description, a.created_at, a.updated_at, b.username, b.bio, b.image "
    (filter-tag filters)
-   " order by case when a.updated_at is not null then a.updated_at else a.created_at end desc "
+   " order by a.updated_at desc "
    " limit ? offset ?"))
 
 (defn- list-articles-sql-with-auth [filters]
@@ -323,7 +323,7 @@ where a.slug=? order by c.id", (:id auth-user), slug] {:builder-fn rs/as-unquali
    " left join favorites as h on h.user_id = ? and h.article = a.id"
    " group by a.id, a.slug, a.title, a.description, a.created_at, a.updated_at, b.username, b.bio, b.image, following, favorited"
    (filter-tag filters)
-   " order by case when a.updated_at is not null then a.updated_at else a.created_at end desc"
+   " order by a.updated_at desc"
    " limit ? offset ?"))
 
 (defn list-articles
@@ -375,7 +375,7 @@ on t.id = h.tag
 where f.user_id = ?
 group by a.id, a.slug, a.title, a.description, a.created_at, a.updated_at, u.username, u.bio, u.image,
 following, favorited
-order by case when a.updated_at is not null then a.updated_at else a.created_at end desc
+order by a.updated_at desc
 limit ?
 offset ?", (:id auth-user), limit, offset] {:builder-fn rs/as-unqualified-kebab-maps})]
     (->> articles

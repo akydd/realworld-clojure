@@ -208,7 +208,7 @@
           _ (test-utils/create-follows db user author)
           now (jt/local-date-time)
           a1 (test-utils/create-article db (:id author) {:created-at (jt/- now (jt/days 3))
-                                                         :updatedat now})
+                                                         :updated-at now})
           a2 (test-utils/create-article db (:id author) {:created-at (jt/- now (jt/days 2))})
           a3 (test-utils/create-article db (:id author) {:created-at (jt/- now (jt/days 1))})
           token (get-login-token user)

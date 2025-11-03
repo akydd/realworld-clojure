@@ -6,8 +6,7 @@
             [next.jdbc.date-time :as dt]
             [com.stuartsierra.component :as component]
             [ragtime.repl :as ragtime-repl]
-            [ragtime.jdbc :as ragtime-jdbc]
-            [java-time.api :as jt]))
+            [ragtime.jdbc :as ragtime-jdbc]))
 
 (def query-options
   {:builder-fn o/as-unqualified-lower-maps})
@@ -188,11 +187,10 @@ group by a.id, a.slug, a.title, a.description, a.body, a.created_at, a.updated_a
 (defn update-article
   "Update a record in the articles table"
   [database slug updates auth-user]
-  (let [updated-at (jt/local-date-time)]
-    (try (sql/update! (:datasource database) :articles (assoc updates :updatedat updated-at) {:slug slug} update-options)
-         (catch org.postgresql.util.PSQLException e
-           (handle-psql-exception e)))
-    (get-article-by-slug database (or (:slug updates) slug) auth-user)))
+  (try (sql/update! (:datasource database) :articles updates {:slug slug} update-options)
+       (catch org.postgresql.util.PSQLException e
+         (handle-psql-exception e)))
+  (get-article-by-slug database (or (:slug updates) slug) auth-user))
 
 (defn delete-article
   "Delete a record from the articles table"

@@ -268,10 +268,10 @@
    [:description [:string {:min 1}]]
    [:body [:string {:min 1}]]
    [:createdAt [:string {:min 1}]]
-   [:updatedAt [:maybe :string]]
+   [:updatedAt [:string {:min 1}]]
    [:favoritesCount [:int]]
    [:author #'no-auth-profile-schema]
-   [:tagList {:optional true} [:vector {:min 1} :string]]])
+   [:tagList [:maybe [:vector :string]]]])
 
 (def no-auth-article-feed-schema
   [:map {:closed true}
@@ -296,11 +296,11 @@
    [:description [:string {:min 1}]]
    [:body [:string {:min 1}]]
    [:createdAt [:string {:min 1}]]
-   [:updatedAt [:maybe :string]]
+   [:updatedAt [:string {:min 1}]]
    [:favorited [:boolean]]
    [:favoritesCount [:int]]
    [:author #'auth-profile-schema]
-   [:tagList {:optional true} [:vector {:min 1} :string]]])
+   [:tagList [:maybe [:vector :string]]]])
 
 (def auth-article-feed-schema
   [:map {:closed true}

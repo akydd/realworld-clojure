@@ -87,6 +87,12 @@
           user (test-utils/create-user db)
           article (test-utils/create-article db (:id user))
           update (mg/generate article/article-update-schema)
-          token (get-login-token user)
-          r (update-article-request (:slug article) update token)]
-      (is (= 200 (:status r))))))
+          r (update-article-request (:slug article) update (get-login-token user))
+          returned-article (-> r
+                               (:body)
+                               (json/parse-string true)
+                               (:article))]
+      (is (= 200 (:status r)))
+      (is (true? (m/validate auth-article-schema returned-article)) (->> returned-article
+                                                                         (m/explain auth-article-schema)
+                                                                         (me/humanize))))))

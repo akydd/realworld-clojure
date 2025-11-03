@@ -62,7 +62,7 @@
           user-two (test-utils/create-user db)
           user-three (test-utils/create-user db)
           _ (test-utils/create-article db (:id user-one))
-          article (test-utils/create-article db (:id user-three) {:tagList []})
+          article (test-utils/create-article db (:id user-three) {:tag-list []})
           _ (test-utils/create-follows db user-two user-three)
           r (article-feed-request "" (get-login-token user-two))]
       (validate-response r [article] [user-three]))))

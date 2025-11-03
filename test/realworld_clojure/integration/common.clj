@@ -162,11 +162,11 @@
 
 (defn assert-comment-matches
   ([expected actual author follows]
-   (let [expected-created-at (instance->str (:createdat expected))
-         expected-updated-at (instance->str (:updatedat expected))]
+   (let [expected-created-at (instance->str (:created-at expected))
+         expected-updated-at (instance->str (:updated-at expected))]
      (is (= (:id expected) (:id actual)) "ids do not match")
-     (is (= expected-created-at (:createdat actual)) "createdats do not match")
-     (is (= expected-updated-at (:updatedat actual)) "updatedats do not match")
+     (is (= expected-created-at (:createdAt actual)) "created-ats do not match")
+     (is (= expected-updated-at (:updatedAt actual)) "updated-ats do not match")
      (is (= (:body expected) (:body actual)) "bodies do not match")
      (profiles-equal? author (:author actual))
      (when (some? follows)
@@ -182,23 +182,24 @@
   (is (= (:title article) (:title input)) "titles do not match")
   (is (= (:description article) (:description input)) "descriptions do not match")
   (is (= (:body article) (:body input)) "bodies do not match")
-  (is (= (:tagList article) (seq (sort (distinct (:tag-list input))))) "tag lists do not match"))
+  (if (nil? (:tag-list input))
+    (is (= [] (:tagList article)) "tagList should be []")
+    (is (= (:tagList article) (sort (distinct (:tag-list input)))) "tag lists do not match")))
 
 (defn- assert-article-matches-feed [article feed author follows]
   (let [;; article's timestamps, returned from the db, are javaa.sql.Timestamps.
           ;; But the timestamps in feed, returned from parsing the json, are strings.
           ;; To compare them, convert article's timestamps to strings.
-        expected-created-at (instance->str (:createdat article))
-        expected-updated-at (when (some? (:updatedat article))
-                              (instance->str (:updatedat article)))]
-
+        expected-created-at (instance->str (:created-at article))
+        expected-updated-at (instance->str (:updated-at article))]
     (is (= (:title article) (:title feed)) "titles do not match")
     (is (= (:description article) (:description feed)) "descriptions do not match")
     (is (= (:slug article) (:slug feed)) "slugs do not match")
-    (is (= (:tag-list article) (seq (sort (distinct (:tag-list feed))))) "tag lists do not match")
-    (is (= expected-created-at (:createdat feed)) "createdats do not match")
-    (when (some? (:updatedat article))
-      (is (= expected-updated-at (:updatedat feed)) "updatedats do not match"))
+    (if (nil? (:tag-list article))
+      (is (= [] (:tagList feed)) "tagList should be empty")
+      (is (= (:tag-list article) (:tagList feed)) "tag lists do not match"))
+    (is (= expected-created-at (:createdAt feed)) "createdats do not match")
+    (is (= expected-updated-at (:updatedAt feed)) "updatedats do not match")
     (profiles-equal? author (:author feed))
     (when (some? follows)
       (is (= follows (get-in feed [:author :following])) "following does not match"))))
@@ -214,17 +215,16 @@
          ;; But the timestamps in feed, returned from parsing the json, are strings.
          ;; To compare them, convert article's timestamps to strings.
          expected-created-at (instance->str (:created-at expected-article))
-         expected-updated-at (when (some? (:updatedat expected-article))
-                               (instance->str (:updatedat expected-article)))]
-
+         expected-updated-at (instance->str (:updated-at expected-article))]
      (is (= (:title expected-article) (:title article-from-json)) "titles do not match")
      (is (= (:body expected-article) (:body article-from-json)) "bodies do not match")
      (is (= (:description expected-article) (:description article-from-json)) "descriptions do not match")
      (is (= (:slug expected-article) (:slug article-from-json)) "slugs do not match")
-     (is (= (:tag-list expected-article) (:tagList article-from-json)) "tag lists do not match")
+     (if (nil? (:tag-list expected-article))
+       (is (= [] (:tagList article-from-json)) "tagList should be empty")
+       (is (= (:tag-list expected-article) (:tagList article-from-json)) "tag lists do not match"))
      (is (= expected-created-at (:createdAt article-from-json)) "created-ats do not match")
-     (when (some? (:updatedat article-from-json))
-       (is (= expected-updated-at (:updatedat article-from-json)) "updated-ats do not match"))
+     (is (= expected-updated-at (:updatedAt article-from-json)) "updated-ats do not match")
      (profiles-equal? author (:author article-from-json))))
   ([expected-article author article-from-json follows]
    (article-matches-article? expected-article author article-from-json)
@@ -282,7 +282,7 @@
    [:updatedAt [:maybe :string]]
    [:favoritesCount [:int]]
    [:author #'no-auth-profile-schema]
-   [:tagList {:optional true} [:vector {:min 1} :string]]])
+   [:tagList [:maybe [:vector :string]]]])
 
 (def multiple-no-auth-article-schema
   [:map {:closed true}
@@ -312,7 +312,7 @@
    [:favorited [:boolean]]
    [:favoritesCount [:int]]
    [:author #'auth-profile-schema]
-   [:tagList {:optional true} [:vector {:min 1} :string]]])
+   [:tagList [:maybe [:vector :string]]]])
 
 (def multiple-auth-article-schema
   [:map {:closed true}
@@ -322,16 +322,16 @@
 (def no-auth-comment-schema
   [:map {:closed true}
    [:id :int]
-   [:createdat [:string {:min 1}]]
-   [:updatedat [:string {:min 1}]]
+   [:createdAt [:string {:min 1}]]
+   [:updatedAt [:string {:min 1}]]
    [:body [:string {:min 1}]]
    [:author #'no-auth-profile-schema]])
 
 (def auth-comment-schema
   [:map {:closed true}
    [:id :int]
-   [:createdat [:string {:min 1}]]
-   [:updatedat [:string {:min 1}]]
+   [:createdAt [:string {:min 1}]]
+   [:updatedAt [:string {:min 1}]]
    [:body [:string {:min 1}]]
    [:author #'auth-profile-schema]])
 

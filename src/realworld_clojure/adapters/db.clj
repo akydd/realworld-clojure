@@ -206,7 +206,7 @@ group by a.id, a.slug, a.title, a.description, a.body, a.created_at, a.updated_a
   "Get a single comment by id."
   [database id auth-user]
   (when-let [c (jdbc/execute-one! (:datasource database) ["select c.id,
-c.createdat, c.updatedat,
+c.created_at, c.updated_at,
 c.body,
 u.username, u.bio, u.image,
 case when f.follows is null then false else true end as following
@@ -231,7 +231,7 @@ where slug = ?", (:body comment), (:id auth-user), slug] update-options)]
   "Get all comments for an article"
   ([database slug]
    (when-let [cs (jdbc/execute! (:datasource database) ["select c.id, c.body,
-c.createdat, c.updatedat,
+c.created_at, c.updated_at,
 u.username, u.bio, u.image
 from articles as a
 inner join comments as c
@@ -242,7 +242,7 @@ where a.slug=? order by c.id", slug] {:builder-fn rs/as-unqualified-maps})]
      (map db-record->model cs)))
   ([database slug auth-user]
    (when-let [cs (jdbc/execute! (:datasource database) ["select c.id, c.body,
-c.createdat, c.updatedat,
+c.created_at, c.updated_at,
 u.username, u.bio, u.image,
 case when f.follows is null then false else true end as following
 from articles as a

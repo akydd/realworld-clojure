@@ -43,7 +43,7 @@
                                                                            (m/explain auth-article-schema)
                                                                            (me/humanize)))
         (is (false? (:favorited returned-article)))
-        (is (zero? (:favoritescount returned-article))))))
+        (is (zero? (:favoritesCount returned-article))))))
 
   (testing "leaves an unfavorited article as unfavorited"
     (test-utils/with-system
@@ -62,4 +62,4 @@
                                                                            (m/explain auth-article-schema)
                                                                            (me/humanize)))
         (is (false? (:favorited returned-article)))
-        (is (zero? (:favoritescount returned-article)))))))
+        (is (zero? (:favoritesCount returned-article)))))))

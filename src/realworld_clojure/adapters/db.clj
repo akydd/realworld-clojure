@@ -379,7 +379,7 @@ order by case when a.updated_at is not null then a.updated_at else a.created_at 
 limit ?
 offset ?", (:id auth-user), limit, offset] {:builder-fn rs/as-unqualified-kebab-maps})]
     (->> articles
-         ;;(map extract-tags)
+         (map extract-tags)
          articles->multiple-articles)))
 
 (defn favorite-article

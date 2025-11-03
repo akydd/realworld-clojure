@@ -39,7 +39,7 @@
                                                             (m/explain auth-article-schema)
                                                             (me/humanize)))
         (is (true? (:favorited a)))
-        (is (= 1 (:favoritescount a))))))
+        (is (= 1 (:favoritesCount a))))))
 
   (testing "already favorited"
     (test-utils/with-system
@@ -71,4 +71,4 @@
         (is (true? (m/validate auth-article-schema returned-article)) (->> returned-article
                                                                            (m/explain auth-article-schema)
                                                                            (me/humanize)))
-        (is (= 2 (:favoritescount returned-article)))))))
+        (is (= 2 (:favoritesCount returned-article)))))))

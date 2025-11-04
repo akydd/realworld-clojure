@@ -80,11 +80,11 @@
           author-one (test-utils/create-user db)
           now (jt/local-date-time)
           yesterday (jt/- now (jt/days 1))
-          a-one-one (test-utils/create-article db (:id author-one) {:created-at now})
-          a-one-two (test-utils/create-article db (:id author-one) {:created-at now})
+          a-one-one (test-utils/create-article db (:id author-one) {:updated-at now})
+          a-one-two (test-utils/create-article db (:id author-one) {:updated-at now})
           author-two (test-utils/create-user db)
-          a-two-one (test-utils/create-article db (:id author-two) {:created-at yesterday})
-          a-two-two (test-utils/create-article db (:id author-two) {:created-at yesterday})
+          a-two-one (test-utils/create-article db (:id author-two) {:updated-at yesterday})
+          a-two-two (test-utils/create-article db (:id author-two) {:updated-at yesterday})
           user-one (test-utils/create-user db)
           user-two (test-utils/create-user db)
           _ (test-utils/fav-article db user-one a-one-one)
@@ -101,11 +101,11 @@
           author-one (test-utils/create-user db)
           now (jt/local-date-time)
           yesterday (jt/- now (jt/days 1))
-          a-one-one (test-utils/create-article db (:id author-one) {:created-at now})
-          a-one-two (test-utils/create-article db (:id author-one) {:created-at now})
+          a-one-one (test-utils/create-article db (:id author-one) {:updated-at now})
+          a-one-two (test-utils/create-article db (:id author-one) {:updated-at now})
           author-two (test-utils/create-user db)
-          a-two-one (test-utils/create-article db (:id author-two) {:created-at yesterday})
-          a-two-two (test-utils/create-article db (:id author-two) {:created-at yesterday})
+          a-two-one (test-utils/create-article db (:id author-two) {:updated-at yesterday})
+          a-two-two (test-utils/create-article db (:id author-two) {:updated-at yesterday})
           user-one (test-utils/create-user db)
           user-two (test-utils/create-user db)
           _ (test-utils/fav-article db user-one a-one-one)
@@ -122,11 +122,11 @@
           author (test-utils/create-user db)
           now (jt/local-date-time)
           article-one (test-utils/create-article db (:id author) {:tag-list ["tag-one"]
-                                                                  :created-at now})
+                                                                  :updated-at now})
           article-two (test-utils/create-article db (:id author) {:tag-list ["tag-two"]
-                                                                  :created-at (jt/- now (jt/days 1))})
+                                                                  :updated-at (jt/- now (jt/days 1))})
           article-three (test-utils/create-article db (:id author) {:tag-list ["tag-one" "tag-two"]
-                                                                    :created-at (jt/- now (jt/days 2))})
+                                                                    :updated-at (jt/- now (jt/days 2))})
           r (list-articles-request "?tag=tag-one")]
       (validate-response r [article-one article-three] [author author]))))
 
@@ -137,11 +137,11 @@
           author (test-utils/create-user db)
           now (jt/local-date-time)
           _ (test-utils/create-article db (:id author) {:tag-list []
-                                                        :created-at now})
+                                                        :updated-at now})
           _ (test-utils/create-article db (:id author) {:tag-list ["tag-two"]
-                                                        :created-at (jt/- now (jt/days 1))})
+                                                        :updated-at (jt/- now (jt/days 1))})
           _ (test-utils/create-article db (:id author) {:tag-list ["tag-three"]
-                                                        :created-at (jt/- now (jt/days 2))})
+                                                        :updated-at (jt/- now (jt/days 2))})
           r (list-articles-request "?tag=tag-one")]
       (validate-response r [] []))))
 
@@ -152,11 +152,11 @@
           author (test-utils/create-user db)
           now (jt/local-date-time)
           article-one (test-utils/create-article db (:id author) {:tag-list ["tag-one"]
-                                                                  :created-at now})
+                                                                  :updated-at now})
           article-two (test-utils/create-article db (:id author) {:tag-list ["tag-two"]
-                                                                  :created-at (jt/- now (jt/days 1))})
+                                                                  :updated-at (jt/- now (jt/days 1))})
           article-three (test-utils/create-article db (:id author) {:tag-list ["tag-one" "tag-two"]
-                                                                    :created-at (jt/- now (jt/days 2))})
+                                                                    :updated-at (jt/- now (jt/days 2))})
           r (list-articles-request "?tag=tag-one" (:id author))]
       (validate-response r [article-one article-three] [author author]))))
 
@@ -166,9 +166,9 @@
     (let [db (get-in sut [:database :datasource])
           author (test-utils/create-user db)
           now (jt/local-date-time)
-          a1 (test-utils/create-article db (:id author) {:created-at (jt/- now (jt/days 2))})
-          a2 (test-utils/create-article db (:id author) {:created-at (jt/- now (jt/days 1))})
-          a3 (test-utils/create-article db (:id author) {:created-at now})
+          a1 (test-utils/create-article db (:id author) {:updated-at (jt/- now (jt/days 2))})
+          a2 (test-utils/create-article db (:id author) {:updated-at (jt/- now (jt/days 1))})
+          a3 (test-utils/create-article db (:id author) {:updated-at now})
           r (list-articles-request "")]
       (validate-response r [a3 a2 a1] [author author author]))))
 
@@ -178,9 +178,9 @@
     (let [db (get-in sut [:database :datasource])
           author (test-utils/create-user db)
           now (jt/local-date-time)
-          a1 (test-utils/create-article db (:id author) {:created-at (jt/- now (jt/days 2))})
-          a2 (test-utils/create-article db (:id author) {:created-at (jt/- now (jt/days 1))})
-          a3 (test-utils/create-article db (:id author) {:created-at now})
+          a1 (test-utils/create-article db (:id author) {:updated-at (jt/- now (jt/days 2))})
+          a2 (test-utils/create-article db (:id author) {:updated-at (jt/- now (jt/days 1))})
+          a3 (test-utils/create-article db (:id author) {:updated-at now})
           r (list-articles-request "" (get-login-token author))]
       (validate-response r [a3 a2 a1] [author author author] [false false false]))))
 
@@ -193,8 +193,8 @@
           user (test-utils/create-user db)
           _ (test-utils/create-follows db user author-two)
           now (jt/local-date-time)
-          a1 (test-utils/create-article db (:id author-two) {:created-at (jt/- now (jt/days 2))})
-          a2 (test-utils/create-article db (:id author-one) {:created-at (jt/- now (jt/days 1))})
-          a3 (test-utils/create-article db (:id author-two) {:created-at now})
+          a1 (test-utils/create-article db (:id author-two) {:updated-at (jt/- now (jt/days 2))})
+          a2 (test-utils/create-article db (:id author-one) {:updated-at (jt/- now (jt/days 1))})
+          a3 (test-utils/create-article db (:id author-two) {:updated-at now})
           r (list-articles-request "" (get-login-token user))]
       (validate-response r [a3 a2 a1] [author-two author-one author-two] [true false true]))))

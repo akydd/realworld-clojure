@@ -197,7 +197,7 @@
     (is (= (:slug article) (:slug feed)) "slugs do not match")
     (if (nil? (:tag-list article))
       (is (= [] (:tagList feed)) "tagList should be empty")
-      (is (= (:tag-list article) (:tagList feed)) "tag lists do not match"))
+      (is (= (sort-by str/lower-case (:tag-list article)) (:tagList feed)) "tag lists do not match"))
     (is (= expected-created-at (:createdAt feed)) "createdats do not match")
     (is (= expected-updated-at (:updatedAt feed)) "updatedats do not match")
     (profiles-equal? author (:author feed))
@@ -222,7 +222,8 @@
      (is (= (:slug expected-article) (:slug article-from-json)) "slugs do not match")
      (if (nil? (:tag-list expected-article))
        (is (= [] (:tagList article-from-json)) "tagList should be empty")
-       (is (= (:tag-list expected-article) (:tagList article-from-json)) "tag lists do not match"))
+       ;; We need to sort by lower caee to match psql's default sorting.
+       (is (= (sort-by str/lower-case (:tag-list expected-article)) (:tagList article-from-json)) "tag lists do not match"))
      (is (= expected-created-at (:createdAt article-from-json)) "created-ats do not match")
      (is (= expected-updated-at (:updatedAt article-from-json)) "updated-ats do not match")
      (profiles-equal? author (:author article-from-json))))

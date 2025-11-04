@@ -96,4 +96,4 @@
 
 (defn fav-article
   [db user article]
-  (sql/insert! db :favorites {:user_id (:id user) :article (:id article)}))
+  (sql/insert! db :favorites {:user-id (:id user) :article (:id article)} update-options))

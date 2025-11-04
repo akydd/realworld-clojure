@@ -24,6 +24,22 @@
       (is (zero? (:articlesCount body)))
       (is (empty? (:articles body))))))
 
+(deftest no-articles-auth
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          user (test-utils/create-user db)
+          r (list-articles-request "" (get-login-token user))
+          body (-> r
+                   (:body)
+                   (json/parse-string true))]
+      (is (= 200 (:status r)))
+      (is (true? (m/validate multiple-no-auth-article-schema body)) (->> body
+                                                                         (m/explain multiple-no-auth-article-schema)
+                                                                         (me/humanize)))
+      (is (zero? (:articlesCount body)))
+      (is (empty? (:articles body))))))
+
 (defn- validate-response
   ([response expected-articles expected-authors]
    (let [body (-> response
@@ -50,6 +66,24 @@
                                                :author b
                                                :feed c
                                                :follows d}) expected-articles expected-authors (:articles body) expected-follows)))))
+
+(deftest no-filter-no-auth
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          author (test-utils/create-user db)
+          article (test-utils/create-article db (:id author))
+          r (list-articles-request "")]
+      (validate-response r [article] [author]))))
+
+(deftest no-filter-auth
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          author (test-utils/create-user db)
+          article (test-utils/create-article db (:id author))
+          r (list-articles-request "" (get-login-token author))]
+      (validate-response r [article] [author] [false]))))
 
 (deftest filter-by-author-no-auth
   (test-utils/with-system

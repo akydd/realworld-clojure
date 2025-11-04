@@ -14,19 +14,19 @@
    [:bio {:optional true} [:string {:min 1}]]
    [:image {:optional true} [:string {:min 1}]]])
 
-(defn hash-password
+(defn- hash-password
   "Returns the user with a hashed version of the password"
   [user]
   (if (:password user)
     (update user :password hashers/derive)
     user))
 
-(defn add-token
+(defn- add-token
   "Returns the user with a token"
   [jwt-secret user]
   (assoc user :token (jwt/sign {:id (:id user)} jwt-secret)))
 
-(defn password-valid?
+(defn- password-valid?
   "Returns true if the password is valid."
   [incoming-password encrypted-password]
   (:valid (hashers/verify incoming-password encrypted-password)))

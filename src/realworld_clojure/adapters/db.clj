@@ -220,11 +220,11 @@ where c.id = ?", (:id auth-user) id] {:builder-fn rs/as-unqualified-kebab-maps})
 
 (defn create-comment
   "Add a record to the comments table"
-  [database slug comment auth-user]
+  [database slug c auth-user]
   (when-let [c (jdbc/execute-one! (:datasource database) ["insert into comments (article, body, author)
 select id, ?, ?
 from articles
-where slug = ?", (:body comment), (:id auth-user), slug] update-options)]
+where slug = ?", (:body c), (:id auth-user), slug] update-options)]
     (get-comment database (:id c) auth-user)))
 
 (defn get-article-comments

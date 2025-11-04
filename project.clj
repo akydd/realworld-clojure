@@ -33,4 +33,6 @@
                    :dependencies [[org.clojure/tools.namespace "1.5.0"]
                                   [org.clojure/java.classpath "1.1.0"]
                                   [io.github.noahtheduke/splint "1.21.0"]]}}
+  :plugins [[jonase/eastwood "1.4.3"]
+            [lein-bikeshed "0.5.2"]]
   :aliases {"splint" ["run" "-m" "noahtheduke.splint"]})

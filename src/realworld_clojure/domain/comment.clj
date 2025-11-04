@@ -13,11 +13,11 @@
 
 (defn create-comment
   "Add a new comment to an article."
-  [controller slug comment auth-user]
-  (if (m/validate comment-create-schema comment)
+  [controller slug c auth-user]
+  (if (m/validate comment-create-schema c)
     (when (db/get-article-by-slug (:database controller) slug)
-      (db/create-comment (:database controller) slug comment auth-user))
-    {:errors (me/humanize (m/explain comment-create-schema comment))}))
+      (db/create-comment (:database controller) slug c auth-user))
+    {:errors (me/humanize (m/explain comment-create-schema c))}))
 
 (defn delete-comment
   "Delete a comment"

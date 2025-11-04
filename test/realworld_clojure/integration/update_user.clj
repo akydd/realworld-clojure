@@ -60,4 +60,3 @@
                                                                        (m/explain user-response-schema)
                                                                        (me/humanize)))
       (is (= "Bilbo Baggins" (:username returned-user))))))
-

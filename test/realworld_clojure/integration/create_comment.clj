@@ -48,10 +48,9 @@
           c (mg/generate comment/comment-create-schema)
           token (get-login-token user)
           r (create-comment-request (:slug article) c token)
-          comment (:comment (json/parse-string (:body r) true))]
+          returned-comment (:comment (json/parse-string (:body r) true))]
       (is (= 200 (:status r)))
-      (is (true? (m/validate auth-comment-schema comment)) (->> comment
-                                                                (m/explain auth-comment-schema)
-                                                                (me/humanize)))
-      (is (= (:body c) (:body comment))))))
-
+      (is (true? (m/validate auth-comment-schema returned-comment)) (->> returned-comment
+                                                                         (m/explain auth-comment-schema)
+                                                                         (me/humanize)))
+      (is (= (:body c) (:body returned-comment))))))

@@ -6,7 +6,9 @@
    [realworld-clojure.config-test :as config]
    [malli.generator :as mg]
    [realworld-clojure.domain.article :as article]
-   [realworld-clojure.integration.common :refer [update-article-request get-login-token auth-article-schema]]
+   [realworld-clojure.integration.common :refer [update-article-request
+                                                 get-login-token
+                                                 auth-article-schema]]
    [malli.core :as m]
    [cheshire.core :as json]
    [malli.error :as me]))
@@ -24,7 +26,8 @@
     (let [db (get-in sut [:database :datasource])
           user (test-utils/create-user db)
           update (mg/generate article/article-update-schema)
-          r (update-article-request "no-article-here" update (get-login-token user))]
+          r (update-article-request "no-article-here" update
+                                    (get-login-token user))]
       (is (= 404 (:status r))))))
 
 (deftest invalid-input
@@ -62,9 +65,11 @@
           r (update-article-request (:slug article) update token)
           updated-article (:article (json/parse-string (:body r) true))]
       (is (= 200 (:status r)))
-      (is (true? (m/validate auth-article-schema updated-article)) (->> updated-article
-                                                                        (m/explain auth-article-schema)
-                                                                        (me/humanize)))
+      (is (true?
+           (m/validate auth-article-schema updated-article))
+          (->> updated-article
+               (m/explain auth-article-schema)
+               (me/humanize)))
       (is (= (:title updated-article) new-title))
       (is (= (:slug updated-article) (str (:slug article) "-updated"))))))
 
@@ -87,12 +92,15 @@
           user (test-utils/create-user db)
           article (test-utils/create-article db (:id user))
           update (mg/generate article/article-update-schema)
-          r (update-article-request (:slug article) update (get-login-token user))
+          r (update-article-request (:slug article) update
+                                    (get-login-token user))
           returned-article (-> r
                                (:body)
                                (json/parse-string true)
                                (:article))]
       (is (= 200 (:status r)))
-      (is (true? (m/validate auth-article-schema returned-article)) (->> returned-article
-                                                                         (m/explain auth-article-schema)
-                                                                         (me/humanize))))))
+      (is (true?
+           (m/validate auth-article-schema returned-article))
+          (->> returned-article
+               (m/explain auth-article-schema)
+               (me/humanize))))))

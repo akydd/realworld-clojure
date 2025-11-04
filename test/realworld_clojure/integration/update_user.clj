@@ -6,7 +6,9 @@
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
    [malli.core :as m]
-   [realworld-clojure.integration.common :refer [update-user-request user-response-schema get-login-token]]
+   [realworld-clojure.integration.common :refer [update-user-request
+                                                 user-response-schema
+                                                 get-login-token]]
    [malli.error :as me]))
 
 (deftest no-authentication
@@ -56,7 +58,9 @@
                             (json/parse-string true)
                             (:user))]
       (is (= 200 (:status r)))
-      (is (true? (m/validate user-response-schema returned-user)) (->> returned-user
-                                                                       (m/explain user-response-schema)
-                                                                       (me/humanize)))
+      (is (true?
+           (m/validate user-response-schema returned-user))
+          (->> returned-user
+               (m/explain user-response-schema)
+               (me/humanize)))
       (is (= "Bilbo Baggins" (:username returned-user))))))

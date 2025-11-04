@@ -1,7 +1,10 @@
 (ns realworld-clojure.integration.unfollow-user
   (:require
    [clojure.test :refer [deftest is]]
-   [realworld-clojure.integration.common :refer [get-login-token unfollow-user-request auth-profile-schema profiles-equal?]]
+   [realworld-clojure.integration.common :refer [get-login-token
+                                                 unfollow-user-request
+                                                 auth-profile-schema
+                                                 profiles-equal?]]
    [realworld-clojure.utils :as test-utils]
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
@@ -39,9 +42,10 @@
                       (json/parse-string true)
                       (:profile))]
       (is (= 200 (:status r)))
-      (is (true? (m/validate auth-profile-schema profile)) (->> profile
-                                                                (m/explain auth-profile-schema)
-                                                                (me/humanize)))
+      (is (true? (m/validate auth-profile-schema profile))
+          (->> profile
+               (m/explain auth-profile-schema)
+               (me/humanize)))
       (is (false? (:following profile)))
       (is (true? (profiles-equal? user-two profile))))))
 
@@ -59,8 +63,9 @@
                       (json/parse-string true)
                       (:profile))]
       (is (= 200 (:status r)))
-      (is (true? (m/validate auth-profile-schema profile)) (->> profile
-                                                                (m/explain auth-profile-schema)
-                                                                (me/humanize)))
+      (is (true? (m/validate auth-profile-schema profile))
+          (->> profile
+               (m/explain auth-profile-schema)
+               (me/humanize)))
       (is (false? (:following profile)))
       (is (true? (profiles-equal? user-two profile))))))

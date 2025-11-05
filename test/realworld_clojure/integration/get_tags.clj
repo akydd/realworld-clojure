@@ -32,6 +32,9 @@
     [sut (core/new-system (config/read-test-config))]
     (let [db (get-in sut [:database :datasource])
           author (test-utils/create-user db)
-          _ (test-utils/create-article db (:id author) {:tag-list ["tag-one" "tag-two" "tag-three"]})
+          _ (test-utils/create-article db (:id author)
+                                       {:tag-list ["tag-one"
+                                                   "tag-two"
+                                                   "tag-three"]})
           r (get-tags-request)]
       (validate-response r ["tag-one" "tag-three" "tag-two"]))))

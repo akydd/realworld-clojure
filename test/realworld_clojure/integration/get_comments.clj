@@ -1,7 +1,11 @@
 (ns realworld-clojure.integration.get-comments
   (:require
    [clojure.test :refer [deftest is]]
-   [realworld-clojure.integration.common :refer [get-comments-request get-login-token no-auth-comment-schema auth-comment-schema assert-comments-match]]
+   [realworld-clojure.integration.common :refer [get-comments-request
+                                                 get-login-token
+                                                 no-auth-comment-schema
+                                                 auth-comment-schema
+                                                 assert-comments-match]]
    [realworld-clojure.utils :as test-utils]
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
@@ -37,12 +41,16 @@
                       (:comments))]
      (is (= 200 (:status response)))
      (doseq [c comments]
-       (is (m/validate no-auth-comment-schema c) (->> c
-                                                      (m/explain no-auth-comment-schema c)
-                                                      (me/humanize))))
+       (is (m/validate no-auth-comment-schema c)
+           (->> c
+                (m/explain no-auth-comment-schema c)
+                (me/humanize))))
      (assert-comments-match (map (fn [a b c] {:expected a
                                               :actual b
-                                              :author c}) expected-comments comments authors))))
+                                              :author c})
+                                 expected-comments
+                                 comments
+                                 authors))))
   ([response expected-comments authors follows]
    (let [comments (-> response
                       (:body)
@@ -50,13 +58,18 @@
                       (:comments))]
      (is (= 200 (:status response)))
      (doseq [c comments]
-       (is (m/validate auth-comment-schema c) (->> c
-                                                   (m/explain auth-comment-schema c)
-                                                   (me/humanize))))
+       (is (m/validate auth-comment-schema c)
+           (->> c
+                (m/explain auth-comment-schema c)
+                (me/humanize))))
      (assert-comments-match (map (fn [a b c d] {:expected a
                                                 :actual b
                                                 :author c
-                                                :follows d}) expected-comments comments authors follows)))))
+                                                :follows d})
+                                 expected-comments
+                                 comments
+                                 authors
+                                 follows)))))
 
 (deftest no-auth
   (test-utils/with-system

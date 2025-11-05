@@ -1,8 +1,9 @@
 (ns realworld-clojure.integration.authentication-test
   (:require
-   [clojure.test :refer [deftest testing is]]
+   [clojure.test :refer [deftest is]]
    [realworld-clojure.utils :as test-utils]
-   [realworld-clojure.integration.common :refer [login-request user-response-schema]]
+   [realworld-clojure.integration.common :refer [login-request
+                                                 user-response-schema]]
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
    [cheshire.core :as json]
@@ -46,7 +47,8 @@
                             (json/parse-string true)
                             (:user))]
       (is (= 200 (:status r)))
-      (is (true? (m/validate user-response-schema returned-user)) (->> returned-user
-                                                                       (m/explain user-response-schema)
-                                                                       (me/humanize)))
+      (is (true? (m/validate user-response-schema returned-user))
+          (->> returned-user
+               (m/explain user-response-schema)
+               (me/humanize)))
       (is (= (:username user) (:username returned-user))))))

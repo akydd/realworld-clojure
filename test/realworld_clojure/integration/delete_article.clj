@@ -4,7 +4,9 @@
    [realworld-clojure.utils :as test-utils]
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
-   [realworld-clojure.integration.common :refer [delete-article-request get-login-token get-article-request]]))
+   [realworld-clojure.integration.common :refer [delete-article-request
+                                                 get-login-token
+                                                 get-article-request]]))
 
 (deftest no-auth
   (test-utils/with-system

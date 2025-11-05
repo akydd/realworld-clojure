@@ -5,7 +5,11 @@
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
    [malli.generator :as mg]
-   [realworld-clojure.integration.common :refer [create-article-request get-login-token auth-article-schema validate-article-vs-input validate-slug]]
+   [realworld-clojure.integration.common :refer [create-article-request
+                                                 get-login-token
+                                                 auth-article-schema
+                                                 validate-article-vs-input
+                                                 validate-slug]]
    [realworld-clojure.domain.article :as article]
    [malli.core :as m]
    [malli.error :as me]
@@ -33,7 +37,8 @@
     (let [db (get-in sut [:database :datasource])
           user (test-utils/create-user db)
           article-one (test-utils/create-article db (:id user))
-          input (assoc (mg/generate article/article-schema) :title (:title article-one))
+          input (assoc (mg/generate article/article-schema)
+                       :title (:title article-one))
           token (get-login-token user)
           r (create-article-request input token)]
       (is (= 409 (:status r))))))
@@ -48,9 +53,10 @@
           r (create-article-request input token)
           article (:article (json/parse-string (:body r) true))]
       (is (= 200 (:status r)))
-      (is (true? (m/validate auth-article-schema article)) (->> article
-                                                                (m/explain auth-article-schema)
-                                                                (me/humanize)))
+      (is (true? (m/validate auth-article-schema article))
+          (->> article
+               (m/explain auth-article-schema)
+               (me/humanize)))
       (validate-article-vs-input article input)
       (validate-slug article)
       (is (zero? (count (:tag-list article)))))))
@@ -79,9 +85,10 @@
                       (json/parse-string true)
                       (:article))]
       (is (= 200 (:status r)))
-      (is (true? (m/validate auth-article-schema article)) (->> article
-                                                                (m/explain auth-article-schema)
-                                                                (me/humanize)))
+      (is (true? (m/validate auth-article-schema article))
+          (->> article
+               (m/explain auth-article-schema)
+               (me/humanize)))
       (validate-article-vs-input article input)
       (validate-slug article))))
 
@@ -99,9 +106,10 @@
                       (json/parse-string true)
                       (:article))]
       (is (= 200 (:status r)))
-      (is (true? (m/validate auth-article-schema article)) (->> article
-                                                                (m/explain auth-article-schema)
-                                                                (me/humanize)))
+      (is (true? (m/validate auth-article-schema article))
+          (->> article
+               (m/explain auth-article-schema)
+               (me/humanize)))
       (validate-article-vs-input article input)
       (validate-slug article))))
 
@@ -120,8 +128,9 @@
                       (json/parse-string true)
                       (:article))]
       (is (= 200 (:status r)))
-      (is (true? (m/validate auth-article-schema article)) (->> article
-                                                                (m/explain auth-article-schema)
-                                                                (me/humanize)))
+      (is (true? (m/validate auth-article-schema article))
+          (->> article
+               (m/explain auth-article-schema)
+               (me/humanize)))
       (validate-article-vs-input article input)
       (validate-slug article))))

@@ -4,7 +4,9 @@
    [realworld-clojure.utils :as test-utils]
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
-   [realworld-clojure.integration.common :refer [create-comment-request get-login-token auth-comment-schema]]
+   [realworld-clojure.integration.common :refer [create-comment-request
+                                                 get-login-token
+                                                 auth-comment-schema]]
    [malli.generator :as mg]
    [realworld-clojure.domain.comment :as comment]
    [cheshire.core :as json]
@@ -50,7 +52,8 @@
           r (create-comment-request (:slug article) c token)
           returned-comment (:comment (json/parse-string (:body r) true))]
       (is (= 200 (:status r)))
-      (is (true? (m/validate auth-comment-schema returned-comment)) (->> returned-comment
-                                                                         (m/explain auth-comment-schema)
-                                                                         (me/humanize)))
+      (is (true? (m/validate auth-comment-schema returned-comment))
+          (->> returned-comment
+               (m/explain auth-comment-schema)
+               (me/humanize)))
       (is (= (:body c) (:body returned-comment))))))

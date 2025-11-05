@@ -1,7 +1,9 @@
 (ns realworld-clojure.integration.delete-comment
   (:require
    [clojure.test :refer [deftest is]]
-   [realworld-clojure.integration.common :refer [delete-comment-request get-login-token get-comments-request]]
+   [realworld-clojure.integration.common :refer [delete-comment-request
+                                                 get-login-token
+                                                 get-comments-request]]
    [realworld-clojure.utils :as test-utils]
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]

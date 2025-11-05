@@ -30,16 +30,18 @@
   ([username]
    @(http/get (str base-url "/profiles/" username) {:headers (get-headers)}))
   ([username token]
-   @(http/get (str base-url "/profiles/" username) {:headers (get-headers token)})))
+   @(http/get (str base-url "/profiles/" username)
+              {:headers (get-headers token)})))
 
 (defn login-request
   ([]
    @(http/post (str base-url "/users/login") {:headers (get-headers)
                                               :body (json/generate-string {})}))
   ([email password]
-   @(http/post (str base-url "/users/login") {:headers (get-headers)
-                                              :body (json/generate-string {:user {:email email
-                                                                                  :password password}})})))
+   @(http/post (str base-url "/users/login")
+               {:headers (get-headers)
+                :body (json/generate-string {:user {:email email
+                                                    :password password}})})))
 
 (defn get-login-token
   [user]
@@ -48,28 +50,37 @@
 
 (defn update-user-request
   ([user]
-   @(http/put (str base-url "/user") {:headers (get-headers)
-                                      :body (json/generate-string {:user user})}))
+   @(http/put
+     (str base-url "/user") {:headers (get-headers)
+                             :body (json/generate-string {:user user})}))
   ([user token]
-   @(http/put (str base-url "/user") {:headers (get-headers token)
-                                      :body (json/generate-string {:user user})})))
+   @(http/put
+     (str base-url "/user") {:headers (get-headers token)
+                             :body (json/generate-string {:user user})})))
 
 (defn register-request
   [user]
-  @(http/post (str base-url "/users") {:headers (get-headers)
-                                       :body (json/generate-string {:user (select-keys user [:username :password :email])})}))
+  @(http/post
+    (str base-url "/users")
+    {:headers (get-headers)
+     :body (json/generate-string
+            {:user (select-keys user [:username :password :email])})}))
 
 (defn follow-user-request
   ([username]
-   @(http/post (str base-url "/profiles/" username "/follow") {:headers (get-headers)}))
+   @(http/post (str base-url "/profiles/" username "/follow")
+               {:headers (get-headers)}))
   ([username token]
-   @(http/post (str base-url "/profiles/" username "/follow") {:headers (get-headers token)})))
+   @(http/post (str base-url "/profiles/" username "/follow")
+               {:headers (get-headers token)})))
 
 (defn unfollow-user-request
   ([username]
-   @(http/delete (str base-url "/profiles/" username "/follow") {:headers (get-headers)}))
+   @(http/delete (str base-url "/profiles/" username "/follow")
+                 {:headers (get-headers)}))
   ([username token]
-   @(http/delete (str base-url "/profiles/" username "/follow") {:headers (get-headers token)})))
+   @(http/delete (str base-url "/profiles/" username "/follow")
+                 {:headers (get-headers token)})))
 
 (defn get-article-request
   ([slug]
@@ -79,69 +90,87 @@
 
 (defn create-article-request
   ([article]
-   @(http/post (str base-url "/articles") {:headers (get-headers)
-                                           :body (json/generate-string {:article article})}))
+   @(http/post (str base-url "/articles")
+               {:headers (get-headers)
+                :body (json/generate-string {:article article})}))
   ([article token]
-   @(http/post (str base-url "/articles") {:headers (get-headers token)
-                                           :body (json/generate-string {:article article})})))
+   @(http/post (str base-url "/articles")
+               {:headers (get-headers token)
+                :body (json/generate-string {:article article})})))
 
 (defn update-article-request
   ([slug update]
-   @(http/put (str base-url "/articles/" slug) {:headers (get-headers)
-                                                :body (json/generate-string {:article update})}))
+   @(http/put (str base-url "/articles/" slug)
+              {:headers (get-headers)
+               :body (json/generate-string {:article update})}))
   ([slug update token]
-   @(http/put (str base-url "/articles/" slug) {:headers (get-headers token)
-                                                :body (json/generate-string {:article update})})))
+   @(http/put (str base-url "/articles/" slug)
+              {:headers (get-headers token)
+               :body (json/generate-string {:article update})})))
 
 (defn delete-article-request
   ([slug]
    @(http/delete (str base-url "/articles/" slug) {:headers (get-headers)}))
   ([slug token]
-   @(http/delete (str base-url "/articles/" slug) {:headers (get-headers token)})))
+   @(http/delete (str base-url "/articles/" slug)
+                 {:headers (get-headers token)})))
 
 (defn create-comment-request
   ([slug comment]
-   @(http/post (str base-url "/articles/" slug "/comments") {:headers (get-headers)
-                                                             :body (json/generate-string {:comment comment})}))
+   @(http/post (str base-url "/articles/" slug "/comments")
+               {:headers (get-headers)
+                :body (json/generate-string {:comment comment})}))
   ([slug comment token]
-   @(http/post (str base-url "/articles/" slug "/comments") {:headers (get-headers token)
-                                                             :body (json/generate-string {:comment comment})})))
+   @(http/post (str base-url "/articles/" slug "/comments")
+               {:headers (get-headers token)
+                :body (json/generate-string {:comment comment})})))
 
 (defn get-comments-request
   ([slug]
-   @(http/get (str base-url "/articles/" slug "/comments") {:headers (get-headers)}))
+   @(http/get (str base-url "/articles/" slug "/comments")
+              {:headers (get-headers)}))
   ([slug token]
-   @(http/get (str base-url "/articles/" slug "/comments") {:headers (get-headers token)})))
+   @(http/get (str base-url "/articles/" slug "/comments")
+              {:headers (get-headers token)})))
 
 (defn delete-comment-request
   ([slug id]
-   @(http/delete (str base-url "/articles/" slug "/comments/" id) {:headers (get-headers)}))
+   @(http/delete (str base-url "/articles/" slug "/comments/" id)
+                 {:headers (get-headers)}))
   ([slug id token]
-   @(http/delete (str base-url "/articles/" slug "/comments/" id) {:headers (get-headers token)})))
+   @(http/delete (str base-url "/articles/" slug "/comments/" id)
+                 {:headers (get-headers token)})))
 
 (defn favorite-article-request
   ([slug]
-   @(http/post (str base-url "/articles/" slug "/favorite") {:headers (get-headers)}))
+   @(http/post (str base-url "/articles/" slug "/favorite")
+               {:headers (get-headers)}))
   ([slug token]
-   @(http/post (str base-url "/articles/" slug "/favorite") {:headers (get-headers token)})))
+   @(http/post (str base-url "/articles/" slug "/favorite")
+               {:headers (get-headers token)})))
 
 (defn unfavorite-article-request
   ([slug]
-   @(http/delete (str base-url "/articles/" slug "/favorite") {:headers (get-headers)}))
+   @(http/delete (str base-url "/articles/" slug "/favorite")
+                 {:headers (get-headers)}))
   ([slug token]
-   @(http/delete (str base-url "/articles/" slug "/favorite") {:headers (get-headers token)})))
+   @(http/delete (str base-url "/articles/" slug "/favorite")
+                 {:headers (get-headers token)})))
 
 (defn article-feed-request
   ([filter-str]
-   @(http/get (str base-url "/articles/feed" filter-str) {:headers (get-headers)}))
+   @(http/get (str base-url "/articles/feed" filter-str)
+              {:headers (get-headers)}))
   ([filter-str token]
-   @(http/get (str base-url "/articles/feed" filter-str) {:headers (get-headers token)})))
+   @(http/get (str base-url "/articles/feed" filter-str)
+              {:headers (get-headers token)})))
 
 (defn list-articles-request
   ([filter-str]
    @(http/get (str base-url "/articles" filter-str) {:headers (get-headers)}))
   ([filter-str token]
-   @(http/get (str base-url "/articles" filter-str) {:headers (get-headers token)})))
+   @(http/get (str base-url "/articles" filter-str)
+              {:headers (get-headers token)})))
 
 (defn get-tags-request
   []
@@ -170,7 +199,8 @@
      (is (= (:body expected) (:body actual)) "bodies do not match")
      (profiles-equal? author (:author actual))
      (when (some? follows)
-       (is (= follows (get-in actual [:author :following])) "follows does not match")))))
+       (is (= follows (get-in actual [:author :following]))
+           "follows does not match")))))
 
 (defn assert-comments-match
   [test-cases]
@@ -180,29 +210,34 @@
 (defn validate-article-vs-input
   [article input]
   (is (= (:title article) (:title input)) "titles do not match")
-  (is (= (:description article) (:description input)) "descriptions do not match")
+  (is (= (:description article) (:description input))
+      "descriptions do not match")
   (is (= (:body article) (:body input)) "bodies do not match")
   (if (nil? (:tag-list input))
     (is (= [] (:tagList article)) "tagList should be []")
-    (is (= (:tagList article) (sort (distinct (:tag-list input)))) "tag lists do not match")))
+    (is (= (:tagList article) (sort (distinct (:tag-list input))))
+        "tag lists do not match")))
 
 (defn- assert-article-matches-feed [article feed author follows]
   (let [;; article's timestamps, returned from the db, are javaa.sql.Timestamps.
-          ;; But the timestamps in feed, returned from parsing the json, are strings.
-          ;; To compare them, convert article's timestamps to strings.
+        ;; But the timestamps in feed, returned from parsing the json, are
+        ;;strings. To compare them, convert article's timestamps to strings.
         expected-created-at (instance->str (:created-at article))
         expected-updated-at (instance->str (:updated-at article))]
     (is (= (:title article) (:title feed)) "titles do not match")
-    (is (= (:description article) (:description feed)) "descriptions do not match")
+    (is (= (:description article) (:description feed))
+        "descriptions do not match")
     (is (= (:slug article) (:slug feed)) "slugs do not match")
     (if (nil? (:tag-list article))
       (is (= [] (:tagList feed)) "tagList should be empty")
-      (is (= (sort-by str/lower-case (:tag-list article)) (:tagList feed)) "tag lists do not match"))
+      (is (= (sort-by str/lower-case (:tag-list article)) (:tagList feed))
+          "tag lists do not match"))
     (is (= expected-created-at (:createdAt feed)) "createdats do not match")
     (is (= expected-updated-at (:updatedAt feed)) "updatedats do not match")
     (profiles-equal? author (:author feed))
     (when (some? follows)
-      (is (= follows (get-in feed [:author :following])) "following does not match"))))
+      (is (= follows (get-in feed [:author :following]))
+          "following does not match"))))
 
 (defn articles-match-feed?
   [test-cases]
@@ -216,20 +251,28 @@
          ;; To compare them, convert article's timestamps to strings.
          expected-created-at (instance->str (:created-at expected-article))
          expected-updated-at (instance->str (:updated-at expected-article))]
-     (is (= (:title expected-article) (:title article-from-json)) "titles do not match")
-     (is (= (:body expected-article) (:body article-from-json)) "bodies do not match")
-     (is (= (:description expected-article) (:description article-from-json)) "descriptions do not match")
-     (is (= (:slug expected-article) (:slug article-from-json)) "slugs do not match")
+     (is (= (:title expected-article) (:title article-from-json))
+         "titles do not match")
+     (is (= (:body expected-article) (:body article-from-json))
+         "bodies do not match")
+     (is (= (:description expected-article) (:description article-from-json))
+         "descriptions do not match")
+     (is (= (:slug expected-article) (:slug article-from-json))
+         "slugs do not match")
      (if (nil? (:tag-list expected-article))
        (is (= [] (:tagList article-from-json)) "tagList should be empty")
        ;; We need to sort by lower caee to match psql's default sorting.
-       (is (= (sort-by str/lower-case (:tag-list expected-article)) (:tagList article-from-json)) "tag lists do not match"))
-     (is (= expected-created-at (:createdAt article-from-json)) "created-ats do not match")
-     (is (= expected-updated-at (:updatedAt article-from-json)) "updated-ats do not match")
+       (is (= (sort-by str/lower-case (:tag-list expected-article))
+              (:tagList article-from-json)) "tag lists do not match"))
+     (is (= expected-created-at (:createdAt article-from-json))
+         "created-ats do not match")
+     (is (= expected-updated-at (:updatedAt article-from-json))
+         "updated-ats do not match")
      (profiles-equal? author (:author article-from-json))))
   ([expected-article author article-from-json follows]
    (article-matches-article? expected-article author article-from-json)
-   (is (= follows (get-in article-from-json [:author :following])) "follows does not match")))
+   (is (= follows (get-in article-from-json [:author :following]))
+       "follows does not match")))
 
 (defn validate-slug
   [article]
@@ -238,8 +281,8 @@
                              (str/replace #"W+" "-"))) "slug is incorrect"))
 
 ;; Response schemas, used for validation.
-;; Note that the keywords here are in camelCase, to reflect the requirement that the
-;; fieldnames returned in the json body are also camelCase.
+;; Note that the keywords here are in camelCase, to reflect the requirement that
+;; the fieldnames returned in the json body are also camelCase.
 
 (def user-response-schema
   [:map {:closed true}

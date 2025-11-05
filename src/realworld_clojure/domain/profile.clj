@@ -15,7 +15,8 @@
   (m/schema [:string {:min 1}]))
 
 (defn follow-user
-  "Set auth-user to follow the user with username. Returns the profile of the user being followed, or nil."
+  "Set auth-user to follow the user with username. Returns the profile of the
+ user being followed, or nil."
   [controller auth-user username]
   (if (m/validate non-empty-string username)
     (when-let [u (db/get-user-by-username (:database controller) username)]
@@ -26,7 +27,8 @@
                   (me/humanize))}))
 
 (defn unfollow-user
-  "Set auth-user to unfollow a user. Returns the profile of the user being unfollowed, or nil."
+  "Set auth-user to unfollow a user. Returns the profile of the user being
+ unfollowed, or nil."
   [controller auth-user username]
   (if (m/validate non-empty-string username)
     (when-let [u (db/get-user-by-username (:database controller) username)]

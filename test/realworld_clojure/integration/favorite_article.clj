@@ -4,7 +4,9 @@
    [realworld-clojure.utils :as test-utils]
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
-   [realworld-clojure.integration.common :refer [favorite-article-request get-login-token auth-article-schema]]
+   [realworld-clojure.integration.common :refer [favorite-article-request
+                                                 get-login-token
+                                                 auth-article-schema]]
    [cheshire.core :as json]
    [malli.core :as m]
    [malli.error :as me]))
@@ -35,9 +37,10 @@
             r (favorite-article-request (:slug article) token)
             a (:article (json/parse-string (:body r) true))]
         (is (= 200 (:status r)))
-        (is (true? (m/validate auth-article-schema a)) (->> a
-                                                            (m/explain auth-article-schema)
-                                                            (me/humanize)))
+        (is (true? (m/validate auth-article-schema a))
+            (->> a
+                 (m/explain auth-article-schema)
+                 (me/humanize)))
         (is (true? (:favorited a)))
         (is (= 1 (:favoritesCount a))))))
 
@@ -68,7 +71,8 @@
             r (favorite-article-request (:slug article) token-two)
             returned-article (:article (json/parse-string (:body r) true))]
         (is (= 200 (:status r)))
-        (is (true? (m/validate auth-article-schema returned-article)) (->> returned-article
-                                                                           (m/explain auth-article-schema)
-                                                                           (me/humanize)))
+        (is (true? (m/validate auth-article-schema returned-article))
+            (->> returned-article
+                 (m/explain auth-article-schema)
+                 (me/humanize)))
         (is (= 2 (:favoritesCount returned-article)))))))

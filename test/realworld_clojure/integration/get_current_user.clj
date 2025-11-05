@@ -4,7 +4,8 @@
    [realworld-clojure.utils :as test-utils]
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
-   [realworld-clojure.integration.common :refer [get-user-request login-request]]
+   [realworld-clojure.integration.common :refer [get-user-request
+                                                 login-request]]
    [cheshire.core :as json]))
 
 (deftest no-authentication

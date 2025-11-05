@@ -1,7 +1,10 @@
 (ns realworld-clojure.integration.article-feed
   (:require
    [clojure.test :refer [deftest is]]
-   [realworld-clojure.integration.common :refer [article-feed-request get-login-token articles-match-feed? multiple-auth-article-schema]]
+   [realworld-clojure.integration.common :refer [article-feed-request
+                                                 get-login-token
+                                                 articles-match-feed?
+                                                 multiple-auth-article-schema]]
    [realworld-clojure.utils :as test-utils]
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
@@ -21,15 +24,22 @@
                  (:body)
                  (json/parse-string true))]
     (is (= 200 (:status response)))
-    (is (true? (m/validate multiple-auth-article-schema body)) (->> body
-                                                                    (m/explain multiple-auth-article-schema)
-                                                                    (me/humanize)))
+    (is (true? (m/validate multiple-auth-article-schema body))
+        (->> body
+             (m/explain multiple-auth-article-schema)
+             (me/humanize)))
     ;;(is (= expected-articles (:articles body)))
-    (is (= (count expected-articles) (:articlesCount body)) "article count is wrong")
-    (articles-match-feed? (map (fn [a b c d] {:article a
-                                              :author b
-                                              :feed c
-                                              :follows d}) expected-articles expected-authors (:articles body) (vec (repeat (count expected-authors) true))))))
+    (is (= (count expected-articles) (:articlesCount body))
+        "article count is wrong")
+    (articles-match-feed?
+     (map (fn [a b c d] {:article a
+                         :author b
+                         :feed c
+                         :follows d})
+          expected-articles
+          expected-authors
+          (:articles body)
+          (vec (repeat (count expected-authors) true))))))
 
 (deftest following-no-one
   (test-utils/with-system
@@ -76,10 +86,12 @@
           user-three (test-utils/create-user db)
           _ (test-utils/create-article db (:id user-one))
           now (jt/local-date-time)
-          article-one (test-utils/create-article db (:id user-three) {:title "article-one"
-                                                                      :tag-list []})
-          article-two (test-utils/create-article db (:id user-three) {:title "article-two"
-                                                                      :tag-list []})
+          article-one (test-utils/create-article
+                       db (:id user-three) {:title "article-one"
+                                            :tag-list []})
+          article-two (test-utils/create-article
+                       db (:id user-three) {:title "article-two"
+                                            :tag-list []})
           _ (test-utils/create-follows db user-two user-three)
           r (article-feed-request "" (get-login-token user-two))]
       (validate-response r [article-two article-one] [user-three user-three]))))
@@ -92,7 +104,8 @@
           user-two (test-utils/create-user db)
           user-three (test-utils/create-user db)
           _ (test-utils/create-article db (:id user-one))
-          article (test-utils/create-article db (:id user-three) {:tag-list ["one-tag"]})
+          article (test-utils/create-article
+                   db (:id user-three) {:tag-list ["one-tag"]})
           _ (test-utils/create-follows db user-two user-three)
           token (get-login-token user-two)
           r (article-feed-request "" token)]
@@ -107,10 +120,12 @@
           user-three (test-utils/create-user db)
           _ (test-utils/create-article db (:id user-one))
           now (jt/local-date-time)
-          article-one (test-utils/create-article db (:id user-three) {:title "article-one"
-                                                                      :tag-list ["my-tag"]})
-          article-two (test-utils/create-article db (:id user-three) {:title "article-two"
-                                                                      :tag-list ["my-tag"]})
+          article-one (test-utils/create-article
+                       db (:id user-three) {:title "article-one"
+                                            :tag-list ["my-tag"]})
+          article-two (test-utils/create-article
+                       db (:id user-three) {:title "article-two"
+                                            :tag-list ["my-tag"]})
           _ (test-utils/create-follows db user-two user-three)
           r (article-feed-request "" (get-login-token user-two))]
       (validate-response r [article-two article-one] [user-three user-three]))))
@@ -123,10 +138,12 @@
           user-two (test-utils/create-user db)
           user-three (test-utils/create-user db)
           _ (test-utils/create-article db (:id user-one))
-          article-one (test-utils/create-article db (:id user-three) {:title "article-one"
-                                                                      :tag-list ["my-tag"]})
-          article-two (test-utils/create-article db (:id user-three) {:title "article-two"
-                                                                      :tag-list ["my-other-tag"]})
+          article-one (test-utils/create-article
+                       db (:id user-three) {:title "article-one"
+                                            :tag-list ["my-tag"]})
+          article-two (test-utils/create-article
+                       db (:id user-three) {:title "article-two"
+                                            :tag-list ["my-other-tag"]})
           _ (test-utils/create-follows db user-two user-three)
           r (article-feed-request "" (get-login-token user-two))]
       (validate-response r [article-two article-one] [user-three user-three]))))
@@ -139,7 +156,9 @@
           user-two (test-utils/create-user db)
           user-three (test-utils/create-user db)
           _ (test-utils/create-article db (:id user-one))
-          article (test-utils/create-article db (:id user-three) {:tag-list ["one-tag" "two-tag" "three-tag"]})
+          article (test-utils/create-article
+                   db (:id user-three) {:tag-list
+                                        ["one-tag" "two-tag" "three-tag"]})
           _ (test-utils/create-follows db user-two user-three)
           token (get-login-token user-two)
           r (article-feed-request "" token)]
@@ -169,9 +188,12 @@
           user (test-utils/create-user db)
           _ (test-utils/create-follows db user author)
           now (jt/local-date-time)
-          a1 (test-utils/create-article db (:id author) {:updated-at now})
-          a2 (test-utils/create-article db (:id author) {:updated-at (jt/- now (jt/days 1))})
-          a3 (test-utils/create-article db (:id author) {:updated-at (jt/- now (jt/days 2))})
+          a1 (test-utils/create-article
+              db (:id author) {:updated-at now})
+          a2 (test-utils/create-article
+              db (:id author) {:updated-at (jt/- now (jt/days 1))})
+          a3 (test-utils/create-article
+              db (:id author) {:updated-at (jt/- now (jt/days 2))})
           token (get-login-token user)
           r (article-feed-request "" token)]
       (is (= 200 (:status r)))
@@ -200,17 +222,19 @@
           user (test-utils/create-user db)
           _ (test-utils/create-follows db user author)
           _ (dotimes [i 25]
-              (test-utils/create-article db (:id author) {:tag-list [(str "tag-" i)]
-                                                          :title (str "article-" i)}))
+              (test-utils/create-article
+               db (:id author) {:tag-list [(str "tag-" i)]
+                                :title (str "article-" i)}))
           r (article-feed-request "" (get-login-token user))
           body (-> r
                    (:body)
                    (json/parse-string true))
           articles (:articles body)]
       (is (= 200 (:status r)))
-      (is (true? (m/validate multiple-auth-article-schema body)) (->> body
-                                                                      (m/explain multiple-auth-article-schema)
-                                                                      (me/humanize)))
+      (is (true? (m/validate multiple-auth-article-schema body))
+          (->> body
+               (m/explain multiple-auth-article-schema)
+               (me/humanize)))
       (is (= 20 (:articlesCount body)))
       (is (= 20 (count articles))))))
 

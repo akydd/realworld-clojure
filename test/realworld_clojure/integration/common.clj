@@ -246,8 +246,8 @@
 
 (defn article-matches-article?
   ([expected-article author article-from-json]
-   (let [;; article's timestamps, returned from the db, are javaa.sql.Timestamps.
-         ;; But the timestamps in feed, returned from parsing the json, are strings.
+   (let [;; article's timestamps, returned from the db, are javaa.sql.Instance.
+         ;; But the timestamps returned from parsing the json, are strings.
          ;; To compare them, convert article's timestamps to strings.
          expected-created-at (instance->str (:created-at expected-article))
          expected-updated-at (instance->str (:updated-at expected-article))]

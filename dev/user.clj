@@ -10,7 +10,9 @@
 (defn init
   "Constructs the dev system"
   []
-  (alter-var-root #'system (c/constantly (core/new-system (config/read-config)))))
+  (alter-var-root #'system (-> (config/read-config)
+                               (core/new-system)
+                               (c/constantly))))
 
 (defn start []
   (alter-var-root #'system core/start))

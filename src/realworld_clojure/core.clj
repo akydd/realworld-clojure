@@ -35,7 +35,8 @@
                       [:database])
      :handler (component/using
                (handlers/new-handler)
-               [:user-controller :profile-controller :article-controller :comment-controller :tag-controller])
+               [:user-controller :profile-controller :article-controller
+                :comment-controller :tag-controller])
      :web-server (component/using
                   (webserver/new-webserver (:port server-config) jwt-secret)
                   [:handler :database]))))

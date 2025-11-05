@@ -16,7 +16,7 @@
 (defrecord ArticleController [database])
 
 (defn str->slug
-  "Given a string, return it formatted to a slug"
+  "Given a string, return it formatted to a slug 'like-this'"
   [s]
   (-> s
       str/lower-case
@@ -55,7 +55,8 @@
     (when-let [article (db/get-article-by-slug (:database controller) slug)]
       ;; We don't have the author id at this level, but usernames are unique.
       (if (= (get-in article [:author :username]) (:username auth-user))
-        (db/update-article (:database controller) slug (update-slug updates) auth-user)
+        (db/update-article
+         (:database controller) slug (update-slug updates) auth-user)
         (throw-unauthorized)))
     {:errors (me/humanize (m/explain article-update-schema updates))}))
 

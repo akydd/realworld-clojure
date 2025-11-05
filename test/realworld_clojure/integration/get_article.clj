@@ -4,7 +4,11 @@
    [realworld-clojure.utils :as test-utils]
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
-   [realworld-clojure.integration.common :refer [get-article-request get-login-token no-auth-article-schema auth-article-schema article-matches-article?]]
+   [realworld-clojure.integration.common :refer [get-article-request
+                                                 get-login-token
+                                                 no-auth-article-schema
+                                                 auth-article-schema
+                                                 article-matches-article?]]
    [malli.core :as m]
    [cheshire.core :as json]
    [malli.error :as me]))
@@ -36,9 +40,10 @@
                                (json/parse-string true)
                                (:article))]
       (is (= 200 (:status r)))
-      (is (true? (m/validate no-auth-article-schema returned-article)) (->> returned-article
-                                                                            (m/explain no-auth-article-schema)
-                                                                            (me/humanize)))
+      (is (true? (m/validate no-auth-article-schema returned-article))
+          (->> returned-article
+               (m/explain no-auth-article-schema)
+               (me/humanize)))
       (article-matches-article? article user returned-article))))
 
 (deftest authenticated-not-following-author
@@ -52,9 +57,10 @@
           r (get-article-request (:slug article) token)
           returned-article (:article (json/parse-string (:body r) true))]
       (is (= 200 (:status r)))
-      (is (true? (m/validate auth-article-schema returned-article)) (->> returned-article
-                                                                         (m/explain auth-article-schema)
-                                                                         (me/humanize)))
+      (is (true? (m/validate auth-article-schema returned-article))
+          (->> returned-article
+               (m/explain auth-article-schema)
+               (me/humanize)))
       (article-matches-article? article author returned-article false))))
 
 (deftest authenticated-following-author
@@ -71,9 +77,10 @@
                                (json/parse-string true)
                                (:article))]
       (is (= 200 (:status r)))
-      (is (true? (m/validate auth-article-schema returned-article)) (->> returned-article
-                                                                         (m/explain auth-article-schema)
-                                                                         (me/humanize)))
+      (is (true? (m/validate auth-article-schema returned-article))
+          (->> returned-article
+               (m/explain auth-article-schema)
+               (me/humanize)))
       (article-matches-article? article author returned-article true))))
 
 (deftest single-tag
@@ -89,9 +96,10 @@
                                (json/parse-string true)
                                (:article))]
       (is (= 200 (:status r)))
-      (is (true? (m/validate no-auth-article-schema returned-article)) (->> returned-article
-                                                                            (m/explain no-auth-article-schema)
-                                                                            (me/humanize)))
+      (is (true? (m/validate no-auth-article-schema returned-article))
+          (->> returned-article
+               (m/explain no-auth-article-schema)
+               (me/humanize)))
       (article-matches-article? article user returned-article))))
 
 (deftest authenticated-single-tag
@@ -107,9 +115,10 @@
                                (json/parse-string true)
                                (:article))]
       (is (= 200 (:status r)))
-      (is (true? (m/validate auth-article-schema returned-article)) (->> returned-article
-                                                                         (m/explain no-auth-article-schema)
-                                                                         (me/humanize)))
+      (is (true? (m/validate auth-article-schema returned-article))
+          (->> returned-article
+               (m/explain no-auth-article-schema)
+               (me/humanize)))
       (article-matches-article? article user returned-article false))))
 
 (deftest multiple-tags
@@ -125,9 +134,10 @@
                                (json/parse-string true)
                                (:article))]
       (is (= 200 (:status r)))
-      (is (true? (m/validate no-auth-article-schema returned-article)) (->> returned-article
-                                                                            (m/explain no-auth-article-schema)
-                                                                            (me/humanize)))
+      (is (true? (m/validate no-auth-article-schema returned-article))
+          (->> returned-article
+               (m/explain no-auth-article-schema)
+               (me/humanize)))
       (article-matches-article? article user returned-article))))
 
 (deftest authenticated-multiple-tags
@@ -143,7 +153,8 @@
                                (json/parse-string true)
                                (:article))]
       (is (= 200 (:status r)))
-      (is (true? (m/validate auth-article-schema returned-article)) (->> returned-article
-                                                                         (m/explain no-auth-article-schema)
-                                                                         (me/humanize)))
+      (is (true? (m/validate auth-article-schema returned-article))
+          (->> returned-article
+               (m/explain no-auth-article-schema)
+               (me/humanize)))
       (article-matches-article? article user returned-article false))))

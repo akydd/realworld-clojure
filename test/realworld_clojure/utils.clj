@@ -20,7 +20,8 @@
 (defn clear-ds
   "Delete all data from datasource"
   [ds]
-  (sql/query ds ["truncate favorites, follows, comments, articles, tags, article_tags, users cascade"]))
+  (sql/query ds [(str "truncate favorites, follows, comments, "
+                      "articles, tags, article_tags, users cascade")]))
 
 (defmacro with-system
   [[bound-var binding-expr] & body]
@@ -32,11 +33,12 @@
          (component/stop ~bound-var)))))
 
 (defn create-user
-  "Save a test user to the db. Returns the user with an unhashed password, for testing."
+  "Save a test user to the db."
   [db]
   (let [user (mg/generate user/user-schema)
         password (hashers/derive (:password user))
-        new-user (sql/insert! db :users (assoc user :password password) update-options)]
+        new-user (sql/insert!
+                  db :users (assoc user :password password) update-options)]
     (assoc new-user :password (:password user))))
 
 (defn create-follows
@@ -49,13 +51,17 @@
 
 (defn insert-tag
   [db tag]
-  (let [existing-tag (jdbc/execute-one! db ["select * from tags where tag=?" tag] query-options)]
+  (let [existing-tag (jdbc/execute-one!
+                      db ["select * from tags where tag=?" tag] query-options)]
     (if (some? existing-tag)
       existing-tag
-      (jdbc/execute-one! db ["insert into tags (tag) values (?)" tag] update-options))))
+      (jdbc/execute-one!
+       db ["insert into tags (tag) values (?)" tag] update-options))))
 
 (defn link-article-and-tag [db article tag]
-  (jdbc/execute-one! db ["insert into article_tags (article, tag) values (?, ?) on conflict do nothing" (:id article) (:id tag)] update-options))
+  (jdbc/execute-one! db [(str "insert into article_tags (article, tag) "
+                              "values (?, ?) on conflict do nothing")
+                         (:id article) (:id tag)] update-options))
 
 (defn- create-article-for-input
   "Save a test article to the db.
@@ -81,7 +87,8 @@
   ([db author-id]
    (create-article-for-input db author-id (mg/generate article/article-schema)))
   ([db author-id options]
-   (create-article-for-input db author-id (merge (mg/generate article/article-schema) options))))
+   (create-article-for-input
+    db author-id (merge (mg/generate article/article-schema) options))))
 
 (defn create-article
   ([db author-id]
@@ -92,8 +99,13 @@
 (defn create-comment
   [db article-id author-id]
   (let [comment (mg/generate comment/comment-create-schema)]
-    (sql/insert! db :comments (assoc comment :author author-id :article article-id) update-options)))
+    (sql/insert!
+     db :comments (assoc comment :author author-id
+                         :article article-id)
+     update-options)))
 
 (defn fav-article
   [db user article]
-  (sql/insert! db :favorites {:user-id (:id user) :article (:id article)} update-options))
+  (sql/insert! db :favorites {:user-id (:id user)
+                              :article (:id article)}
+               update-options))

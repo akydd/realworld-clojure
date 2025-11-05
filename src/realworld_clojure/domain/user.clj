@@ -53,7 +53,8 @@
   "User login"
   [controller user]
   (if (m/validate user-login-schema user)
-    (when-let [fetched-user (db/get-user-by-email (:database controller) (:email user))]
+    (when-let [fetched-user (db/get-user-by-email
+                             (:database controller) (:email user))]
       (let [incoming-password (:password user)
             encrypted-password (:password fetched-user)]
         (if (password-valid? incoming-password encrypted-password)

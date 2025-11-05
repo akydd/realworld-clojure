@@ -16,7 +16,9 @@
                  (do
                    (log/error {} e "Caught exception")
                    {:status 500
-                    :body {:errors (str "Internal error" (.getMessage e))}}))))))))
+                    :body {:errors (str
+                                    "Internal error"
+                                    (.getMessage e))}}))))))))
 
 (defn wrap-log-req [handler]
   (fn [req]

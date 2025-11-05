@@ -5,7 +5,8 @@
    [realworld-clojure.utils :as test-utils]
    [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
-   [realworld-clojure.integration.common :refer [register-request user-response-schema]]
+   [realworld-clojure.integration.common :refer [register-request
+                                                 user-response-schema]]
    [malli.core :as m]
    [malli.generator :as mg]
    [realworld-clojure.domain.user :as user]
@@ -35,9 +36,10 @@
                    (json/parse-string true)
                    (:user))]
       (is (= 200 (:status r)))
-      (is (true? (m/validate user-response-schema user)) (->> user
-                                                              (m/explain user-response-schema)
-                                                              (me/humanize)))
+      (is (true? (m/validate user-response-schema user))
+          (->> user
+               (m/explain user-response-schema)
+               (me/humanize)))
       (is (= (:username input) (:username user)))
       (is (= (:email input) (:email user)))
       (is (some? (:token user))))))

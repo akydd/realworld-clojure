@@ -13,10 +13,6 @@
 (def query-options
   {:builder-fn o/as-unqualified-lower-maps})
 
-(def update-options-with-nulls
-  {:return-keys true
-   :builder-fn rs/as-unqualified-lower-maps})
-
 (def update-options
   {:return-keys true
    :builder-fn rs/as-unqualified-lower-maps})
@@ -30,9 +26,10 @@
 (defn insert-user
   [database user]
   (try
-    (jdbc/execute-one! (:datasource database) (hsql/format {:insert-into :users
-                                                            :values [user]
-                                                            :returning :*})
+    (jdbc/execute-one! (:datasource database)
+                       (hsql/format {:insert-into :users
+                                     :values [user]
+                                     :returning :*})
                        {:builder-fn rs/as-unqualified-kebab-maps})
     (catch org.postgresql.util.PSQLException e
       (handle-psql-exception e))))
@@ -40,9 +37,10 @@
 (defn get-user
   "Get a user record from user table"
   [database id]
-  (jdbc/execute-one! (:datasource database) (hsql/format {:select :*
-                                                          :from :users
-                                                          :where [:= :id id]})
+  (jdbc/execute-one! (:datasource database)
+                     (hsql/format {:select :*
+                                   :from :users
+                                   :where [:= :id id]})
                      {:builder-fn rs/as-unqualified-kebab-maps}))
 
 (defn get-user-by-email
@@ -89,20 +87,31 @@
   "Update a user record"
   [database auth-user data]
   (try
-    (sql/update! (:datasource database) :users data {:id (:id auth-user)} {:suffix "returning *"
-                                                                           :builder-fn rs/as-unqualified-maps})
+    (jdbc/execute-one! (:datasource database)
+                       (hsql/format {:update :users
+                                     :set data
+                                     :where [:= :id (:id auth-user)]
+                                     :returning :*})
+                       {:builder-fn rs/as-unqualified-kebab-maps})
     (catch org.postgresql.util.PSQLException e
       (handle-psql-exception e))))
 
 (defn follow-user
   [database auth-user user]
-  (jdbc/execute-one! (:datasource database) ["insert into follows (user_id, follows)
-values (?, ?) on conflict do nothing", (:id auth-user) (:id user)]))
+  (jdbc/execute-one! (:datasource database)
+                     (hsql/format {:insert-into :follows
+                                   :values [[(:id auth-user) (:id user)]]
+                                   :on-conflict []
+                                   :do-nothing true})))
 
 (defn unfollow-user
   "Unfollow a user."
   [database auth-user user]
-  (sql/delete! (:datasource database) :follows {:user_id (:id auth-user) :follows (:id user)}))
+  (jdbc/execute-one! (:datasource database)
+                     (hsql/format {:delete-from :follows
+                                   :where [:and
+                                           [:= :user-id (:id auth-user)]
+                                           [:= :follows (:id user)]]})))
 
 (defn- sqlarray->vec
   [s]
@@ -176,13 +185,22 @@ group by a.id, a.slug, a.title, a.description, a.body, a.created_at, a.updated_a
 (defn- insert-tag
   [tx tag]
   (let [existing-tag
-        (jdbc/execute-one! tx ["select * from tags where tag=?" tag] query-options)]
+        (jdbc/execute-one! tx
+                           ["select * from tags where tag=?" tag]
+                           query-options)]
     (if (some? existing-tag)
       existing-tag
-      (jdbc/execute-one! tx ["insert into tags (tag) values (?)" tag] update-options))))
+      (jdbc/execute-one! tx
+                         ["insert into tags (tag) values (?)" tag]
+                         update-options))))
 
 (defn- link-article-and-tag [tx article tag]
-  (jdbc/execute-one! tx ["insert into article_tags (article, tag) values (?, ?) on conflict do nothing" (:id article) (:id tag)] update-options))
+  (jdbc/execute-one! tx
+                     (hsql/format {:insert-into :article-tags
+                                   :values [[(:id article) (:id tag)]]
+                                   :on-conflict []
+                                   :do-nothing true})
+                     update-options))
 
 (defn- create-article
   "Save sn article to the db. This does not handle tags.
@@ -245,10 +263,16 @@ where c.id = ?", (:id auth-user) id] {:builder-fn rs/as-unqualified-kebab-maps})
 (defn create-comment
   "Add a record to the comments table"
   [database slug c auth-user]
-  (when-let [c (jdbc/execute-one! (:datasource database) ["insert into comments (article, body, author)
-select id, ?, ?
-from articles
-where slug = ?", (:body c), (:id auth-user), slug] update-options)]
+  (when-let [c (jdbc/execute-one!
+                (:datasource database)
+                (hsql/format {:insert-into :comments
+                              :columns [:article :body :author]
+                              :values [[{:select [:id]
+                                         :from :articles
+                                         :where [:= :slug slug]}
+                                        (:body c)
+                                        (:id auth-user)]]})
+                update-options)]
     (get-comment database (:id c) auth-user)))
 
 (defn get-article-comments
@@ -426,7 +450,11 @@ where slug = ?)" , (:id auth-user), slug])
 
 (defn get-tags
   [database]
-  (let [tags (jdbc/execute! (:datasource database) ["select tag from tags order by tag"] query-options)]
+  (let [tags (jdbc/execute! (:datasource database)
+                            (hsql/format {:select :tag
+                                          :from :tags
+                                          :order-by [:tag]})
+                            {:builder-fn rs/as-unqualified-kebab-maps})]
     (map :tag tags)))
 
 (defn migrate
@@ -447,7 +475,8 @@ where slug = ?)" , (:id auth-user), slug])
     (dt/read-as-instant)
     (let [ds (jdbc/get-datasource dbspec)
           migration-config {:datastore (ragtime-jdbc/sql-database dbspec)
-                            :migrations (ragtime-jdbc/load-resources "migrations")}]
+                            :migrations (ragtime-jdbc/load-resources
+                                         "migrations")}]
       (ragtime-repl/migrate migration-config)
       (assoc component
              :datasource ds

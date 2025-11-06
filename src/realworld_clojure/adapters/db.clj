@@ -7,7 +7,8 @@
             [com.stuartsierra.component :as component]
             [ragtime.repl :as ragtime-repl]
             [ragtime.jdbc :as ragtime-jdbc]
-            [honey.sql :as hsql]))
+            [honey.sql :as hsql]
+            [honey.sql.helpers :as h]))
 
 (def query-options
   {:builder-fn o/as-unqualified-lower-maps})
@@ -53,22 +54,36 @@
                                    :where [:= :email email]})
                      {:builder-fn rs/as-unqualified-kebab-maps}))
 
+(defn- get-profile-query
+  [username auth-user]
+  (-> (h/select :u.username :u.bio :u.image)
+      (cond-> auth-user (h/select [[:case [:is :f.follows nil] false
+                                    :else true
+                                    :end] :following]))
+      (h/from [:users :u])
+      (cond-> auth-user (h/left-join [:follows :f]
+                                     [:and
+                                      [:= :f.follows :u.id]
+                                      [:= :f.user-id (:id auth-user)]]))
+      (h/where [:= :u.username username])))
+
 (defn get-profile
   "Get a user profile"
   ([database username]
-   (jdbc/execute-one! (:datasource database) ["select username, bio, image from users where username = ?" username] {:builder-fn rs/as-unqualified-maps}))
+   (get-profile database username nil))
   ([database username auth-user]
-   (jdbc/execute-one! (:datasource database) ["select u.username, u.bio, u.image,
-case when f.follows is null then false else true end as following
-from users u
-left join follows as f
-on f.user_id = ? and f.follows = u.id
-where u.username = ?", (:id auth-user), username] {:builder-fn rs/as-unqualified-maps})))
+   (jdbc/execute-one! (:datasource database)
+                      (hsql/format (get-profile-query username auth-user))
+                      {:builder-fn rs/as-unqualified-kebab-maps})))
 
 (defn get-user-by-username
   "Get a user record by username"
   [database username]
-  (first (sql/find-by-keys (:datasource database) :users {:username username} query-options)))
+  (jdbc/execute-one! (:datasource database)
+                     (hsql/format {:select :*
+                                   :from :users
+                                   :where [:= :username username]})
+                     {:builder-fn rs/as-unqualified-kebab-maps}))
 
 (defn update-user
   "Update a user record"

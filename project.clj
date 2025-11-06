@@ -23,7 +23,8 @@
                  [cambium/cambium.logback.core "0.4.6"]
                  [clojure.java-time "1.4.2"]
                  [cheshire "6.1.0"]
-                 [camel-snake-kebab "0.4.3"]]
+                 [camel-snake-kebab "0.4.3"]
+                 [com.github.seancorfield/honeysql "2.7.1350"]]
 
   :main ^:skip-aot realworld-clojure.core
   :target-path "target/%s"

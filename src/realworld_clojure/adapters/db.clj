@@ -6,7 +6,8 @@
             [next.jdbc.date-time :as dt]
             [com.stuartsierra.component :as component]
             [ragtime.repl :as ragtime-repl]
-            [ragtime.jdbc :as ragtime-jdbc]))
+            [ragtime.jdbc :as ragtime-jdbc]
+            [honey.sql :as hsql]))
 
 (def query-options
   {:builder-fn o/as-unqualified-lower-maps})
@@ -26,23 +27,31 @@
     (throw (ex-info "db error" {:type :unknown :state (.getSQLState e)} e))))
 
 (defn insert-user
-  "Insert record into user table"
   [database user]
   (try
-    (sql/insert! (:datasource database) :users user {:returning :all
-                                                     :builder-fn rs/as-unqualified-lower-maps})
+    (jdbc/execute-one! (:datasource database) (hsql/format {:insert-into :users
+                                                            :values [user]
+                                                            :returning :*})
+                       {:builder-fn rs/as-unqualified-kebab-maps})
     (catch org.postgresql.util.PSQLException e
       (handle-psql-exception e))))
 
 (defn get-user
   "Get a user record from user table"
   [database id]
-  (sql/get-by-id (:datasource database) :users id {:builder-fn rs/as-unqualified-lower-maps}))
+  (jdbc/execute-one! (:datasource database) (hsql/format {:select :*
+                                                          :from :users
+                                                          :where [:= :id id]})
+                     {:builder-fn rs/as-unqualified-kebab-maps}))
 
 (defn get-user-by-email
   "Get a user record by email"
   [database email]
-  (first (sql/find-by-keys (:datasource database) :users {:email email} {:builder-fn rs/as-unqualified-maps})))
+  (jdbc/execute-one! {:datasource database}
+                     (hsql/format {:select :*
+                                   :from :users
+                                   :where [:= :email email]})
+                     {:builder-fn rs/as-unqualified-kebab-maps}))
 
 (defn get-profile
   "Get a user profile"

@@ -433,19 +433,28 @@ offset ?", (:id auth-user), limit, offset] {:builder-fn rs/as-unqualified-kebab-
 (defn favorite-article
   [database slug auth-user]
   (try
-    (jdbc/execute-one! (:datasource database) ["insert into favorites (user_id, article)
-select ?, id from articles
-where slug = ?", (:id auth-user), slug] update-options)
+    (jdbc/execute-one!
+     (:datasource database)
+     (hsql/format `{:insert-into
+                    (:favorites {:select [[[:inline ~(:id auth-user)]] :id]
+                                 :from :articles
+                                 :where [:= :slug ~slug]})})
+     update-options)
     (catch org.postgresql.util.PSQLException e
       (handle-psql-exception e)))
   (get-article-by-slug database slug auth-user))
 
 (defn unfavorite-article
   [database slug auth-user]
-  (jdbc/execute-one! (:datasource database) ["delete from favorites
-where user_id = ? and article in
-(select id from articles
-where slug = ?)" , (:id auth-user), slug])
+  (jdbc/execute-one! (:datasource database)
+                     (hsql/format {:delete-from :favorites
+                                   :where [:and
+                                           [:= :user-id (:id auth-user)]
+                                           [:in :article
+                                            {:select [:id]
+                                             :from :articles
+                                             :where [:= :slug slug]}]]}))
+
   (get-article-by-slug database slug auth-user))
 
 (defn get-tags

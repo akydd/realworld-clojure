@@ -52,18 +52,31 @@
                                    :where [:= :email email]})
                      {:builder-fn rs/as-unqualified-kebab-maps}))
 
+(def profile-selects
+  [:u.username :u.bio :u.image])
+
+(def following-select
+  [[:case [:is :f.follows nil] false
+    :else true
+    :end] :following])
+
+(def follows-table-alias
+  [:follows :f])
+
+(def users-table-alias
+  [:users :u])
+
 (defn- get-profile-query
   [username auth-user]
-  (-> (h/select :u.username :u.bio :u.image)
-      (cond-> auth-user (h/select [[:case [:is :f.follows nil] false
-                                    :else true
-                                    :end] :following]))
+  (-> (apply h/select profile-selects)
+      (cond-> auth-user (h/select following-select))
       (h/from [:users :u])
       (cond-> auth-user (h/left-join [:follows :f]
                                      [:and
                                       [:= :f.follows :u.id]
                                       [:= :f.user-id (:id auth-user)]]))
-      (h/where [:= :u.username username])))
+      (h/where [:= :u.username username])
+      (hsql/format)))
 
 (defn get-profile
   "Get a user profile"
@@ -71,7 +84,7 @@
    (get-profile database username nil))
   ([database username auth-user]
    (jdbc/execute-one! (:datasource database)
-                      (hsql/format (get-profile-query username auth-user))
+                      (get-profile-query username auth-user)
                       {:builder-fn rs/as-unqualified-kebab-maps})))
 
 (defn get-user-by-username
@@ -244,20 +257,32 @@ group by a.id, a.slug, a.title, a.description, a.body, a.created_at, a.updated_a
       (sql/delete! tx :comments {:article (:id article)})
       (sql/delete! tx :articles {:id (:id article)}))))
 
+(def comment-fields
+  [:c.id :c.created-at :c.updated-at :c.body])
+
+(def comments-table-alias
+  [:comments :c])
+
+(defn- get-comment-query [auth-user id]
+  (-> (apply h/select (concat comment-fields profile-selects))
+      (h/select following-select)
+      (h/from comments-table-alias)
+      (h/left-join follows-table-alias
+                   [:and
+                    [:= :f.user-id (:id auth-user)]
+                    [:= :f.follows :c.author]])
+
+      (h/inner-join users-table-alias
+                    [:= :c.author :u.id])
+      (h/where [:= :c.id id])
+      (hsql/format)))
+
 (defn get-comment
   "Get a single comment by id."
   [database id auth-user]
-  (when-let [c (jdbc/execute-one! (:datasource database) ["select c.id,
-c.created_at, c.updated_at,
-c.body,
-u.username, u.bio, u.image,
-case when f.follows is null then false else true end as following
-from comments as c
-inner join users as u
-on c.author = u.id
-left join follows as f
-on f.user_id = ? and f.follows = c.author
-where c.id = ?", (:id auth-user) id] {:builder-fn rs/as-unqualified-kebab-maps})]
+  (when-let [c (jdbc/execute-one! (:datasource database)
+                                  (get-comment-query auth-user id)
+                                  {:builder-fn rs/as-unqualified-kebab-maps})]
     (db-record->model c)))
 
 (defn create-comment
@@ -275,32 +300,33 @@ where c.id = ?", (:id auth-user) id] {:builder-fn rs/as-unqualified-kebab-maps})
                 update-options)]
     (get-comment database (:id c) auth-user)))
 
+(def article-table-alias
+  [:articles :a])
+
+(defn- get-article-comments-query
+  [slug auth-user]
+  (-> (apply h/select (concat comment-fields profile-selects))
+      (cond-> auth-user (h/select following-select))
+      (h/from article-table-alias)
+      ;; Used join-by because the joins had to be applied in a certain order.
+      (h/join-by :inner [comments-table-alias [:= :a.id :c.article]]
+                 :inner [users-table-alias [:= :c.author :u.id]])
+      (cond-> auth-user (h/left-join follows-table-alias
+                                     [:and
+                                      [:= :f.user-id (:id auth-user)]
+                                      [:= :f.follows :c.author]]))
+      (h/where [:= :a.slug slug])
+      (h/order-by :c.id)
+      (hsql/format)))
+
 (defn get-article-comments
   "Get all comments for an article"
   ([database slug]
-   (when-let [cs (jdbc/execute! (:datasource database) ["select c.id, c.body,
-c.created_at, c.updated_at,
-u.username, u.bio, u.image
-from articles as a
-inner join comments as c
-on a.id = c.article
-inner join users as u
-on c.author = u.id
-where a.slug=? order by c.id", slug] {:builder-fn rs/as-unqualified-maps})]
-     (map db-record->model cs)))
+   (get-article-comments database slug nil))
   ([database slug auth-user]
-   (when-let [cs (jdbc/execute! (:datasource database) ["select c.id, c.body,
-c.created_at, c.updated_at,
-u.username, u.bio, u.image,
-case when f.follows is null then false else true end as following
-from articles as a
-inner join comments as c
-on a.id = c.article
-inner join users as u
-on c.author = u.id
-left join follows as f
-on f.user_id = ? and f.follows = c.author
-where a.slug=? order by c.id", (:id auth-user), slug] {:builder-fn rs/as-unqualified-maps})]
+   (when-let [cs (jdbc/execute! (:datasource database)
+                                (get-article-comments-query slug auth-user)
+                                {:builder-fn rs/as-unqualified-maps})]
      (map db-record->model cs))))
 
 (defn delete-comment

@@ -119,7 +119,6 @@
           user-two (test-utils/create-user db)
           user-three (test-utils/create-user db)
           _ (test-utils/create-article db (:id user-one))
-          now (jt/local-date-time)
           article-one (test-utils/create-article
                        db (:id user-three) {:title "article-one"
                                             :tag-list ["my-tag"]})

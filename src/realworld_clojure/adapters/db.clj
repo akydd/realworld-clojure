@@ -271,7 +271,6 @@ group by a.id, a.slug, a.title, a.description, a.body, a.created_at, a.updated_a
                    [:and
                     [:= :f.user-id (:id auth-user)]
                     [:= :f.follows :c.author]])
-
       (h/inner-join users-table-alias
                     [:= :c.author :u.id])
       (h/where [:= :c.id id])
@@ -332,7 +331,8 @@ group by a.id, a.slug, a.title, a.description, a.body, a.created_at, a.updated_a
 (defn delete-comment
   "Remove a record from the comment table"
   [database id]
-  (sql/delete! (:datasource database) :comments {:id id}))
+  (jdbc/execute-one! (:datasource database) (hsql/format {:delete-from :comments
+                                                          :where [:= :id id]})))
 
 (defn- articles->multiple-articles
   [articles]
@@ -422,36 +422,53 @@ group by a.id, a.slug, a.title, a.description, a.body, a.created_at, a.updated_a
           (map extract-tags)
           articles->multiple-articles))))
 
+(def tag-list-select
+  [[:array_remove [:array_agg [:order-by :t.tag [:t.tag]]] :null] :tag-list])
+
+(def multiple-article-selects
+  [:a.slug :a.title :a.description :a.created-at :a.updated-at])
+
+(def favorited-select
+  [[:case [:is :g.article nil] false
+    :else true
+    :end] :favorited])
+
+(def favorites-count-select
+  {:select [[[:count :*]]]
+   :from [[:favorites :favs]]
+   :where [:= :favs.article :a.id]})
+
+(def ^:private multi-article-group-by
+  (conj (vec (cons :a.id (concat multiple-article-selects
+                                 profile-selects))) :following :favorited))
+
+(defn article-feed-query
+  [filters auth-user]
+  (-> (apply h/select (conj (concat multiple-article-selects profile-selects)
+                            tag-list-select favorited-select
+                            [favorites-count-select :favorites-count]
+                            [[:inline true] :following]))
+      (h/from follows-table-alias)
+      (h/join-by :inner [article-table-alias [:= :a.author :f.follows]]
+                 :inner [users-table-alias [:= :a.author :u.id]])
+      (h/left-join [:favorites :g]
+                   [:and
+                    [:= :g.user-id :f.user-id]
+                    [:= :g.article :a.id]])
+      (h/left-join [:article-tags :h] [:= :h.article :a.id])
+      (h/left-join [:tags :t] [:= :t.id :h.tag])
+      (h/where [:= :f.user-id (:id auth-user)])
+      (merge (apply h/group-by multi-article-group-by))
+      (h/order-by [:a.updated-at :desc])
+      (h/limit (or (:limit filters) 20))
+      (h/offset (or (:offset filters) 0))
+      (hsql/format)))
+
 (defn article-feed
   [database filters auth-user]
-  (let [limit (or (:limit filters) 20)
-        offset (or (:offset filters) 0)
-        articles (jdbc/execute! (:datasource database) ["select a.slug, a.title, a.description,
-a.created_at, a.updated_at,
-u.username, u.bio, u.image,
-array_remove(array_agg(t.tag order by t.tag), null) as tag_list,
-true as following,
-case when g.article is null then false else true end as favorited,
-(select count(*)
-from favorites as favs
-where favs.article = a.id) as favorites_count
-from follows as f
-inner join articles as a
-on a.author = f.follows
-inner join users as u
-on a.author = u.id
-left join favorites as g
-on g.user_id = f.user_id and g.article = a.id
-left join article_tags h
-on h.article = a.id
-left join tags t
-on t.id = h.tag
-where f.user_id = ?
-group by a.id, a.slug, a.title, a.description, a.created_at, a.updated_at, u.username, u.bio, u.image,
-following, favorited
-order by a.updated_at desc
-limit ?
-offset ?", (:id auth-user), limit, offset] {:builder-fn rs/as-unqualified-kebab-maps})]
+  (let [articles (jdbc/execute! (:datasource database)
+                                (article-feed-query filters auth-user)
+                                {:builder-fn rs/as-unqualified-kebab-maps})]
     (->> articles
          (map extract-tags)
          articles->multiple-articles)))
@@ -480,7 +497,6 @@ offset ?", (:id auth-user), limit, offset] {:builder-fn rs/as-unqualified-kebab-
                                             {:select [:id]
                                              :from :articles
                                              :where [:= :slug slug]}]]}))
-
   (get-article-by-slug database slug auth-user))
 
 (defn get-tags

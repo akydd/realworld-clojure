@@ -52,6 +52,36 @@
                                    :where [:= :email email]})
                      {:builder-fn rs/as-unqualified-kebab-maps}))
 
+;; Table aliasing used throughout:
+;; article a
+;; users u
+;; tags t
+;; article-tags h
+;; follows f
+;; comments c
+;; favorites g, or favs if within a subquery
+
+(def article-as-a
+  [:articles :a])
+
+(def users-as-u
+  [:users :u])
+
+(def tags-as-t
+  [:tags :t])
+
+(def article-tags-as-h
+  [:article-tags :h])
+
+(def follows-as-f
+  [:follows :f])
+
+(def comments-as-c
+  [:comments :c])
+
+(def favorites-as-g
+  [:favorites :g])
+
 (def profile-selects
   [:u.username :u.bio :u.image])
 
@@ -60,18 +90,12 @@
     :else true
     :end] :following])
 
-(def follows-table-alias
-  [:follows :f])
-
-(def users-table-alias
-  [:users :u])
-
 (defn- get-profile-query
   [username auth-user]
   (-> (apply h/select profile-selects)
       (cond-> auth-user (h/select following-select))
-      (h/from [:users :u])
-      (cond-> auth-user (h/left-join [:follows :f]
+      (h/from users-as-u)
+      (cond-> auth-user (h/left-join follows-as-f
                                      [:and
                                       [:= :f.follows :u.id]
                                       [:= :f.user-id (:id auth-user)]]))
@@ -142,55 +166,60 @@
         author (select-keys m ks)]
     (assoc (reduce dissoc m ks) :author author)))
 
+(def article-selects
+  [:a.slug :a.title :a.description :a.body :a.created-at :a.updated-at])
+
+(def tag-list-select
+  [[:array_remove [:array_agg [:order-by :t.tag [:t.tag]]] :null] :tag-list])
+
+(def favorites-count-select
+  [{:select [[[:count :*]]]
+    :from [[:favorites :favs]]
+    :where [:= :favs.article :a.id]} :favorites-count])
+
+(def article-group-by
+  (vec (cons :a.id (concat article-selects profile-selects))))
+
+(def favorited-select
+  [[:case [:is :g.article nil] false
+    :else true
+    :end] :favorited])
+
+(defn- get-article-by-slug-query
+  [slug auth-user]
+  (-> (apply h/select (concat article-selects profile-selects))
+      (cond-> auth-user (h/select favorited-select))
+      (cond-> auth-user (h/select following-select))
+      (h/select tag-list-select)
+      (h/select favorites-count-select)
+      (h/from article-as-a)
+      (h/join-by :inner [users-as-u [:= :a.author :u.id]]
+                 :left [article-tags-as-h [:= :h.article :a.id]]
+                 :left [tags-as-t [:= :t.id :h.tag]])
+      (cond-> auth-user (h/left-join
+                         favorites-as-g [:and
+                                         [:= :g.user-id (:id auth-user)]
+                                         [:= :g.article :a.id]]))
+      (cond-> auth-user (h/left-join
+                         follows-as-f [:and
+                                       [:= :f.user-id (:id auth-user)]
+                                       [:= :f.follows :a.author]]))
+      (h/where [:= :a.slug slug])
+      (merge (apply h/group-by
+                    (if (nil? auth-user)
+                      article-group-by
+                      (conj article-group-by :favorited :following))))
+      (hsql/format)))
+
 (defn get-article-by-slug
   "Get an article by slug."
   ([database slug]
-   (let [db-articles
-         (jdbc/execute-one! (:datasource database) ["select a.slug, a.title, a.description, a.body,
-a.created_at, a.updated_at,
-b.username, b.bio, b.image,
-array_remove(array_agg(t.tag order by t.tag), null) as tag_list,
-(select count(*)
-from favorites as f
-where f.article = a.id) as favorites_count
-from articles as a
-inner join users as b
-on a.author = b.id
-left join article_tags h
-on h.article = a.id
-left join tags t
-on t.id = h.tag
-where a.slug = ?
-group by a.id, a.slug, a.title, a.description, a.body, a.created_at, a.updated_at, b.username, b.bio, b.image", slug] {:builder-fn rs/as-unqualified-kebab-maps})]
-     (when (seq db-articles) (-> db-articles
-                                 (db-record->model)
-                                 (extract-tags)))))
-
+   (get-article-by-slug database slug nil))
   ([database slug auth-user]
    (let [db-articles
-         (jdbc/execute-one! (:datasource database) ["select a.slug, a.title, a.description, a.body,
-a.created_at, a.updated_at,
-b.username, b.bio, b.image,
-case when favs.article is not null then true else false end as favorited,
-case when g.follows is not null then true else false end as following,
-array_remove(array_agg(t.tag order by t.tag), null) as tag_list,
-(select count(*)
-from favorites as f
-where f.article = a.id) as favorites_count
-from articles as a
-inner join users as b
-on a.author = b.id
-left join favorites as favs
-on favs.user_id = ? and favs.article = a.id
-left join follows as g
-on g.user_id = ? and g.follows = a.author
-left join article_tags h
-on h.article = a.id
-left join tags t
-on t.id = h.tag
-where a.slug = ?
-group by a.id, a.slug, a.title, a.description, a.body, a.created_at, a.updated_at, b.username, b.bio, b.image, favorited, following
-", (:id auth-user), (:id auth-user), slug] {:builder-fn rs/as-unqualified-kebab-maps})]
+         (jdbc/execute-one! (:datasource database)
+                            (get-article-by-slug-query slug auth-user)
+                            {:builder-fn rs/as-unqualified-kebab-maps})]
      (when (seq db-articles) (-> db-articles
                                  (db-record->model)
                                  (extract-tags))))))
@@ -267,11 +296,11 @@ group by a.id, a.slug, a.title, a.description, a.body, a.created_at, a.updated_a
   (-> (apply h/select (concat comment-fields profile-selects))
       (h/select following-select)
       (h/from comments-table-alias)
-      (h/left-join follows-table-alias
+      (h/left-join follows-as-f
                    [:and
                     [:= :f.user-id (:id auth-user)]
                     [:= :f.follows :c.author]])
-      (h/inner-join users-table-alias
+      (h/inner-join users-as-u
                     [:= :c.author :u.id])
       (h/where [:= :c.id id])
       (hsql/format)))
@@ -299,18 +328,15 @@ group by a.id, a.slug, a.title, a.description, a.body, a.created_at, a.updated_a
                 update-options)]
     (get-comment database (:id c) auth-user)))
 
-(def article-table-alias
-  [:articles :a])
-
 (defn- get-article-comments-query
   [slug auth-user]
   (-> (apply h/select (concat comment-fields profile-selects))
       (cond-> auth-user (h/select following-select))
-      (h/from article-table-alias)
+      (h/from article-as-a)
       ;; Used join-by because the joins had to be applied in a certain order.
       (h/join-by :inner [comments-table-alias [:= :a.id :c.article]]
-                 :inner [users-table-alias [:= :c.author :u.id]])
-      (cond-> auth-user (h/left-join follows-table-alias
+                 :inner [users-as-u [:= :c.author :u.id]])
+      (cond-> auth-user (h/left-join follows-as-f
                                      [:and
                                       [:= :f.user-id (:id auth-user)]
                                       [:= :f.follows :c.author]]))
@@ -422,21 +448,8 @@ group by a.id, a.slug, a.title, a.description, a.body, a.created_at, a.updated_a
           (map extract-tags)
           articles->multiple-articles))))
 
-(def tag-list-select
-  [[:array_remove [:array_agg [:order-by :t.tag [:t.tag]]] :null] :tag-list])
-
 (def multiple-article-selects
   [:a.slug :a.title :a.description :a.created-at :a.updated-at])
-
-(def favorited-select
-  [[:case [:is :g.article nil] false
-    :else true
-    :end] :favorited])
-
-(def favorites-count-select
-  {:select [[[:count :*]]]
-   :from [[:favorites :favs]]
-   :where [:= :favs.article :a.id]})
 
 (def ^:private multi-article-group-by
   (conj (vec (cons :a.id (concat multiple-article-selects
@@ -446,11 +459,11 @@ group by a.id, a.slug, a.title, a.description, a.body, a.created_at, a.updated_a
   [filters auth-user]
   (-> (apply h/select (conj (concat multiple-article-selects profile-selects)
                             tag-list-select favorited-select
-                            [favorites-count-select :favorites-count]
+                            favorites-count-select
                             [[:inline true] :following]))
-      (h/from follows-table-alias)
-      (h/join-by :inner [article-table-alias [:= :a.author :f.follows]]
-                 :inner [users-table-alias [:= :a.author :u.id]])
+      (h/from follows-as-f)
+      (h/join-by :inner [article-as-a [:= :a.author :f.follows]]
+                 :inner [users-as-u [:= :a.author :u.id]])
       (h/left-join [:favorites :g]
                    [:and
                     [:= :g.user-id :f.user-id]

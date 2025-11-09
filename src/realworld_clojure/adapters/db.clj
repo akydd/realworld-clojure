@@ -177,8 +177,11 @@
     :from [[:favorites :favs]]
     :where [:= :favs.article :a.id]} :favorites-count])
 
-(def article-group-by
-  (vec (cons :a.id (concat article-selects profile-selects))))
+(defn- article-group-by [auth-user]
+  (let [group-by (vec (cons :a.id (concat article-selects profile-selects)))]
+    (if (nil? auth-user)
+      group-by
+      (conj group-by :favorited :following))))
 
 (def favorited-select
   [[:case [:is :g.article nil] false
@@ -205,10 +208,7 @@
                                        [:= :f.user-id (:id auth-user)]
                                        [:= :f.follows :a.author]]))
       (h/where [:= :a.slug slug])
-      (merge (apply h/group-by
-                    (if (nil? auth-user)
-                      article-group-by
-                      (conj article-group-by :favorited :following))))
+      (merge (apply h/group-by (article-group-by auth-user)))
       (hsql/format)))
 
 (defn get-article-by-slug
@@ -271,7 +271,8 @@
 (defn update-article
   "Update a record in the articles table"
   [database slug updates auth-user]
-  (try (sql/update! (:datasource database) :articles updates {:slug slug} update-options)
+  (try (sql/update! (:datasource database)
+                    :articles updates {:slug slug} update-options)
        (catch org.postgresql.util.PSQLException e
          (handle-psql-exception e)))
   (get-article-by-slug database (or (:slug updates) slug) auth-user))
@@ -280,7 +281,8 @@
   "Delete a record from the articles table"
   [database slug]
   (jdbc/with-transaction [tx (:datasource database)]
-    (when-let [article (first (sql/find-by-keys tx :articles {:slug slug} query-options))]
+    (when-let [article (first (sql/find-by-keys tx :articles
+                                                {:slug slug} query-options))]
       (sql/delete! tx :favorites {:article (:id article)})
       (sql/delete! tx :article_tags {:article (:id article)})
       (sql/delete! tx :comments {:article (:id article)})
@@ -289,13 +291,10 @@
 (def comment-fields
   [:c.id :c.created-at :c.updated-at :c.body])
 
-(def comments-table-alias
-  [:comments :c])
-
 (defn- get-comment-query [auth-user id]
   (-> (apply h/select (concat comment-fields profile-selects))
       (h/select following-select)
-      (h/from comments-table-alias)
+      (h/from comments-as-c)
       (h/left-join follows-as-f
                    [:and
                     [:= :f.user-id (:id auth-user)]
@@ -334,7 +333,7 @@
       (cond-> auth-user (h/select following-select))
       (h/from article-as-a)
       ;; Used join-by because the joins had to be applied in a certain order.
-      (h/join-by :inner [comments-table-alias [:= :a.id :c.article]]
+      (h/join-by :inner [comments-as-c [:= :a.id :c.article]]
                  :inner [users-as-u [:= :c.author :u.id]])
       (cond-> auth-user (h/left-join follows-as-f
                                      [:and
@@ -369,93 +368,71 @@
                     0
                     (count articles))})
 
-(defn- join-and-filter-user
+(def multiple-article-selects
+  [:a.slug :a.title :a.description :a.created-at :a.updated-at])
+
+(defn multiple-article-group-by [auth-user]
+  (let [group-by (vec (cons :a.id (concat multiple-article-selects
+                                          profile-selects)))]
+    (if (nil? auth-user)
+      group-by
+      (conj group-by :favorited :following))))
+
+(defn new-join-and-filter-user
   [filters]
-  (str " inner join users as b on a.author = b.id "
-       (when (:author filters)
-         (str " and b.username='" (:author filters) "' "))))
+  (let [f [:= :a.author :u.id]]
+    (if (nil? (:author filters))
+      f
+      [:and f [:= :u.username (:author filters)]])))
 
-(defn- join-and-filter-favorite
-  [filters]
-  (when (:favorited filters)
-    (str " inner join favorites as i on i.article = a.id inner join users as j on j.username='" (:favorited filters) "' and i.user_id = j.id ")))
-
-(defn- join-tags []
-  " left join article_tags as s on a.id = s.article left join tags as t on t.id = s.tag ")
-
-(defn- filter-tag [filters]
-  (when (:tag filters)
-    (str " having '" (:tag filters) "' = ANY(array_agg(t.tag)) ")))
-
-(defn- list-articles-sql-no-auth
-  [filters]
-  (str
-   "select a.slug, a.title, a.description, a.created_at, a.updated_at, "
-   " array_remove(array_agg(t.tag order by t.tag), null) as tag_list, "
-   " b.username, b.bio, b.image,"
-   " (select count(*)"
-   " from favorites as f"
-   " where f.article = a.id) as favorites_count"
-   " from articles as a "
-   (join-tags)
-   (join-and-filter-user filters)
-   (join-and-filter-favorite filters)
-   " group by a.id, a.slug, a.title, a.description, a.created_at, a.updated_at, b.username, b.bio, b.image "
-   (filter-tag filters)
-   " order by a.updated_at desc "
-   " limit ? offset ?"))
-
-(defn- list-articles-sql-with-auth [filters]
-  (str
-   "select a.slug, a.title, a.description, a.created_at, a.updated_at,"
-   " array_remove(array_agg(t.tag order by t.tag), null) as tag_list,"
-   " b.username, b.bio, b.image,"
-   " case when g.follows is null then false else true end as following,"
-   " case when h.article is null then false else true end as favorited,"
-   " (select count(*) "
-   " from favorites as f"
-   " where f.article = a.id) as favorites_count"
-   " from articles as a"
-   (join-tags)
-   (join-and-filter-user filters)
-   (join-and-filter-favorite filters)
-   " left join follows as g on g.user_id = ? and g.follows = a.author"
-   " left join favorites as h on h.user_id = ? and h.article = a.id"
-   " group by a.id, a.slug, a.title, a.description, a.created_at, a.updated_at, b.username, b.bio, b.image, following, favorited"
-   (filter-tag filters)
-   " order by a.updated_at desc"
-   " limit ? offset ?"))
+(defn list-articles-query
+  [filters auth-user]
+  (-> (apply h/select (concat multiple-article-selects profile-selects))
+      (cond-> auth-user (h/select favorited-select))
+      (cond-> auth-user (h/select following-select))
+      (h/select tag-list-select)
+      (h/select favorites-count-select)
+      (h/from article-as-a)
+      (h/left-join article-tags-as-h [:= :h.article :a.id])
+      (h/left-join tags-as-t [:= :t.id :h.tag])
+      (h/inner-join users-as-u (new-join-and-filter-user filters))
+      (cond-> (some? (:favorited filters))
+        (h/join-by :inner [[:favorites :i] [:= :i.article :a.id]]
+                   :inner [[:users :j] [[:and
+                                         [:= :j.username (:favorited filters)]
+                                         [:= :j.id :i.user-id]]]]))
+      (cond-> auth-user
+        (h/join-by :left [follows-as-f [:and
+                                        [:= :f.user-id (:id auth-user)]
+                                        [:= :f.follows :a.author]]]
+                   :left [favorites-as-g [:and
+                                          [:= :g.user-id (:id auth-user)]
+                                          [:= :g.article :a.id]]]))
+      (merge (apply h/group-by (multiple-article-group-by auth-user)))
+      (cond-> (some? (:tag filters))
+        (h/having [:= (:tag filters) [:any [:array_agg :t.tag]]]))
+      (h/order-by [:a.updated-at :desc])
+      (h/limit (or (:limit filters) 20))
+      (h/offset (or (:offset filters) 0))
+      (hsql/format)))
 
 (defn list-articles
   ([database filters]
-   (let [limit (or (:limit filters) 20)
-         offset (or (:offset filters) 0)
-         articles (jdbc/execute!
-                   (:datasource database)
-                   [(list-articles-sql-no-auth filters) limit offset]
-                   {:builder-fn rs/as-unqualified-kebab-maps})]
-     (->> articles
-          (map extract-tags)
-          articles->multiple-articles)))
+   (list-articles database filters nil))
   ([database filters auth-user]
-   (let [limit (or (:limit filters) 20)
-         offset (or (:offset filters) 0)
-         articles (jdbc/execute!
+   (let [articles (jdbc/execute!
                    (:datasource database)
-                   [(list-articles-sql-with-auth filters) (:id auth-user) (:id auth-user) limit offset]
+                   (list-articles-query filters auth-user)
                    {:builder-fn rs/as-unqualified-kebab-maps})]
      (->> articles
           (map extract-tags)
           articles->multiple-articles))))
 
-(def multiple-article-selects
-  [:a.slug :a.title :a.description :a.created-at :a.updated-at])
-
 (def ^:private multi-article-group-by
   (conj (vec (cons :a.id (concat multiple-article-selects
                                  profile-selects))) :following :favorited))
 
-(defn article-feed-query
+(defn- article-feed-query
   [filters auth-user]
   (-> (apply h/select (conj (concat multiple-article-selects profile-selects)
                             tag-list-select favorited-select

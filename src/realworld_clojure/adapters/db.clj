@@ -288,11 +288,11 @@
       (sql/delete! tx :comments {:article (:id article)})
       (sql/delete! tx :articles {:id (:id article)}))))
 
-(def comment-fields
+(def comment-selects
   [:c.id :c.created-at :c.updated-at :c.body])
 
 (defn- get-comment-query [auth-user id]
-  (-> (apply h/select (concat comment-fields profile-selects))
+  (-> (apply h/select (concat comment-selects profile-selects))
       (h/select following-select)
       (h/from comments-as-c)
       (h/left-join follows-as-f
@@ -329,7 +329,7 @@
 
 (defn- get-article-comments-query
   [slug auth-user]
-  (-> (apply h/select (concat comment-fields profile-selects))
+  (-> (apply h/select (concat comment-selects profile-selects))
       (cond-> auth-user (h/select following-select))
       (h/from article-as-a)
       ;; Used join-by because the joins had to be applied in a certain order.
@@ -378,7 +378,7 @@
       group-by
       (conj group-by :favorited :following))))
 
-(defn new-join-and-filter-user
+(defn join-and-filter-username
   [filters]
   (let [f [:= :a.author :u.id]]
     (if (nil? (:author filters))
@@ -395,7 +395,7 @@
       (h/from article-as-a)
       (h/left-join article-tags-as-h [:= :h.article :a.id])
       (h/left-join tags-as-t [:= :t.id :h.tag])
-      (h/inner-join users-as-u (new-join-and-filter-user filters))
+      (h/inner-join users-as-u (join-and-filter-username filters))
       (cond-> (some? (:favorited filters))
         (h/join-by :inner [[:favorites :i] [:= :i.article :a.id]]
                    :inner [[:users :j] [[:and
@@ -432,12 +432,13 @@
   (conj (vec (cons :a.id (concat multiple-article-selects
                                  profile-selects))) :following :favorited))
 
-(defn- article-feed-query
+(defn article-feed-query
   [filters auth-user]
   (-> (apply h/select (conj (concat multiple-article-selects profile-selects)
-                            tag-list-select favorited-select
-                            favorites-count-select
                             [[:inline true] :following]))
+      (h/select tag-list-select)
+      (h/select favorited-select)
+      (h/select favorites-count-select)
       (h/from follows-as-f)
       (h/join-by :inner [article-as-a [:= :a.author :f.follows]]
                  :inner [users-as-u [:= :a.author :u.id]])

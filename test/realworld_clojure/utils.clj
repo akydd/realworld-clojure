@@ -12,18 +12,20 @@
    [realworld-clojure.domain.comment :as comment]
    [realworld-clojure.domain.user :as user]))
 
-(def update-options
+(def ^:private update-options
   {:return-keys true
    :builder-fn rs/as-unqualified-kebab-maps
    :column-fn csk/->snake_case_string})
 
 (defn clear-ds
-  "Delete all data from datasource"
+  "Delete all data from datasource."
   [ds]
   (sql/query ds [(str "truncate favorites, follows, comments, "
                       "articles, tags, article_tags, users cascade")]))
 
 (defmacro with-system
+  "Start up the system for an integration test.
+  System will be bound to `bound-var`."
   [[bound-var binding-expr] & body]
   `(let [~bound-var (component/start ~binding-expr)]
      (try
@@ -46,10 +48,11 @@
   [db follower followed]
   (sql/insert! db :follows {:user_id (:id follower) :follows (:id followed)}))
 
-(def query-options
+(def ^:private query-options
   {:builder-fn o/as-unqualified-lower-maps})
 
 (defn insert-tag
+  "Save `tag` to the db."
   [db tag]
   (let [existing-tag (jdbc/execute-one!
                       db ["select * from tags where tag=?" tag] query-options)]
@@ -58,7 +61,9 @@
       (jdbc/execute-one!
        db ["insert into tags (tag) values (?)" tag] update-options))))
 
-(defn link-article-and-tag [db article tag]
+(defn link-article-and-tag
+  "Link `article` to `tag`."
+  [db article tag]
   (jdbc/execute-one! db [(str "insert into article_tags (article, tag) "
                               "values (?, ?) on conflict do nothing")
                          (:id article) (:id tag)] update-options))
@@ -91,20 +96,23 @@
     db author-id (merge (mg/generate article/article-schema) options))))
 
 (defn create-article
+  "Save an article authored by `author-id`."
   ([db author-id]
    (create-article-with-generated-data db author-id))
   ([db author-id options]
    (create-article-with-generated-data db author-id options)))
 
 (defn create-comment
+  "Save a comment on `article-id` from user `author-id`."
   [db article-id author-id]
-  (let [comment (mg/generate comment/comment-create-schema)]
+  (let [c (mg/generate comment/comment-create-schema)]
     (sql/insert!
-     db :comments (assoc comment :author author-id
+     db :comments (assoc c :author author-id
                          :article article-id)
      update-options)))
 
 (defn fav-article
+  "Mark `article` as favorite for `user`."
   [db user article]
   (sql/insert! db :favorites {:user-id (:id user)
                               :article (:id article)}

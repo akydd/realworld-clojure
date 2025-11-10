@@ -7,6 +7,7 @@
    [realworld-clojure.adapters.db :as db]))
 
 (def article-schema
+  "Schema for [[create-article]] input."
   [:map {:closed true}
    [:title [:string {:min 1}]]
    [:description [:string {:min 1}]]
@@ -16,20 +17,21 @@
 (defrecord ArticleController [database])
 
 (defn str->slug
-  "Given a string, return it formatted to a slug 'like-this'"
+  "Given a string, return it formatted to a slug `\"like-this\"`."
   [s]
   (-> s
       str/lower-case
       (str/replace #"\W+" "-")))
 
 (defn get-article-by-slug
-  "Get an article by slug."
+  "Return a single article given `slug`. Authentication optional."
   ([controller slug]
    (db/get-article-by-slug (:database controller) slug))
   ([controller slug auth-user]
    (db/get-article-by-slug (:database controller) slug auth-user)))
 
 (defn create-article
+  "Create an article."
   [controller article auth-user]
   (if (m/validate article-schema article)
     (let [a (assoc article :slug (str->slug (:title article)))]
@@ -37,12 +39,13 @@
     {:errors (me/humanize (m/explain article-schema article))}))
 
 (def article-update-schema
+  "Schema for [[update-article]] input."
   [:map {:closed true}
    [:title {:optional true} [:string {:min 1}]]
    [:description {:optional true} [:string {:min 1}]]
    [:body {:optional true} [:string {:min 1}]]])
 
-(defn update-slug
+(defn- update-slug
   [updates]
   (if (:title updates)
     (assoc updates :slug (str->slug (:title updates)))
@@ -69,7 +72,7 @@
       (db/delete-article (:database controller) slug)
       (throw-unauthorized))))
 
-(def list-articles-filter-schema
+(def ^:private list-articles-filter-schema
   [:map {:closed true}
    [:tag {:optional true} [:string {:min 1}]]
    [:author {:optional true} [:string {:min 1}]]
@@ -78,6 +81,8 @@
    [:offset {:optional true} [:int {:min 0}]]])
 
 (defn list-articles
+  "Returns most recent articles globally by default.
+  Provide tag, author or favorited query parameter to filter results."
   ([controller filters]
    (if (m/validate list-articles-filter-schema filters)
      (db/list-articles (:database controller) filters)
@@ -87,24 +92,30 @@
      (db/list-articles (:database controller) filters auth-user)
      {:errors (me/humanize (m/explain list-articles-filter-schema filters))})))
 
-(def article-feed-filter-schema
+(def ^:private article-feed-filter-schema
   [:map {:closed true}
    [:limit {:optional true} [:int {:min 1}]]
    [:offset {:optional true} [:int {:min 0}]]])
 
 (defn article-feed
+  "Return articles created by followed users, ordered by most recent first.
+  Can also take limit and offset query parameters like [[list-articles]]."
   [controller filters auth-user]
   (if (m/validate article-feed-filter-schema filters)
     (db/article-feed (:database controller) filters auth-user)
     {:errors (me/humanize (m/explain article-feed-filter-schema filters))}))
 
 (defn favorite-article
+  "Given a `slug`, makr the article as a favorite for `auth-user`."
   [controller slug auth-user]
   (db/favorite-article (:database controller) slug auth-user))
 
 (defn unfavorite-aarticle
+  "Give a `slug`, unmark the artile as a favorite for `auth-user`."
   [controller slug auth-user]
   (db/unfavorite-article (:database controller) slug auth-user))
 
-(defn new-article-controller []
+(defn new-article-controller
+  "Create an `ArticleController`."
+  []
   (map->ArticleController {}))

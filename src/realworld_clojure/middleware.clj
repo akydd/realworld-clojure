@@ -1,6 +1,6 @@
 (ns realworld-clojure.middleware
-  (:require [cambium.core :as log]
-            [buddy.auth :as buddy-auth]
+  (:require [buddy.auth :as buddy-auth]
+            [cambium.core :as log]
             [realworld-clojure.adapters.db :as db]))
 
 (defn wrap-exception [handler]

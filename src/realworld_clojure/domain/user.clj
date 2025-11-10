@@ -1,10 +1,10 @@
 (ns realworld-clojure.domain.user
-  (:require [realworld-clojure.adapters.db :as db]
-            [malli.core :as m]
-            [malli.error :as me]
+  (:require [buddy.auth :refer [throw-unauthorized]]
             [buddy.hashers :as hashers]
             [buddy.sign.jwt :as jwt]
-            [buddy.auth :refer [throw-unauthorized]]))
+            [malli.core :as m]
+            [malli.error :as me]
+            [realworld-clojure.adapters.db :as db]))
 
 (def user-schema
   [:map {:closed true}

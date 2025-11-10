@@ -1,17 +1,17 @@
 (ns realworld-clojure.integration.get-profile
   (:require
+   [cheshire.core :as json]
    [clojure.test :refer [deftest is]]
-   [realworld-clojure.utils :as test-utils]
-   [realworld-clojure.core :as core]
-   [realworld-clojure.config-test :as config]
    [malli.core :as m]
    [malli.error :as me]
+   [realworld-clojure.config-test :as config]
+   [realworld-clojure.core :as core]
    [realworld-clojure.integration.common :refer [no-auth-profile-schema
                                                  auth-profile-schema
                                                  get-profile-request
                                                  get-login-token
                                                  profiles-equal?]]
-   [cheshire.core :as json]))
+   [realworld-clojure.utils :as test-utils]))
 
 (defn- extract-profile
   [r]

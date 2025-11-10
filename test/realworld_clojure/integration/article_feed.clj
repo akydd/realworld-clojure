@@ -1,17 +1,17 @@
 (ns realworld-clojure.integration.article-feed
   (:require
+   [cheshire.core :as json]
    [clojure.test :refer [deftest is]]
+   [java-time.api :as jt]
+   [malli.core :as m]
+   [malli.error :as me]
+   [realworld-clojure.config-test :as config]
+   [realworld-clojure.core :as core]
    [realworld-clojure.integration.common :refer [article-feed-request
                                                  get-login-token
                                                  articles-match-feed?
                                                  multiple-auth-article-schema]]
-   [realworld-clojure.utils :as test-utils]
-   [realworld-clojure.core :as core]
-   [realworld-clojure.config-test :as config]
-   [cheshire.core :as json]
-   [malli.core :as m]
-   [malli.error :as me]
-   [java-time.api :as jt]))
+   [realworld-clojure.utils :as test-utils]))
 
 (deftest no-auth
   (test-utils/with-system

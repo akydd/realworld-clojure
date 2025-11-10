@@ -1,13 +1,13 @@
 (ns realworld-clojure.integration.delete-comment
   (:require
+   [cheshire.core :as json]
    [clojure.test :refer [deftest is]]
+   [realworld-clojure.config-test :as config]
+   [realworld-clojure.core :as core]
    [realworld-clojure.integration.common :refer [delete-comment-request
                                                  get-login-token
                                                  get-comments-request]]
-   [realworld-clojure.utils :as test-utils]
-   [realworld-clojure.core :as core]
-   [realworld-clojure.config-test :as config]
-   [cheshire.core :as json]))
+   [realworld-clojure.utils :as test-utils]))
 
 (deftest no-auth
   (test-utils/with-system

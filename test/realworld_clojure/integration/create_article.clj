@@ -1,19 +1,19 @@
 (ns realworld-clojure.integration.create-article
   (:require
+   [cheshire.core :as json]
    [clojure.test :refer [deftest is]]
-   [realworld-clojure.utils :as test-utils]
-   [realworld-clojure.core :as core]
-   [realworld-clojure.config-test :as config]
+   [malli.core :as m]
+   [malli.error :as me]
    [malli.generator :as mg]
+   [realworld-clojure.config-test :as config]
+   [realworld-clojure.core :as core]
+   [realworld-clojure.domain.article :as article]
    [realworld-clojure.integration.common :refer [create-article-request
                                                  get-login-token
                                                  auth-article-schema
                                                  validate-article-vs-input
                                                  validate-slug]]
-   [realworld-clojure.domain.article :as article]
-   [malli.core :as m]
-   [malli.error :as me]
-   [cheshire.core :as json]))
+   [realworld-clojure.utils :as test-utils]))
 
 (deftest no-auth
   (test-utils/with-system

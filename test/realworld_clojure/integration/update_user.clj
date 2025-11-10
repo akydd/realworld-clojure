@@ -1,15 +1,15 @@
 (ns realworld-clojure.integration.update-user
   (:require
-   [clojure.test :refer [deftest is]]
    [cheshire.core :as json]
-   [realworld-clojure.utils :as test-utils]
-   [realworld-clojure.core :as core]
-   [realworld-clojure.config-test :as config]
+   [clojure.test :refer [deftest is]]
    [malli.core :as m]
+   [malli.error :as me]
+   [realworld-clojure.config-test :as config]
+   [realworld-clojure.core :as core]
    [realworld-clojure.integration.common :refer [update-user-request
                                                  user-response-schema
                                                  get-login-token]]
-   [malli.error :as me]))
+   [realworld-clojure.utils :as test-utils]))
 
 (deftest no-authentication
   (test-utils/with-system

@@ -1,17 +1,17 @@
 (ns realworld-clojure.integration.get-comments
   (:require
+   [cheshire.core :as json]
    [clojure.test :refer [deftest is]]
+   [malli.core :as m]
+   [malli.error :as me]
+   [realworld-clojure.config-test :as config]
+   [realworld-clojure.core :as core]
    [realworld-clojure.integration.common :refer [get-comments-request
                                                  get-login-token
                                                  no-auth-comment-schema
                                                  auth-comment-schema
                                                  assert-comments-match]]
-   [realworld-clojure.utils :as test-utils]
-   [realworld-clojure.core :as core]
-   [realworld-clojure.config-test :as config]
-   [cheshire.core :as json]
-   [malli.core :as m]
-   [malli.error :as me]))
+   [realworld-clojure.utils :as test-utils]))
 
 (deftest no-article
   (test-utils/with-system

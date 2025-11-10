@@ -1,12 +1,12 @@
 (ns realworld-clojure.integration.delete-article
   (:require
    [clojure.test :refer [deftest is]]
-   [realworld-clojure.utils :as test-utils]
-   [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
+   [realworld-clojure.core :as core]
    [realworld-clojure.integration.common :refer [delete-article-request
                                                  get-login-token
-                                                 get-article-request]]))
+                                                 get-article-request]]
+   [realworld-clojure.utils :as test-utils]))
 
 (deftest no-auth
   (test-utils/with-system

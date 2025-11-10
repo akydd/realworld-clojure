@@ -1,11 +1,11 @@
 (ns realworld-clojure.integration.common
   (:require
    [cheshire.core :as json]
-   [clojure.test :refer [is]]
-   [realworld-clojure.config-test :as config]
-   [org.httpkit.client :as http]
    [clojure.string :as str]
-   [java-time.api :as jt]))
+   [clojure.test :refer [is]]
+   [java-time.api :as jt]
+   [org.httpkit.client :as http]
+   [realworld-clojure.config-test :as config]))
 
 (def port (get-in (config/read-test-config) [:server :port]))
 (def host "http://localhost")
@@ -380,5 +380,5 @@
    [:author #'auth-profile-schema]])
 
 (def tags-schema
-  [:map {:closed  true}
+  [:map {:closed true}
    [:tags [:vector {:min 0} :string]]])

@@ -1,16 +1,16 @@
 (ns realworld-clojure.integration.follow-user
   (:require
+   [cheshire.core :as json]
    [clojure.test :refer [deftest is]]
-   [realworld-clojure.utils :as test-utils]
-   [realworld-clojure.core :as core]
+   [malli.core :as m]
+   [malli.error :as me]
    [realworld-clojure.config-test :as config]
+   [realworld-clojure.core :as core]
    [realworld-clojure.integration.common :refer [follow-user-request
                                                  get-login-token
                                                  auth-profile-schema
                                                  profiles-equal?]]
-   [cheshire.core :as json]
-   [malli.core :as m]
-   [malli.error :as me]))
+   [realworld-clojure.utils :as test-utils]))
 
 (deftest no-auth
   (test-utils/with-system

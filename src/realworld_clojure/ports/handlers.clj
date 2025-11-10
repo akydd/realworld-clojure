@@ -1,11 +1,11 @@
 (ns realworld-clojure.ports.handlers
-  (:require [realworld-clojure.domain.user :as user]
-            [realworld-clojure.domain.profile :as profile]
+  (:require [clojure.string :as str]
             [realworld-clojure.domain.article :as article]
             [realworld-clojure.domain.comment :as comment]
+            [realworld-clojure.domain.profile :as profile]
             [realworld-clojure.domain.tags :as tag]
-            [realworld-clojure.ports.converters :as converters]
-            [clojure.string :as str]))
+            [realworld-clojure.domain.user :as user]
+            [realworld-clojure.ports.converters :as converters]))
 
 (defrecord Handler [user-controller profile-controller
                     article-controller comment-controller])

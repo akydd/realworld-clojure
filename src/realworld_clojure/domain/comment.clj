@@ -1,9 +1,9 @@
 (ns realworld-clojure.domain.comment
   (:require
-   [malli.error :as me]
+   [buddy.auth :refer [throw-unauthorized]]
    [malli.core :as m]
-   [realworld-clojure.adapters.db :as db]
-   [buddy.auth :refer [throw-unauthorized]]))
+   [malli.error :as me]
+   [realworld-clojure.adapters.db :as db]))
 
 (defrecord CommentController [database])
 

@@ -1,15 +1,15 @@
 (ns realworld-clojure.core
   (:require
-   [realworld-clojure.config :as config]
    [com.stuartsierra.component :as component]
    [realworld-clojure.adapters.db :as db]
-   [realworld-clojure.ports.webserver :as webserver]
-   [realworld-clojure.domain.user :as user]
-   [realworld-clojure.domain.profile :as profile]
+   [realworld-clojure.config :as config]
    [realworld-clojure.domain.article :as article]
-   [realworld-clojure.ports.handlers :as handlers]
    [realworld-clojure.domain.comment :as comment]
-   [realworld-clojure.domain.tags :as tag])
+   [realworld-clojure.domain.profile :as profile]
+   [realworld-clojure.domain.tags :as tag]
+   [realworld-clojure.domain.user :as user]
+   [realworld-clojure.ports.handlers :as handlers]
+   [realworld-clojure.ports.webserver :as webserver])
   (:gen-class))
 
 (defn new-system [config]

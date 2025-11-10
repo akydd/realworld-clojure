@@ -18,7 +18,7 @@
                  [buddy/buddy-hashers "2.0.167"]
                  [buddy/buddy-sign "3.5.351"]
                  [buddy/buddy-auth "3.0.1"]
-                 [cambium/cambium.core         "1.1.1"]
+                 [cambium/cambium.core "1.1.1"]
                  [cambium/cambium.codec-simple "1.0.0"]
                  [cambium/cambium.logback.core "0.4.6"]
                  [clojure.java-time "1.4.2"]

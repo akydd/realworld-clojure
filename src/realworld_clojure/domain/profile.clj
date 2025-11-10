@@ -1,8 +1,8 @@
 (ns realworld-clojure.domain.profile
   (:require
-   [realworld-clojure.adapters.db :as db]
    [malli.core :as m]
-   [malli.error :as me]))
+   [malli.error :as me]
+   [realworld-clojure.adapters.db :as db]))
 
 (defn get-profile
   "Get a profile by username."

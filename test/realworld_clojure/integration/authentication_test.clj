@@ -1,14 +1,14 @@
 (ns realworld-clojure.integration.authentication-test
   (:require
+   [cheshire.core :as json]
    [clojure.test :refer [deftest is]]
-   [realworld-clojure.utils :as test-utils]
+   [malli.core :as m]
+   [malli.error :as me]
+   [realworld-clojure.config-test :as config]
+   [realworld-clojure.core :as core]
    [realworld-clojure.integration.common :refer [login-request
                                                  user-response-schema]]
-   [realworld-clojure.core :as core]
-   [realworld-clojure.config-test :as config]
-   [cheshire.core :as json]
-   [malli.core :as m]
-   [malli.error :as me]))
+   [realworld-clojure.utils :as test-utils]))
 
 (deftest no-input
   (test-utils/with-system

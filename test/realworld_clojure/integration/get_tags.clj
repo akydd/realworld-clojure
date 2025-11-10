@@ -1,13 +1,13 @@
 (ns realworld-clojure.integration.get-tags
   (:require
-   [clojure.test :refer [deftest is]]
-   [realworld-clojure.utils :as test-utils]
-   [realworld-clojure.core :as core]
-   [realworld-clojure.config-test :as config]
-   [realworld-clojure.integration.common :refer [get-tags-request tags-schema]]
-   [malli.core :as m]
    [cheshire.core :as json]
-   [malli.error :as me]))
+   [clojure.test :refer [deftest is]]
+   [malli.core :as m]
+   [malli.error :as me]
+   [realworld-clojure.config-test :as config]
+   [realworld-clojure.core :as core]
+   [realworld-clojure.integration.common :refer [get-tags-request tags-schema]]
+   [realworld-clojure.utils :as test-utils]))
 
 (defn- validate-response
   [response expected-tags]

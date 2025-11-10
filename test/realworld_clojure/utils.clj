@@ -1,16 +1,16 @@
 (ns realworld-clojure.utils
   (:require
+   [buddy.hashers :as hashers]
+   [camel-snake-kebab.core :as csk]
    [com.stuartsierra.component :as component]
+   [malli.generator :as mg]
+   [next.jdbc :as jdbc]
    [next.jdbc.optional :as o]
    [next.jdbc.result-set :as rs]
-   [realworld-clojure.domain.user :as user]
-   [malli.generator :as mg]
    [next.jdbc.sql :as sql]
    [realworld-clojure.domain.article :as article]
-   [buddy.hashers :as hashers]
    [realworld-clojure.domain.comment :as comment]
-   [next.jdbc :as jdbc]
-   [camel-snake-kebab.core :as csk]))
+   [realworld-clojure.domain.user :as user]))
 
 (def update-options
   {:return-keys true

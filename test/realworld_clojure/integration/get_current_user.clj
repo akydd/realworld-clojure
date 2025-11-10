@@ -1,12 +1,12 @@
 (ns realworld-clojure.integration.get-current-user
   (:require
+   [cheshire.core :as json]
    [clojure.test :refer [deftest is]]
-   [realworld-clojure.utils :as test-utils]
-   [realworld-clojure.core :as core]
    [realworld-clojure.config-test :as config]
+   [realworld-clojure.core :as core]
    [realworld-clojure.integration.common :refer [get-user-request
                                                  login-request]]
-   [cheshire.core :as json]))
+   [realworld-clojure.utils :as test-utils]))
 
 (deftest no-authentication
   (test-utils/with-system

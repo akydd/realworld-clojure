@@ -1,21 +1,21 @@
 (ns realworld-clojure.ports.webserver
   (:require
+   [buddy.auth.backends :as backends]
+   [buddy.auth.middleware :refer [wrap-authentication]]
+   [camel-snake-kebab.core :as csk]
    [com.stuartsierra.component :as component]
+   [compojure.coercions :refer [as-int]]
+   [compojure.core :as core]
+   [org.httpkit.server :as http-server]
    [realworld-clojure.middleware :refer [wrap-exception
                                          wrap-no-auth-error
                                          wrap-log-req
                                          wrap-auth-user]]
-   [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
-   [ring.middleware.content-type :refer [wrap-content-type]]
-   [ring.middleware.keyword-params :refer [wrap-keyword-params]]
-   [ring.middleware.params :refer [wrap-params]]
-   [buddy.auth.middleware :refer [wrap-authentication]]
    [realworld-clojure.ports.handlers :as handlers]
-   [compojure.core :as core]
-   [compojure.coercions :refer [as-int]]
-   [org.httpkit.server :as http-server]
-   [buddy.auth.backends :as backends]
-   [camel-snake-kebab.core :as csk]))
+   [ring.middleware.content-type :refer [wrap-content-type]]
+   [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
+   [ring.middleware.keyword-params :refer [wrap-keyword-params]]
+   [ring.middleware.params :refer [wrap-params]]))
 
 (defn app-routes-no-auth [handler]
   (core/routes

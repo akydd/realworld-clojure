@@ -1,15 +1,15 @@
 (ns realworld-clojure.integration.favorite-article
   (:require
+   [cheshire.core :as json]
    [clojure.test :refer [deftest is]]
-   [realworld-clojure.utils :as test-utils]
-   [realworld-clojure.core :as core]
+   [malli.core :as m]
+   [malli.error :as me]
    [realworld-clojure.config-test :as config]
+   [realworld-clojure.core :as core]
    [realworld-clojure.integration.common :refer [favorite-article-request
                                                  get-login-token
                                                  auth-article-schema]]
-   [cheshire.core :as json]
-   [malli.core :as m]
-   [malli.error :as me]))
+   [realworld-clojure.utils :as test-utils]))
 
 (deftest no-auth
   (test-utils/with-system

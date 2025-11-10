@@ -1,16 +1,16 @@
 (ns realworld-clojure.integration.registration-test
   (:require
-   [clojure.test :refer [deftest is]]
    [cheshire.core :as json]
-   [realworld-clojure.utils :as test-utils]
-   [realworld-clojure.core :as core]
+   [clojure.test :refer [deftest is]]
+   [malli.core :as m]
+   [malli.error :as me]
+   [malli.generator :as mg]
    [realworld-clojure.config-test :as config]
+   [realworld-clojure.core :as core]
+   [realworld-clojure.domain.user :as user]
    [realworld-clojure.integration.common :refer [register-request
                                                  user-response-schema]]
-   [malli.core :as m]
-   [malli.generator :as mg]
-   [realworld-clojure.domain.user :as user]
-   [malli.error :as me]))
+   [realworld-clojure.utils :as test-utils]))
 
 (deftest invalid-input
   (test-utils/with-system

@@ -1,17 +1,17 @@
 (ns realworld-clojure.integration.get-article
   (:require
+   [cheshire.core :as json]
    [clojure.test :refer [deftest is]]
-   [realworld-clojure.utils :as test-utils]
-   [realworld-clojure.core :as core]
+   [malli.core :as m]
+   [malli.error :as me]
    [realworld-clojure.config-test :as config]
+   [realworld-clojure.core :as core]
    [realworld-clojure.integration.common :refer [get-article-request
                                                  get-login-token
                                                  no-auth-article-schema
                                                  auth-article-schema
                                                  article-matches-article?]]
-   [malli.core :as m]
-   [cheshire.core :as json]
-   [malli.error :as me]))
+   [realworld-clojure.utils :as test-utils]))
 
 (deftest does-not-exist-no-auth
   (test-utils/with-system

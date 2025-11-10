@@ -17,7 +17,9 @@
    [ring.middleware.keyword-params :refer [wrap-keyword-params]]
    [ring.middleware.params :refer [wrap-params]]))
 
-(defn app-routes-no-auth [handler]
+(defn- app-routes-no-auth
+  "Define routes for which authentication is not required."
+  [handler]
   (core/routes
    (core/GET "/api/health" req (handlers/health handler req))
 
@@ -29,7 +31,9 @@
 
    (core/GET "/api/tags" [] (handlers/get-tags handler))))
 
-(defn app-routes-with-auth [handler]
+(defn- app-routes-with-auth
+  "Define routes for which authentication is required."
+  [handler]
   (core/routes
    (core/GET "/api/user" [:as {:keys [auth-user headers]}]
      (handlers/get-user handler auth-user headers))
@@ -73,7 +77,9 @@
    (core/DELETE "/api/articles/:slug/favorite" [slug :as {:keys [auth-user]}]
      (handlers/unfavorite-article handler slug auth-user))))
 
-(defn app-routes-optional-auth [handler]
+(defn- app-routes-optional-auth
+  "Defien routes for which authentication is optional."
+  [handler]
   (core/routes
    (core/GET "/api/profiles/:username" [username :as {:keys [auth-user]}]
      (handlers/get-profile handler username auth-user))
@@ -88,10 +94,12 @@
      (handlers/get-comments handler slug auth-user))))
 
 ;; TODO: is this needed?
-(defn unauthorized-handler [_]
+(defn- unauthorized-handler [_]
   {:status 403})
 
-(defn app-routes [handler jwt-secret database]
+(defn- app-routes
+  "Set up all the webserver routes and middleware."
+  [handler jwt-secret database]
   (let [backend (backends/jws {:secret jwt-secret
                                :token-name "Token"
                                :unauthorized-handler unauthorized-handler})]
@@ -134,5 +142,7 @@
     ((:server component) :timeout 10)
     (assoc component :server nil)))
 
-(defn new-webserver [port jwt-secret]
+(defn new-webserver
+  "Create a new Webserver component."
+  [port jwt-secret]
   (map->Webserver {:port port :jwt-secret jwt-secret}))

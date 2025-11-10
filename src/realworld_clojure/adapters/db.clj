@@ -1,3 +1,5 @@
+(set! *warn-on-reflection* true)
+
 (ns realworld-clojure.adapters.db
   (:require
    [com.stuartsierra.component :as component]
@@ -25,6 +27,7 @@
     (throw (ex-info "db error" {:type :unknown :state (.getSQLState e)} e))))
 
 (defn insert-user
+  "Insert `user` into `database`."
   [database user]
   (try
     (jdbc/execute-one! (:datasource database)
@@ -36,7 +39,7 @@
       (handle-psql-exception e))))
 
 (defn get-user
-  "Get a user record from user table"
+  "Get a user record by `id` from `database`."
   [database id]
   (jdbc/execute-one! (:datasource database)
                      (hsql/format {:select :*
@@ -45,7 +48,7 @@
                      {:builder-fn rs/as-unqualified-kebab-maps}))
 
 (defn get-user-by-email
-  "Get a user record by email"
+  "Get a user record by `email` from `database`."
   [database email]
   (jdbc/execute-one! {:datasource database}
                      (hsql/format {:select :*
@@ -104,7 +107,7 @@
       (hsql/format)))
 
 (defn get-profile
-  "Get a user profile"
+  "Get a user profile for `username`."
   ([database username]
    (get-profile database username nil))
   ([database username auth-user]
@@ -113,7 +116,7 @@
                       {:builder-fn rs/as-unqualified-kebab-maps})))
 
 (defn get-user-by-username
-  "Get a user record by username"
+  "Get a user record by `username`."
   [database username]
   (jdbc/execute-one! (:datasource database)
                      (hsql/format {:select :*
@@ -122,7 +125,7 @@
                      {:builder-fn rs/as-unqualified-kebab-maps}))
 
 (defn update-user
-  "Update a user record"
+  "Update `auth-user` with `data`."
   [database auth-user data]
   (try
     (jdbc/execute-one! (:datasource database)
@@ -135,6 +138,7 @@
       (handle-psql-exception e))))
 
 (defn follow-user
+  "Mark `auth-user` as following `user`."
   [database auth-user user]
   (jdbc/execute-one! (:datasource database) (hsql/format {:insert-into :follows
                                                           :values [[(:id auth-user) (:id user)]]
@@ -142,7 +146,7 @@
                                                           :do-nothing true})))
 
 (defn unfollow-user
-  "Unfollow a user."
+  "Mark `auth-user` as not following `user`."
   [database auth-user user]
   (jdbc/execute-one! (:datasource database)
                      (hsql/format {:delete-from :follows
@@ -178,10 +182,10 @@
     :where [:= :favs.article :a.id]} :favorites-count])
 
 (defn- article-group-by [auth-user]
-  (let [group-by (vec (cons :a.id (concat article-selects profile-selects)))]
+  (let [group-bys (vec (cons :a.id (concat article-selects profile-selects)))]
     (if (nil? auth-user)
-      group-by
-      (conj group-by :favorited :following))))
+      group-bys
+      (conj group-bys :favorited :following))))
 
 (def ^:private favorited-select
   [[:case [:is :g.article nil] false
@@ -212,7 +216,7 @@
       (hsql/format)))
 
 (defn get-article-by-slug
-  "Get an article by slug."
+  "Get an article by `slug`."
   ([database slug]
    (get-article-by-slug database slug nil))
   ([database slug auth-user]
@@ -257,19 +261,20 @@
         (handle-psql-exception e)))))
 
 (defn create-article-with-tags
-  [database article-with-tags auth-user]
+  "Save new `article`, authored by `auth-user`."
+  [database article auth-user]
   (jdbc/with-transaction [tx (:datasource database)]
-    (let [tags (distinct (:tag-list article-with-tags))
-          article (dissoc article-with-tags :tag-list)
-          saved-article (create-article tx article auth-user)]
+    (let [tags (distinct (:tag-list article))
+          article-without-tags (dissoc article :tag-list)
+          saved-article (create-article tx article-without-tags auth-user)]
       (doseq [t tags]
         (let [saved-tag (insert-tag tx t)]
           (link-article-and-tag tx saved-article saved-tag)))))
   ;; This fetch needs to happen after the transaction above has completed.
-  (get-article-by-slug database (:slug article-with-tags) auth-user))
+  (get-article-by-slug database (:slug article) auth-user))
 
 (defn update-article
-  "Update a record in the articles table"
+  "Update article having `slug`."
   [database slug updates auth-user]
   (try (sql/update! (:datasource database)
                     :articles updates {:slug slug} update-options)
@@ -278,7 +283,7 @@
   (get-article-by-slug database (or (:slug updates) slug) auth-user))
 
 (defn delete-article
-  "Delete a record from the articles table"
+  "Delete article having `slug`."
   [database slug]
   (jdbc/with-transaction [tx (:datasource database)]
     (when-let [article (first (sql/find-by-keys tx :articles
@@ -305,7 +310,7 @@
       (hsql/format)))
 
 (defn get-comment
-  "Get a single comment by id."
+  "Get a single comment by `id`."
   [database id auth-user]
   (when-let [c (jdbc/execute-one! (:datasource database)
                                   (get-comment-query auth-user id)
@@ -313,7 +318,7 @@
     (db-record->model c)))
 
 (defn create-comment
-  "Add a record to the comments table"
+  "Save new comment authored by `auth-user` for article having `slug`."
   [database slug c auth-user]
   (when-let [c (jdbc/execute-one!
                 (:datasource database)
@@ -344,7 +349,7 @@
       (hsql/format)))
 
 (defn get-article-comments
-  "Get all comments for an article"
+  "Get all comments for article having `slug`."
   ([database slug]
    (get-article-comments database slug nil))
   ([database slug auth-user]
@@ -354,7 +359,7 @@
      (map db-record->model cs))))
 
 (defn delete-comment
-  "Remove a record from the comment table"
+  "Delete comment by `id`."
   [database id]
   (jdbc/execute-one! (:datasource database) (hsql/format {:delete-from :comments
                                                           :where [:= :id id]})))
@@ -368,24 +373,25 @@
                     0
                     (count articles))})
 
-(def multiple-article-selects
+(def ^:private multiple-article-selects
   [:a.slug :a.title :a.description :a.created-at :a.updated-at])
 
-(defn multiple-article-group-by [auth-user]
-  (let [group-by (vec (cons :a.id (concat multiple-article-selects
-                                          profile-selects)))]
+(defn- multiple-article-group-by
+  [auth-user]
+  (let [group-bys (vec (cons :a.id (concat multiple-article-selects
+                                           profile-selects)))]
     (if (nil? auth-user)
-      group-by
-      (conj group-by :favorited :following))))
+      group-bys
+      (conj group-bys :favorited :following))))
 
-(defn join-and-filter-username
+(defn- join-and-filter-username
   [filters]
   (let [f [:= :a.author :u.id]]
     (if (nil? (:author filters))
       f
       [:and f [:= :u.username (:author filters)]])))
 
-(defn list-articles-query
+(defn- list-articles-query
   [filters auth-user]
   (-> (apply h/select (concat multiple-article-selects profile-selects))
       (cond-> auth-user (h/select favorited-select))
@@ -417,6 +423,8 @@
       (hsql/format)))
 
 (defn list-articles
+  "List all artcles, orderd most recently, with `filters` applied.
+  Supported filters are `:tag`, `:author`, `:favorited`, `:limit`, `:offset`."
   ([database filters]
    (list-articles database filters nil))
   ([database filters auth-user]
@@ -432,7 +440,7 @@
   (conj (vec (cons :a.id (concat multiple-article-selects
                                  profile-selects))) :following :favorited))
 
-(defn article-feed-query
+(defn- article-feed-query
   [filters auth-user]
   (-> (apply h/select (conj (concat multiple-article-selects profile-selects)
                             [[:inline true] :following]))
@@ -456,6 +464,8 @@
       (hsql/format)))
 
 (defn article-feed
+  "Return article feed for `auth-user`, with `filters` applied.
+  Supported filters are `:limit` and `:offset`."
   [database filters auth-user]
   (let [articles (jdbc/execute! (:datasource database)
                                 (article-feed-query filters auth-user)
@@ -465,6 +475,7 @@
          articles->multiple-articles)))
 
 (defn favorite-article
+  "Mark article having `slug` as a favorite for `auth-user`."
   [database slug auth-user]
   (try
     (jdbc/execute-one!
@@ -479,6 +490,7 @@
   (get-article-by-slug database slug auth-user))
 
 (defn unfavorite-article
+  "Unmark article having `slug` as a favorite for `auth-user`."
   [database slug auth-user]
   (jdbc/execute-one! (:datasource database)
                      (hsql/format {:delete-from :favorites
@@ -491,6 +503,7 @@
   (get-article-by-slug database slug auth-user))
 
 (defn get-tags
+  "Get all the tags."
   [database]
   (let [tags (jdbc/execute! (:datasource database)
                             (hsql/format {:select :tag
@@ -500,12 +513,12 @@
     (map :tag tags)))
 
 (defn migrate
-  "Migrate the db"
+  "Apply all unapplied migrations to the db."
   [database]
   (ragtime-repl/migrate (:migration-config database)))
 
 (defn rollback
-  "Rollback db migrations"
+  "Rollbacka single db migration."
   [database]
   (ragtime-repl/rollback (:migration-config database)))
 
@@ -528,5 +541,7 @@
     (println "Stopping database")
     (assoc component :datasource nil)))
 
-(defn new-database [dbspec]
+(defn new-database
+  "Create a new Database component."
+  [dbspec]
   (map->Database {:dbspec dbspec}))

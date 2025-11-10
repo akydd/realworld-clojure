@@ -75,8 +75,8 @@
   (test-utils/with-system
     [sut (core/new-system (config/read-test-config))]
     (let [db (get-in sut [:database :datasource])
-          new-tags ["tag-one" "tag-two"]
-          input (assoc (mg/generate article/article-schema) :tag-list new-tags)
+          tags ["tag-one" "tag-two"]
+          input (assoc (mg/generate article/article-schema) :tag-list tags)
           user (test-utils/create-user db)
           token (get-login-token user)
           r (create-article-request input token)
@@ -96,8 +96,8 @@
   (test-utils/with-system
     [sut (core/new-system (config/read-test-config))]
     (let [db (get-in sut [:database :datasource])
-          new-tags ["tag-one" "tag-one"]
-          input (assoc (mg/generate article/article-schema) :tag-list new-tags)
+          tags ["tag-one" "tag-one"]
+          input (assoc (mg/generate article/article-schema) :tag-list tags)
           user (test-utils/create-user db)
           token (get-login-token user)
           r (create-article-request input token)

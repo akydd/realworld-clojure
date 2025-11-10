@@ -5,18 +5,18 @@
    [realworld-clojure.adapters.db :as db]))
 
 (defn get-profile
-  "Get a profile by username."
+  "Get a profile by `username`."
   ([controller username]
    (db/get-profile (:database controller) username))
   ([controller username auth-user]
    (db/get-profile (:database controller) username auth-user)))
 
-(def non-empty-string
+(def ^:private non-empty-string
   (m/schema [:string {:min 1}]))
 
 (defn follow-user
-  "Set auth-user to follow the user with username. Returns the profile of the
- user being followed, or nil."
+  "Set `auth-user` to follow the user with `username`.
+  Returns the profile of the user being followed, or `nil.`"
   [controller auth-user username]
   (if (m/validate non-empty-string username)
     (when-let [u (db/get-user-by-username (:database controller) username)]
@@ -27,8 +27,8 @@
                   (me/humanize))}))
 
 (defn unfollow-user
-  "Set auth-user to unfollow a user. Returns the profile of the user being
- unfollowed, or nil."
+  "Set `auth-user` to unfollow user having `username`.
+  Returns the profile of the user being unfollowed, or `nil`."
   [controller auth-user username]
   (if (m/validate non-empty-string username)
     (when-let [u (db/get-user-by-username (:database controller) username)]
@@ -40,5 +40,7 @@
 
 (defrecord ProfileController [database])
 
-(defn new-profile-controller []
+(defn new-profile-controller
+  "Create a new ProfileController."
+  []
   (map->ProfileController {}))

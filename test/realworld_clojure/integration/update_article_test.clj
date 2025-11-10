@@ -16,8 +16,8 @@
 (deftest no-auth
   (test-utils/with-system
     [sut (core/new-system (config/read-test-config))]
-    (let [update (mg/generate article/article-update-schema)
-          r (update-article-request "slug" update)]
+    (let [u (mg/generate article/article-update-schema)
+          r (update-article-request "slug" u)]
       (is (= 401 (:status r))))))
 
 (deftest not-found
@@ -25,8 +25,8 @@
     [sut (core/new-system (config/read-test-config))]
     (let [db (get-in sut [:database :datasource])
           user (test-utils/create-user db)
-          update (mg/generate article/article-update-schema)
-          r (update-article-request "no-article-here" update
+          u (mg/generate article/article-update-schema)
+          r (update-article-request "no-article-here" u
                                     (get-login-token user))]
       (is (= 404 (:status r))))))
 
@@ -36,9 +36,9 @@
     (let [db (get-in sut [:database :datasource])
           user (test-utils/create-user db)
           article (test-utils/create-article db (:id user))
-          update {:garbage "hi"}
+          u {:garbage "hi"}
           token (get-login-token user)
-          r (update-article-request (:slug article) update token)]
+          r (update-article-request (:slug article) u token)]
       (is (= 422 (:status r))))))
 
 (deftest different-author
@@ -48,9 +48,9 @@
            user-one (test-utils/create-user db)
            user-two (test-utils/create-user db)
            article (test-utils/create-article db (:id user-one))
-           update (mg/generate article/article-update-schema)
+           u (mg/generate article/article-update-schema)
            token (get-login-token user-two)
-           r (update-article-request (:slug article) update token)]
+           r (update-article-request (:slug article) u token)]
        (is (= 403 (:status r))))]))
 
 (deftest new-title-makes-new-slug
@@ -60,9 +60,9 @@
           user (test-utils/create-user db)
           article (test-utils/create-article db (:id user))
           new-title (str (:title article) " updated")
-          update {:title new-title}
+          u {:title new-title}
           token (get-login-token user)
-          r (update-article-request (:slug article) update token)
+          r (update-article-request (:slug article) u token)
           updated-article (:article (json/parse-string (:body r) true))]
       (is (= 200 (:status r)))
       (is (true?
@@ -80,9 +80,9 @@
           user (test-utils/create-user db)
           article-one (test-utils/create-article db (:id user))
           article-two (test-utils/create-article db (:id user))
-          update {:title (:title article-one)}
+          u {:title (:title article-one)}
           token (get-login-token user)
-          r (update-article-request (:slug article-two) update token)]
+          r (update-article-request (:slug article-two) u token)]
       (is (= 409 (:status r))))))
 
 (deftest success
@@ -91,8 +91,8 @@
     (let [db (get-in sut [:database :datasource])
           user (test-utils/create-user db)
           article (test-utils/create-article db (:id user))
-          update (mg/generate article/article-update-schema)
-          r (update-article-request (:slug article) update
+          u (mg/generate article/article-update-schema)
+          r (update-article-request (:slug article) u
                                     (get-login-token user))
           returned-article (-> r
                                (:body)

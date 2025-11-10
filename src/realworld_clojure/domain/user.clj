@@ -7,6 +7,7 @@
             [realworld-clojure.adapters.db :as db]))
 
 (def user-schema
+  "Schema for the `user` param of [[register-user]]."
   [:map {:closed true}
    [:username [:string {:min 1}]]
    [:password [:string {:min 1}]]
@@ -15,14 +16,14 @@
    [:image {:optional true} [:string {:min 1}]]])
 
 (defn- hash-password
-  "Returns the user with a hashed version of the password"
+  "Returns the user with a hashed version of the password."
   [user]
   (if (:password user)
     (update user :password hashers/derive)
     user))
 
 (defn- add-token
-  "Returns the user with a token"
+  "Returns the user with the token attached."
   [jwt-secret user]
   (assoc user :token (jwt/sign {:id (:id user)} jwt-secret)))
 
@@ -37,7 +38,7 @@
   (assoc auth-user :token token))
 
 (defn register-user
-  "Register a user"
+  "Register a user."
   [controller user]
   (if (m/validate user-schema user)
     (let [new-user (db/insert-user (:database controller) (hash-password user))]
@@ -45,12 +46,13 @@
     {:errors (me/humanize (m/explain user-schema user))}))
 
 (def user-login-schema
+  "Schema for the `user` param of [[login-user]]."
   [:map {:closed true}
    [:email [:string {:min 1}]]
    [:password [:string {:min 1}]]])
 
 (defn login-user
-  "User login"
+  "User login."
   [controller user]
   (if (m/validate user-login-schema user)
     (when-let [fetched-user (db/get-user-by-email
@@ -63,6 +65,7 @@
     {:errors (me/humanize (m/explain user-login-schema user))}))
 
 (def user-update-schema
+  "Schema for the `updates` param to [[update-user]]."
   [:map {:closed true}
    [:email {:optional true} [:string {:min 1}]]
    [:username {:optional true} [:string {:min 1}]]
@@ -71,7 +74,7 @@
    [:bio {:optional true} [:string {:min 1}]]])
 
 (defn update-user
-  "Update a user record"
+  "Update a user."
   [controller auth-user updates]
   (if (m/validate user-update-schema updates)
     (->> updates
@@ -82,5 +85,7 @@
 
 (defrecord UserController [jwt-secret database])
 
-(defn new-user-controller [jwt-secret]
+(defn new-user-controller
+  "Create a new UserController."
+  [jwt-secret]
   (map->UserController {:jwt-secret jwt-secret}))

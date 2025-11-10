@@ -1,3 +1,5 @@
+(set! *warn-on-reflection* true)
+
 (ns realworld-clojure.integration.common
   (:require
    [cheshire.core :as json]
@@ -7,9 +9,9 @@
    [org.httpkit.client :as http]
    [realworld-clojure.config-test :as config]))
 
-(def port (get-in (config/read-test-config) [:server :port]))
-(def host "http://localhost")
-(def base-url (str host ":" port "/api"))
+(def ^:private port (get-in (config/read-test-config) [:server :port]))
+(def ^:private host "http://localhost")
+(def ^:private base-url (str host ":" port "/api"))
 
 (defn- get-headers
   ([]
@@ -21,12 +23,14 @@
 ;; Testing endpoints for all operations.
 
 (defn get-user-request
+  "Send a Get User request to the integration test instsance."
   ([]
    @(http/get (str base-url "/user") {:headers (get-headers)}))
   ([token]
    @(http/get (str base-url "/user") {:headers (get-headers token)})))
 
 (defn get-profile-request
+  "Send a Get Current User request to the integration test instance."
   ([username]
    @(http/get (str base-url "/profiles/" username) {:headers (get-headers)}))
   ([username token]
@@ -34,6 +38,7 @@
               {:headers (get-headers token)})))
 
 (defn login-request
+  "Send a Login request to the integration test instance."
   ([]
    @(http/post (str base-url "/users/login") {:headers (get-headers)
                                               :body (json/generate-string {})}))
@@ -44,11 +49,13 @@
                                                     :password password}})})))
 
 (defn get-login-token
+  "Login the user to the integration test instance, return the login token."
   [user]
   (let [r (login-request (:email user) (:password user))]
     (get-in (json/parse-string (:body r) true) [:user :token])))
 
 (defn update-user-request
+  "Send an Update User request to the integration test instance."
   ([user]
    @(http/put
      (str base-url "/user") {:headers (get-headers)
@@ -59,6 +66,7 @@
                              :body (json/generate-string {:user user})})))
 
 (defn register-request
+  "Send a Registration request to the integration test instance."
   [user]
   @(http/post
     (str base-url "/users")
@@ -67,6 +75,7 @@
             {:user (select-keys user [:username :password :email])})}))
 
 (defn follow-user-request
+  "Send a Follow User request to the integration test instance."
   ([username]
    @(http/post (str base-url "/profiles/" username "/follow")
                {:headers (get-headers)}))
@@ -75,6 +84,7 @@
                {:headers (get-headers token)})))
 
 (defn unfollow-user-request
+  "Send an Unfollow User request to the integration test instance."
   ([username]
    @(http/delete (str base-url "/profiles/" username "/follow")
                  {:headers (get-headers)}))
@@ -83,12 +93,14 @@
                  {:headers (get-headers token)})))
 
 (defn get-article-request
+  "Send a Get Article requeest to the integration test instance."
   ([slug]
    @(http/get (str base-url "/articles/" slug) {:headers (get-headers)}))
   ([slug token]
    @(http/get (str base-url "/articles/" slug) {:headers (get-headers token)})))
 
 (defn create-article-request
+  "Send a Create Article request to the integration test instance."
   ([article]
    @(http/post (str base-url "/articles")
                {:headers (get-headers)
@@ -99,16 +111,18 @@
                 :body (json/generate-string {:article article})})))
 
 (defn update-article-request
-  ([slug update]
+  "Send an Update Article request to the integration test instance."
+  ([slug input]
    @(http/put (str base-url "/articles/" slug)
               {:headers (get-headers)
-               :body (json/generate-string {:article update})}))
-  ([slug update token]
+               :body (json/generate-string {:article input})}))
+  ([slug input token]
    @(http/put (str base-url "/articles/" slug)
               {:headers (get-headers token)
-               :body (json/generate-string {:article update})})))
+               :body (json/generate-string {:article input})})))
 
 (defn delete-article-request
+  "Send a Delete Artice request to the integration test instance."
   ([slug]
    @(http/delete (str base-url "/articles/" slug) {:headers (get-headers)}))
   ([slug token]
@@ -116,16 +130,18 @@
                  {:headers (get-headers token)})))
 
 (defn create-comment-request
-  ([slug comment]
+  "Send a Create Comment request to the integration test instance."
+  ([slug c]
    @(http/post (str base-url "/articles/" slug "/comments")
                {:headers (get-headers)
-                :body (json/generate-string {:comment comment})}))
-  ([slug comment token]
+                :body (json/generate-string {:comment c})}))
+  ([slug c token]
    @(http/post (str base-url "/articles/" slug "/comments")
                {:headers (get-headers token)
-                :body (json/generate-string {:comment comment})})))
+                :body (json/generate-string {:comment c})})))
 
 (defn get-comments-request
+  "Send a Get Comment request to the integration test instance."
   ([slug]
    @(http/get (str base-url "/articles/" slug "/comments")
               {:headers (get-headers)}))
@@ -134,6 +150,7 @@
               {:headers (get-headers token)})))
 
 (defn delete-comment-request
+  "Send a Delete Comment request to the integration test instance."
   ([slug id]
    @(http/delete (str base-url "/articles/" slug "/comments/" id)
                  {:headers (get-headers)}))
@@ -142,6 +159,7 @@
                  {:headers (get-headers token)})))
 
 (defn favorite-article-request
+  "Send a Favorite Article request to the integration test instance."
   ([slug]
    @(http/post (str base-url "/articles/" slug "/favorite")
                {:headers (get-headers)}))
@@ -150,6 +168,7 @@
                {:headers (get-headers token)})))
 
 (defn unfavorite-article-request
+  "Send an Unfavorite Article request to the integration test instance."
   ([slug]
    @(http/delete (str base-url "/articles/" slug "/favorite")
                  {:headers (get-headers)}))
@@ -158,6 +177,7 @@
                  {:headers (get-headers token)})))
 
 (defn article-feed-request
+  "Send an Article Feed request to the integration test instance."
   ([filter-str]
    @(http/get (str base-url "/articles/feed" filter-str)
               {:headers (get-headers)}))
@@ -166,6 +186,7 @@
               {:headers (get-headers token)})))
 
 (defn list-articles-request
+  "Send a List Articles request to the integration test instance."
   ([filter-str]
    @(http/get (str base-url "/articles" filter-str) {:headers (get-headers)}))
   ([filter-str token]
@@ -173,6 +194,7 @@
               {:headers (get-headers token)})))
 
 (defn get-tags-request
+  "Send a Get Tags request to the integration test instance."
   []
   @(http/get (str base-url "/tags") {:headers (get-headers)}))
 

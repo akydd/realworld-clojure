@@ -50,9 +50,9 @@
     (let [db (get-in sut [:database :datasource])
           user (test-utils/create-user db)
           article (test-utils/create-article db (:id user))
-          comment (test-utils/create-comment db (:id article) (:id user))
+          c (test-utils/create-comment db (:id article) (:id user))
           token (get-login-token user)
-          r (delete-comment-request (:slug article) (:id comment) token)
+          r (delete-comment-request (:slug article) (:id c) token)
           s (get-comments-request (:slug article))
           comments (-> s
                        (:body)
@@ -60,7 +60,7 @@
                        (:comments))]
       (is (= 200 (:status r)))
       (is (= 200 (:status s)))
-      (is (every? #(not= (:id comment) (:id %)) comments)))))
+      (is (every? #(not= (:id c) (:id %)) comments)))))
 
 (deftest not-the-author
   (test-utils/with-system
@@ -69,9 +69,9 @@
           user-one (test-utils/create-user db)
           user-two (test-utils/create-user db)
           article (test-utils/create-article db (:id user-two))
-          comment (test-utils/create-comment db (:id article) (:id user-one))
+          c (test-utils/create-comment db (:id article) (:id user-one))
           token (get-login-token user-two)
-          r (delete-comment-request (:slug article) (:id comment) token)
+          r (delete-comment-request (:slug article) (:id c) token)
           s (get-comments-request (:slug article))
           comments (-> s
                        (:body)
@@ -79,4 +79,4 @@
                        (:comments))]
       (is (= 403 (:status r)))
       (is (= 200 (:status s)))
-      (is (some #(= (:id comment) (:id %)) comments)))))
+      (is (some #(= (:id c) (:id %)) comments)))))

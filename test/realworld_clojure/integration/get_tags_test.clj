@@ -23,8 +23,7 @@
 (deftest no-tags
   (test-utils/with-system
     [sut (core/new-system (config/read-test-config))]
-    (let [db (get-in sut [:database :datasource])
-          r (get-tags-request)]
+    (let [r (get-tags-request)]
       (validate-response r []))))
 
 (deftest some-tags-ordered

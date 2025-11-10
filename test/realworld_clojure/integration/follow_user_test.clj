@@ -1,4 +1,4 @@
-(ns realworld-clojure.integration.unfollow-user
+(ns realworld-clojure.integration.follow-user-test
   (:require
    [cheshire.core :as json]
    [clojure.test :refer [deftest is]]
@@ -6,8 +6,8 @@
    [malli.error :as me]
    [realworld-clojure.config-test :as config]
    [realworld-clojure.core :as core]
-   [realworld-clojure.integration.common :refer [get-login-token
-                                                 unfollow-user-request
+   [realworld-clojure.integration.common :refer [follow-user-request
+                                                 get-login-token
                                                  auth-profile-schema
                                                  profiles-equal?]]
    [realworld-clojure.utils :as test-utils]))
@@ -17,7 +17,7 @@
     [sut (core/new-system (config/read-test-config))]
     (let [db (get-in sut [:database :datasource])
           user (test-utils/create-user db)
-          r (unfollow-user-request (:username user))]
+          r (follow-user-request (:username user))]
       (is (= 401 (:status r))))))
 
 (deftest user-does-not-exist
@@ -26,28 +26,8 @@
     (let [db (get-in sut [:database :datasource])
           user (test-utils/create-user db)
           token (get-login-token user)
-          r (unfollow-user-request "not-a-user" token)]
+          r (follow-user-request "not-a-user" token)]
       (is (= 404 (:status r))))))
-
-(deftest user-not-followed
-  (test-utils/with-system
-    [sut (core/new-system (config/read-test-config))]
-    (let [db (get-in sut [:database :datasource])
-          user-one (test-utils/create-user db)
-          user-two (test-utils/create-user db)
-          token (get-login-token user-one)
-          r (unfollow-user-request (:username user-two) token)
-          profile (-> r
-                      (:body)
-                      (json/parse-string true)
-                      (:profile))]
-      (is (= 200 (:status r)))
-      (is (true? (m/validate auth-profile-schema profile))
-          (->> profile
-               (m/explain auth-profile-schema)
-               (me/humanize)))
-      (is (false? (:following profile)))
-      (is (true? (profiles-equal? user-two profile))))))
 
 (deftest success
   (test-utils/with-system
@@ -55,9 +35,8 @@
     (let [db (get-in sut [:database :datasource])
           user-one (test-utils/create-user db)
           user-two (test-utils/create-user db)
-          _ (test-utils/create-follows db user-one user-two)
           token (get-login-token user-one)
-          r (unfollow-user-request (:username user-two) token)
+          r (follow-user-request (:username user-two) token)
           profile (-> r
                       (:body)
                       (json/parse-string true)
@@ -67,5 +46,26 @@
           (->> profile
                (m/explain auth-profile-schema)
                (me/humanize)))
-      (is (false? (:following profile)))
+      (is (true? (:following profile)))
+      (is (true? (profiles-equal? user-two profile))))))
+
+(deftest already-following-user
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          user-one (test-utils/create-user db)
+          user-two (test-utils/create-user db)
+          token (get-login-token user-one)
+          _ (follow-user-request (:username user-two) token)
+          r (follow-user-request (:username user-two) token)
+          profile (-> r
+                      (:body)
+                      (json/parse-string true)
+                      (:profile))]
+      (is (= 200 (:status r)))
+      (is (true? (m/validate auth-profile-schema profile))
+          (->> profile
+               (m/explain auth-profile-schema)
+               (me/humanize)))
+      (is (true? (:following profile)))
       (is (true? (profiles-equal? user-two profile))))))

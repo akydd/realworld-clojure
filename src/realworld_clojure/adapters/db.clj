@@ -11,10 +11,10 @@
    [ragtime.jdbc :as ragtime-jdbc]
    [ragtime.repl :as ragtime-repl]))
 
-(def query-options
+(def ^:private query-options
   {:builder-fn o/as-unqualified-lower-maps})
 
-(def update-options
+(def ^:private update-options
   {:return-keys true
    :builder-fn rs/as-unqualified-lower-maps})
 
@@ -62,31 +62,31 @@
 ;; comments c
 ;; favorites g, or favs if within a subquery
 
-(def article-as-a
+(def ^:private article-as-a
   [:articles :a])
 
-(def users-as-u
+(def ^:private users-as-u
   [:users :u])
 
-(def tags-as-t
+(def ^:private tags-as-t
   [:tags :t])
 
-(def article-tags-as-h
+(def ^:private article-tags-as-h
   [:article-tags :h])
 
-(def follows-as-f
+(def ^:private follows-as-f
   [:follows :f])
 
-(def comments-as-c
+(def ^:private comments-as-c
   [:comments :c])
 
-(def favorites-as-g
+(def ^:private favorites-as-g
   [:favorites :g])
 
-(def profile-selects
+(def ^:private profile-selects
   [:u.username :u.bio :u.image])
 
-(def following-select
+(def ^:private following-select
   [[:case [:is :f.follows nil] false
     :else true
     :end] :following])
@@ -166,13 +166,13 @@
         author (select-keys m ks)]
     (assoc (reduce dissoc m ks) :author author)))
 
-(def article-selects
+(def ^:private article-selects
   [:a.slug :a.title :a.description :a.body :a.created-at :a.updated-at])
 
-(def tag-list-select
+(def ^:private tag-list-select
   [[:array_remove [:array_agg [:order-by :t.tag [:t.tag]]] :null] :tag-list])
 
-(def favorites-count-select
+(def ^:private favorites-count-select
   [{:select [[[:count :*]]]
     :from [[:favorites :favs]]
     :where [:= :favs.article :a.id]} :favorites-count])
@@ -183,7 +183,7 @@
       group-by
       (conj group-by :favorited :following))))
 
-(def favorited-select
+(def ^:private favorited-select
   [[:case [:is :g.article nil] false
     :else true
     :end] :favorited])
@@ -288,7 +288,7 @@
       (sql/delete! tx :comments {:article (:id article)})
       (sql/delete! tx :articles {:id (:id article)}))))
 
-(def comment-selects
+(def ^:private comment-selects
   [:c.id :c.created-at :c.updated-at :c.body])
 
 (defn- get-comment-query [auth-user id]

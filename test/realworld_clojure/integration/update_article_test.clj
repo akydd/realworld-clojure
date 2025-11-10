@@ -1,4 +1,4 @@
-(ns realworld-clojure.integration.update-article
+(ns realworld-clojure.integration.update-article-test
   (:require
    [cheshire.core :as json]
    [clojure.test :refer [deftest is]]

@@ -1,4 +1,4 @@
-(ns realworld-clojure.integration.list-articles
+(ns realworld-clojure.integration.list-articles-test
   (:require
    [cheshire.core :as json]
    [clojure.test :refer [deftest is]]
@@ -105,7 +105,7 @@
           author-one (test-utils/create-user db)
           author-two (test-utils/create-user db)
           article-one (test-utils/create-article db (:id author-one))
-          article-two (test-utils/create-article db (:id author-two))
+          _article-two (test-utils/create-article db (:id author-two))
           r (list-articles-request (str "?author=" (:username author-one)))]
       (validate-response r [article-one] [author-one]))))
 
@@ -116,7 +116,7 @@
           author-one (test-utils/create-user db)
           author-two (test-utils/create-user db)
           article-one (test-utils/create-article db (:id author-one))
-          article-two (test-utils/create-article db (:id author-two))
+          _article-two (test-utils/create-article db (:id author-two))
           r (list-articles-request (str "?author=" (:username author-one))
                                    (get-login-token author-one))]
       (validate-response r [article-one] [author-one] [false false]))))
@@ -182,10 +182,10 @@
           article-one (test-utils/create-article db (:id author)
                                                  {:tag-list ["tag-one"]
                                                   :updated-at now})
-          article-two (test-utils/create-article
-                       db (:id author)
-                       {:tag-list ["tag-two"]
-                        :updated-at (jt/- now (jt/days 1))})
+          _article-two (test-utils/create-article
+                        db (:id author)
+                        {:tag-list ["tag-two"]
+                         :updated-at (jt/- now (jt/days 1))})
           article-three (test-utils/create-article
                          db (:id author)
                          {:tag-list ["tag-one" "tag-two"]
@@ -220,10 +220,10 @@
                        db (:id author)
                        {:tag-list ["tag-one"]
                         :updated-at now})
-          article-two (test-utils/create-article
-                       db (:id author)
-                       {:tag-list ["tag-two"]
-                        :updated-at (jt/- now (jt/days 1))})
+          _article-two (test-utils/create-article
+                        db (:id author)
+                        {:tag-list ["tag-two"]
+                         :updated-at (jt/- now (jt/days 1))})
           article-three (test-utils/create-article
                          db (:id author)
                          {:tag-list ["tag-one" "tag-two"]

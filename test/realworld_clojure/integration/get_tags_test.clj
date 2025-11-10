@@ -1,4 +1,4 @@
-(ns realworld-clojure.integration.get-tags
+(ns realworld-clojure.integration.get-tags-test
   (:require
    [cheshire.core :as json]
    [clojure.test :refer [deftest is]]

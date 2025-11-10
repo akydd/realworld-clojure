@@ -1,4 +1,4 @@
-(ns realworld-clojure.integration.delete-article
+(ns realworld-clojure.integration.delete-article-test
   (:require
    [clojure.test :refer [deftest is]]
    [realworld-clojure.config-test :as config]

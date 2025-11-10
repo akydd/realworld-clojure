@@ -1,4 +1,4 @@
-(ns realworld-clojure.integration.article-feed
+(ns realworld-clojure.integration.article-feed-test
   (:require
    [cheshire.core :as json]
    [clojure.test :refer [deftest is]]
@@ -85,7 +85,6 @@
           user-two (test-utils/create-user db)
           user-three (test-utils/create-user db)
           _ (test-utils/create-article db (:id user-one))
-          now (jt/local-date-time)
           article-one (test-utils/create-article
                        db (:id user-three) {:title "article-one"
                                             :tag-list []})
@@ -172,7 +171,6 @@
           user (test-utils/create-user db)
           _ (test-utils/create-follows db user author-one)
           _ (test-utils/create-follows db user author-two)
-          now (jt/local-date-time)
           a1 (test-utils/create-article db (:id author-one))
           a2 (test-utils/create-article db (:id author-two))
           token (get-login-token user)
@@ -205,8 +203,7 @@
           author (test-utils/create-user db)
           user (test-utils/create-user db)
           _ (test-utils/create-follows db user author)
-          now (jt/local-date-time)
-          a1 (test-utils/create-article db (:id author))
+          _ (test-utils/create-article db (:id author))
           a2 (test-utils/create-article db (:id author))
           a3 (test-utils/create-article db (:id author))
           token (get-login-token user)
@@ -256,10 +253,9 @@
           author (test-utils/create-user db)
           user (test-utils/create-user db)
           _ (test-utils/create-follows db user author)
-          now (jt/local-date-time)
           a1 (test-utils/create-article db (:id author))
           a2 (test-utils/create-article db (:id author))
-          a3 (test-utils/create-article db (:id author))
+          _ (test-utils/create-article db (:id author))
           token (get-login-token user)
           r (article-feed-request "?offset=1" token)]
       (validate-response r [a2 a1] [author author]))))

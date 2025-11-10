@@ -1,4 +1,4 @@
-(ns realworld-clojure.integration.get-profile
+(ns realworld-clojure.integration.get-profile-test
   (:require
    [cheshire.core :as json]
    [clojure.test :refer [deftest is]]

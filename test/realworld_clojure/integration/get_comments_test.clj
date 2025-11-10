@@ -1,4 +1,4 @@
-(ns realworld-clojure.integration.get-comments
+(ns realworld-clojure.integration.get-comments-test
   (:require
    [cheshire.core :as json]
    [clojure.test :refer [deftest is]]

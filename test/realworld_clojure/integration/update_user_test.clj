@@ -1,4 +1,4 @@
-(ns realworld-clojure.integration.update-user
+(ns realworld-clojure.integration.update-user-test
   (:require
    [cheshire.core :as json]
    [clojure.test :refer [deftest is]]

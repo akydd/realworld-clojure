@@ -1,10 +1,10 @@
 (ns realworld-clojure.domain.article
   (:require
-   [malli.core :as m]
-   [realworld-clojure.adapters.db :as db]
-   [malli.error :as me]
+   [buddy.auth :refer [throw-unauthorized]]
    [clojure.string :as str]
-   [buddy.auth :refer [throw-unauthorized]]))
+   [malli.core :as m]
+   [malli.error :as me]
+   [realworld-clojure.adapters.db :as db]))
 
 (def article-schema
   [:map {:closed true}

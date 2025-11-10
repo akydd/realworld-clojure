@@ -1,14 +1,15 @@
 (ns realworld-clojure.adapters.db
-  (:require [next.jdbc :as jdbc]
-            [next.jdbc.sql :as sql]
-            [next.jdbc.optional :as o]
-            [next.jdbc.result-set :as rs]
-            [next.jdbc.date-time :as dt]
-            [com.stuartsierra.component :as component]
-            [ragtime.repl :as ragtime-repl]
-            [ragtime.jdbc :as ragtime-jdbc]
-            [honey.sql :as hsql]
-            [honey.sql.helpers :as h]))
+  (:require
+   [com.stuartsierra.component :as component]
+   [honey.sql :as hsql]
+   [honey.sql.helpers :as h]
+   [next.jdbc :as jdbc]
+   [next.jdbc.date-time :as dt]
+   [next.jdbc.optional :as o]
+   [next.jdbc.result-set :as rs]
+   [next.jdbc.sql :as sql]
+   [ragtime.jdbc :as ragtime-jdbc]
+   [ragtime.repl :as ragtime-repl]))
 
 (def query-options
   {:builder-fn o/as-unqualified-lower-maps})
@@ -135,11 +136,10 @@
 
 (defn follow-user
   [database auth-user user]
-  (jdbc/execute-one! (:datasource database)
-                     (hsql/format {:insert-into :follows
-                                   :values [[(:id auth-user) (:id user)]]
-                                   :on-conflict []
-                                   :do-nothing true})))
+  (jdbc/execute-one! (:datasource database) (hsql/format {:insert-into :follows
+                                                          :values [[(:id auth-user) (:id user)]]
+                                                          :on-conflict []
+                                                          :do-nothing true})))
 
 (defn unfollow-user
   "Unfollow a user."

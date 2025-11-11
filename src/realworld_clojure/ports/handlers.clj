@@ -1,19 +1,24 @@
 (ns realworld-clojure.ports.handlers
-  (:require [clojure.string :as str]
-            [realworld-clojure.domain.article :as article]
-            [realworld-clojure.domain.comment :as comment]
-            [realworld-clojure.domain.profile :as profile]
-            [realworld-clojure.domain.tags :as tag]
-            [realworld-clojure.domain.user :as user]
-            [realworld-clojure.ports.converters :as converters]))
+  (:require
+   [clojure.string :as str]
+   [realworld-clojure.domain.article :as article]
+   [realworld-clojure.domain.comment :as comment]
+   [realworld-clojure.domain.profile :as profile]
+   [realworld-clojure.domain.tags :as tag]
+   [realworld-clojure.domain.user :as user]
+   [realworld-clojure.ports.converters :as converters]))
 
 (defrecord Handler [user-controller profile-controller
                     article-controller comment-controller])
 
-(defn new-handler []
+(defn new-handler
+  "Create a new Handler component."
+  []
   (map->Handler {}))
 
-(defn health [_handler _req]
+(defn health
+  "Check if the webserver is running."
+  [_handler _req]
   {:status 200
    :body {:status "Alive"}})
 
@@ -32,7 +37,7 @@
        :body {:user (converters/user->user u)}})))
 
 (defn register-user
-  "Register a user"
+  "Register a user."
   [handler user]
   (let [u (user/register-user (:user-controller handler) user)]
     (if (u :errors)
@@ -42,7 +47,7 @@
        :body {:user (converters/user->user u)}})))
 
 (defn login-user
-  "Login a user"
+  "Login a user."
   [handler user]
   (let [u (user/login-user (:user-controller handler) user)]
     (if (nil? u)
@@ -54,7 +59,7 @@
          :body {:user (converters/user->user u)}}))))
 
 (defn update-user
-  "Update a user"
+  "Update a user."
   [handler auth-user user]
   (let [u (user/update-user (:user-controller handler) auth-user user)]
     (if (nil? u)
@@ -70,7 +75,7 @@
 ;; db.
 
 (defn get-profile
-  "Get a user profile by username"
+  "Get a user profile by username."
   [handler username auth-user]
   (let [p (if (nil? auth-user)
             (profile/get-profile (:profile-controller handler) username)
@@ -82,7 +87,7 @@
        :body {:profile p}})))
 
 (defn follow-user
-  "Follow a user"
+  "Follow a user."
   [handler auth-user username]
   (let [p (profile/follow-user (:profile-controller handler) auth-user
                                username)]
@@ -92,7 +97,7 @@
        :body {:profile p}})))
 
 (defn unfollow-user
-  "Follow a user"
+  "Unfollow a user."
   [handler auth-user username]
   (let [p (profile/unfollow-user (:profile-controller handler) auth-user
                                  username)]
@@ -122,7 +127,7 @@
     (merge params converted-ints)))
 
 (defn list-articles
-  "Get list of articles, filtered"
+  "Get list of articles, filtered."
   [handler params auth-user]
   (let [filters (params->filters params)
         feed (if (nil? auth-user)
@@ -133,6 +138,7 @@
      :body feed}))
 
 (defn article-feed
+  "Get the article feed for `auth-user`."
   [handler params auth-user]
   (let [filters (params->filters params)
         feed (article/article-feed (:article-controller handler) filters
@@ -141,10 +147,10 @@
      :body feed}))
 
 (defn create-article
-  "Create an article"
+  "Create an article."
   [handler article auth-user]
-  (let [a (article/create-article (:article-controller handler) article
-                                  auth-user)]
+  (let [a (article/create-article! (:article-controller handler) article
+                                   auth-user)]
     (if (nil? a)
       {:status 404}
       (if (:errors a)
@@ -154,7 +160,7 @@
          :body {:article a}}))))
 
 (defn update-article
-  "Update an article"
+  "Update an article."
   [handler slug article auth-user]
   (let [a (article/update-article (:article-controller handler) slug article
                                   auth-user)]
@@ -167,7 +173,7 @@
          :body {:article a}}))))
 
 (defn delete-article
-  "Delete an article"
+  "Delete an article."
   [handler slug auth-user]
   (let [a (article/delete-article (:article-controller handler) slug auth-user)]
     (if (nil? a)
@@ -195,10 +201,10 @@
        :body {:article a}})))
 
 (defn create-comment
-  "Create a new comment for an article"
+  "Create a new comment for an article."
   [handler slug input auth-user]
-  (let [c (comment/create-comment (:comment-controller handler) slug input
-                                  auth-user)]
+  (let [c (comment/create-comment! (:comment-controller handler) slug input
+                                   auth-user)]
     (if (nil? c)
       {:status 404}
       (if (:errors c)
@@ -208,7 +214,7 @@
          :body {:comment c}}))))
 
 (defn get-comments
-  "Get comments for an article"
+  "Get comments for an article."
   [handler slug auth-user]
   (let [comments (if (nil? auth-user)
                    (comment/get-article-comments (:article-controller handler)
@@ -221,7 +227,7 @@
        :body {:comments comments}})))
 
 (defn delete-comment
-  "Delete comment"
+  "Delete comment."
   [handler slug id auth-user]
   (let [p (comment/delete-comment (:article-controller handler) slug id
                                   auth-user)]
@@ -230,6 +236,7 @@
       {:status 200})))
 
 (defn get-tags
+  "Get tags."
   [handler]
   (let [tags (tag/get-tags (:tag-controller handler))]
     {:status 200

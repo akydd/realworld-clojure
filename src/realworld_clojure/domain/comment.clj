@@ -12,12 +12,12 @@
   [:map
    [:body [:string {:min 1}]]])
 
-(defn create-comment
+(defn create-comment!
   "Add a new comment to an article."
   [controller slug c auth-user]
   (if (m/validate comment-create-schema c)
     (when (db/get-article-by-slug (:database controller) slug)
-      (db/create-comment (:database controller) slug c auth-user))
+      (db/create-comment! (:database controller) slug c auth-user))
     {:errors (me/humanize (m/explain comment-create-schema c))}))
 
 (defn delete-comment

@@ -30,12 +30,12 @@
   ([controller slug auth-user]
    (db/get-article-by-slug (:database controller) slug auth-user)))
 
-(defn create-article
+(defn create-article!
   "Create an article."
   [controller article auth-user]
   (if (m/validate article-schema article)
     (let [a (assoc article :slug (str->slug (:title article)))]
-      (db/create-article-with-tags (:database controller) a auth-user))
+      (db/create-article! (:database controller) a auth-user))
     {:errors (me/humanize (m/explain article-schema article))}))
 
 (def article-update-schema

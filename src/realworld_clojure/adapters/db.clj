@@ -248,7 +248,7 @@
                                    :do-nothing true})
                      update-options))
 
-(defn- create-article
+(defn- create-article-without-tags!
   "Save sn article to the db. This does not handle tags.
   To save an article and tags, use create-article-with-tags."
   [tx article auth-user]
@@ -260,13 +260,13 @@
       (catch org.postgresql.util.PSQLException e
         (handle-psql-exception e)))))
 
-(defn create-article-with-tags
+(defn create-article!
   "Save new `article`, authored by `auth-user`."
   [database article auth-user]
   (jdbc/with-transaction [tx (:datasource database)]
     (let [tags (distinct (:tag-list article))
           article-without-tags (dissoc article :tag-list)
-          saved-article (create-article tx article-without-tags auth-user)]
+          saved-article (create-article-without-tags! tx article-without-tags auth-user)]
       (doseq [t tags]
         (let [saved-tag (insert-tag tx t)]
           (link-article-and-tag tx saved-article saved-tag)))))
@@ -317,7 +317,7 @@
                                   {:builder-fn rs/as-unqualified-kebab-maps})]
     (db-record->model c)))
 
-(defn create-comment
+(defn create-comment!
   "Save new comment authored by `auth-user` for article having `slug`."
   [database slug c auth-user]
   (when-let [c (jdbc/execute-one!

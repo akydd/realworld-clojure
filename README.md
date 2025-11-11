@@ -7,6 +7,7 @@ Implementation of the [RealWorld server API](https://docs.realworld.show/specifi
 1. Clone this repo.
 2. 
 
+
 ## Usage
 
 FIXME: explanation
@@ -15,8 +16,36 @@ FIXME: explanation
 
 ## Options
 
-All options for the app are set in ...
+See `realworld-clojure/resources/config.edn` and `realworld-clojure/resources/test-config.edn`.
 
+The production instance of the app can use the environment variables:
+```
+DB_HOST
+DB_PORT
+DB_NAME
+DB_USER
+DB_PASSWORD
+PORT
+JWT_SECRET
+```
+
+The integration test instance of the app can use the environment variables:
+```
+TEST_DB_HOST
+TEST_DB_PORT
+TEST_DB_NAME
+TEST_DB_USER
+TEST_DB_PASSWORD
+TEST_PORT
+TEST_JWT_SECRET
+```
+
+In the absence of any environment vars, the app uses default values that match
+the values in the docker compose file (`compose.yaml`).
+
+If you intend to change any of the database options, ensure that the new values
+are first also applied to the docker compose file, and then rerun `docker
+up` as needed.
 
 ## Examples
 

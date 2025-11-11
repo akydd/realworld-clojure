@@ -23,16 +23,15 @@ All options for the app are set in ...
 ...
 
 ## Design Decisions
-The spec specifies that all returned timestamps are formatted as `2016-02-18T03:22:56.637Z`.
+The spec specifies that all returned timestamps are formatted as
+`2016-02-18T03:22:56.637Z`.
 
-Two things needed to happen for this to work.
-
-### JDBC and DB
-The jdbc driver and db had to work together so that timestamps from the db were
-returned in utc, and not formatted for the local time zone. This was accomplished by:
+The jdbc driver, db, and json converter have to work together so that timestamps
+from the db are returned in utc, and not formatted for the local time zone. This
+is accomplished by:
 
 1. Using table column type `timestamptz` to store dates.
-2. Setting the jdbc driver to return those `timestamptz` values as  `java.time.Instant` values.
+2. Setting the jdbc driver to return `timestamptz` values as `java.time.Instant` values.
 ```clojure
 (ns ...
    (:require ...
@@ -44,9 +43,10 @@ returned in utc, and not formatted for the local time zone. This was accomplishe
 3. Tweaking the json conversion. By default the ring `wrap-json-response`
 middleware formats timestamps with the nulliseconds truncated, like
 `2016-02-18T03:22:56Z`. Examining the source code revealed that the code called
-by the middleware, `json/generate-string`, also accepts a `:date-format` option:
+by the middleware, `json/generate-string`, also accepts a `:date-format` option.
+Passing this options to the middleware resulted in the desired format:
 ```clojure
-;; Here `'Z'` was used instead of just `Z` since the timestamps returned were already utc.
+;; `'Z'` is used instead of `Z` since the timestamps returned are already utc.
 (wrap-json-response {:date-format "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"})
 ```
 

@@ -23,6 +23,17 @@ All options for the app are set in ...
 ...
 
 ## Design Decisions
+
+### Architecture
+
+This project is organized into ports and adapters (hexagonal), using the
+[Component](https://github.com/stuartsierra/component) library to manage
+the components and dependency injection.
+
+The only automated tests included are integration tests, located in
+`test/realworld_clojure/integration`.
+
+### Timestamps
 The spec specifies that all returned timestamps are formatted as
 `2016-02-18T03:22:56.637Z`.
 

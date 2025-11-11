@@ -1,10 +1,11 @@
 # realworld-clojure
 
-Implementation of the realworld server API.
+Implementation of the [RealWorld server API](https://docs.realworld.show/specifications/backend/introduction/).
 
 ## Installation
 
-Download from http://example.com/FIXME.
+1. Clone this repo.
+2. 
 
 ## Usage
 
@@ -14,7 +15,8 @@ FIXME: explanation
 
 ## Options
 
-FIXME: listing of options this app accepts.
+All options for the app are set in ...
+
 
 ## Examples
 
@@ -26,10 +28,11 @@ The spec specifies that all returned timestamps are formatted as `2016-02-18T03:
 Two things needed to happen for this to work.
 
 ### JDBC and DB
-The jdbc driver and db had to work together so that timestamps from the db were returned in utc, and not formatted for the local time zone. This was accomplished with the following design decisions:
+The jdbc driver and db had to work together so that timestamps from the db were
+returned in utc, and not formatted for the local time zone. This was accomplished by:
 
-* use column type timestamptz to store dates
-* set jdbc driver to return `java.time.Instant` values from the db:
+1. Using table column type `timestamptz` to store dates.
+2. Setting the jdbc driver to return those `timestamptz` values as  `java.time.Instant` values.
 ```clojure
 (ns ...
    (:require ...
@@ -38,19 +41,18 @@ The jdbc driver and db had to work together so that timestamps from the db were 
 
 (dt/read-as-instant)
 ```
-
-### JSON formatting
-By default the ring `wrap-json-response` middleware formats timestamps with the nulliseconds
-truncated, like `2016-02-18T03:22:56Z`. Examining the source code revealed that the code called
+3. Tweaking the json conversion. By default the ring `wrap-json-response`
+middleware formats timestamps with the nulliseconds truncated, like
+`2016-02-18T03:22:56Z`. Examining the source code revealed that the code called
 by the middleware, `json/generate-string`, also accepts a `:date-format` option:
 ```clojure
+;; Here `'Z'` was used instead of just `Z` since the timestamps returned were already utc.
 (wrap-json-response {:date-format "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"})
 ```
-Here `'Z'` was used instead of just `Z` since the timestamps returned were already utc.
 
 ## License
 
-Copyright © 2024 FIXME
+Copyright © 2025
 
 This program and the accompanying materials are made available under the
 terms of the Eclipse Public License 2.0 which is available at

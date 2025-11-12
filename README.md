@@ -17,21 +17,26 @@ Implementation of the [RealWorld server API](https://docs.realworld.show/specifi
 
 ## Usage
 
-There are theww ways to run the app.
-1. Using Leiningen: `lein run`
-2. Create and run the ubjerjar:
+There are three separate ways to run the app.
+
+### Leiningen
+```sh
+lein run
+```
+
+### Create and run the jar file:
 ```sh
 $ lein uberjar
 ... output skipped ...
-$ java -jar target/uberjar/realworld-clojure-0.1.0-SNAPSHOT-standalone.jar
+$ java -jar target/uberjar/realworld-clojure-0.1.0-SNAPSHOT-standalone.jar [args]
 ```
-2. Run within a REPL (ex. Cider for Emacs), suitable for development workflows: todo
 
+### From a REPL
+Suitable for development workflows.
+```sh
+todo
+```
 
-
-FIXME: explanation
-
-    $ java -jar realworld-clojure-0.1.0-standalone.jar [args]
 
 ## Options
 

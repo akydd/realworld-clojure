@@ -2,13 +2,32 @@
 
 Implementation of the [RealWorld server API](https://docs.realworld.show/specifications/backend/introduction/).
 
+## Prerequest
+
+1. A working java installation
+2. Leiningen
+3. Docker compose
+
+
 ## Installation
 
 1. Clone this repo.
-2. 
+2. Run `docker compose up` to install preconfigured Postgres instances, one for "production" and the other for integration tests.
 
 
 ## Usage
+
+There are theww ways to run the app.
+1. Using Leiningen: `lein run`
+2. Create and run the ubjerjar:
+```sh
+$ lein uberjar
+... output skipped ...
+$ java -jar target/uberjar/realworld-clojure-0.1.0-SNAPSHOT-standalone.jar
+```
+2. Run within a REPL (ex. Cider for Emacs), suitable for development workflows: todo
+
+
 
 FIXME: explanation
 
@@ -40,8 +59,8 @@ TEST_PORT
 TEST_JWT_SECRET
 ```
 
-In the absence of any environment vars, the app uses default values that match
-the values in the docker compose file (`compose.yaml`).
+In the absence of the above environment vars, the app uses default values that
+match the values in the docker compose file (`compose.yaml`).
 
 If you intend to change any of the database options, ensure that the new values
 are first also applied to the docker compose file, and then rerun `docker

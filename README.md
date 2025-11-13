@@ -134,12 +134,8 @@ If you intend to change any of the database options, ensure that the new values
 are first also applied to the docker compose file, and then rerun `docker
 up` as needed.
 
-## Examples
-
-...
 
 ## Design Decisions
-
 
 
 ### Timestamps

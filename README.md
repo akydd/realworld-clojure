@@ -1,8 +1,9 @@
 # realworld-clojure
 
-Implementation of the [RealWorld server API](https://docs.realworld.show/specifications/backend/introduction/).
+A Clojure implementation of the [RealWorld server API](https://docs.realworld.show/specifications/backend/introduction/).
 
-## Prerequest
+
+## Prerequisites
 
 1. A working java installation
 2. Leiningen
@@ -15,26 +16,93 @@ Implementation of the [RealWorld server API](https://docs.realworld.show/specifi
 2. Run `docker compose up` to install preconfigured Postgres instances, one for "production" and the other for integration tests.
 
 
-## Usage
+## Architecture
 
-There are three separate ways to run the app.
+The source code  is organized into ports and adapters (hexagonal), using the
+[Component](https://github.com/stuartsierra/component) library to manage
+the components and dependency injection.
 
-### Leiningen
-```sh
-lein run
+The only automated tests are integration tests, located in
+`test/realworld_clojure/integration`. Each integration test starts up
+a separate instance of the app that runs against a dedicated db instance for
+integration tests.
+
+For development, you can start and manage the application from within the REPL.
+
+To start the app, switch to the `user` namespace and run `go`:
+
+```
+$ lein repl
+...
+nREPL server started on port 52745 on host 127.0.0.1 - nrepl://127.0.0.1:52745
+REPL-y 0.5.1, nREPL 1.0.0
+Clojure 1.11.3
+OpenJDK 64-Bit Server VM 25.0.1
+    Docs: (doc function-name-here)
+          (find-doc "part-of-name-here")
+  Source: (source function-name-here)
+ Javadoc: (javadoc java-object-or-class-here)
+    Exit: Control+D or (exit) or (quit)
+ Results: Stored in vars *1, *2, *3, an exception in *e
+...
+realworld-clojure.core=> (in-ns 'user)
+#object[clojure.lang.Namespace 0x1b9e9be9 "user"]
+user=> (go)
+Starting database with {:dbtype postgresql, :host localhost, :port 8091, :dbname app, :user admin, :password password}
+Starting webserver on port 8090
+#<SystemMap>
+user=> 
 ```
 
-### Create and run the jar file:
+Note that this runs the app on the same port and against the same db as when
+starting the app from outside the repl (see the Usage section below), so you
+cannot run the app in both ways at the same time.
+
+Call `reset` if you make changes to the code and need to restart the app:
+```
+user=> (reset)
+Stopping webserver
+Stopping database
+:reloading <truncated output>
+Starting database with {:dbtype postgresql, :host localhost, :port 8091, :dbname app, :user admin, :password password}
+Starting webserver on port 8090
+#<SystemMap>
+user=>
+```
+
+You can insepct the application's system map:
+```
+user=> (get-in system [:database :dbspec])
+{:dbtype "postgresql", :host "localhost", :port 8091, :dbname "app", :user "admin", :password "password"}
+```
+
+You can execute any public functions:
+```
+user=> (realworld-clojure.adapters.db/get-article-by-slug (:database system) "test")
+```
+
+Call `stop` to stop the app:
+```
+user=> (stop)
+Stopping webserver
+Stopping database
+#<SystemMap>
+user=>
+```
+
+
+## Usage
+
+Run it with Leiningen:
+```sh
+$ lein run
+```
+
+Or create and run the jar file:
 ```sh
 $ lein uberjar
 ... output skipped ...
 $ java -jar target/uberjar/realworld-clojure-0.1.0-SNAPSHOT-standalone.jar [args]
-```
-
-### From a REPL
-Suitable for development workflows.
-```sh
-todo
 ```
 
 
@@ -77,14 +145,7 @@ up` as needed.
 
 ## Design Decisions
 
-### Architecture
 
-This project is organized into ports and adapters (hexagonal), using the
-[Component](https://github.com/stuartsierra/component) library to manage
-the components and dependency injection.
-
-The only automated tests included are integration tests, located in
-`test/realworld_clojure/integration`.
 
 ### Timestamps
 The spec specifies that all returned timestamps are formatted as

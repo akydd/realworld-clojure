@@ -7,7 +7,7 @@
    [realworld-clojure.domain.comment :as comment]
    [realworld-clojure.domain.profile :as profile]
    [realworld-clojure.domain.tags :as tag]
-   [realworld-clojure.domain.user :as user]
+   [realworld-clojure.domain.user :as u]
    [realworld-clojure.ports.handlers :as handlers]
    [realworld-clojure.ports.webserver :as webserver])
   (:gen-class))
@@ -19,7 +19,7 @@
     (component/system-map
      :database (db/new-database dbspec)
      :user-controller (component/using
-                       (user/new-user-controller jwt-secret)
+                       (u/new-user-controller jwt-secret)
                        [:database])
      :profile-controller (component/using
                           (profile/new-profile-controller)

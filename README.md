@@ -82,7 +82,7 @@ user=> (realworld-clojure.adapters.db/get-article-by-slug (:database system) "te
 ```
 
 Call `stop` to stop the app:
-```
+```clojure-repl
 user=> (stop)
 Stopping webserver
 Stopping database

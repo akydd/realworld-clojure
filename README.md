@@ -29,32 +29,26 @@ integration tests.
 
 For development, you can start and manage the application from within the REPL.
 
-To start the app, switch to the `user` namespace and run `go`:
+To start the app, open the repl, switch to the `user` namespace and run `go`:
 
-```sh
-$ lein repl
-```
-
-```clojure-repl
-...
-nREPL server started on port 52745 on host 127.0.0.1 - nrepl://127.0.0.1:52745
-REPL-y 0.5.1, nREPL 1.0.0
-Clojure 1.11.3
-OpenJDK 64-Bit Server VM 25.0.1
-    Docs: (doc function-name-here)
-          (find-doc "part-of-name-here")
-  Source: (source function-name-here)
- Javadoc: (javadoc java-object-or-class-here)
-    Exit: Control+D or (exit) or (quit)
- Results: Stored in vars *1, *2, *3, an exception in *e
-...
-realworld-clojure.core=> (in-ns 'user)
-#object[clojure.lang.Namespace 0x1b9e9be9 "user"]
-user=> (go)
-Starting database with {:dbtype postgresql, :host localhost, :port 8091, :dbname app, :user admin, :password password}
-Starting webserver on port 8090
-#<SystemMap>
-user=> 
+```clojure
+;; nREPL server started on port 52745 on host 127.0.0.1 - nrepl://127.0.0.1:52745
+;; REPL-y 0.5.1, nREPL 1.0.0
+;; Clojure 1.11.3
+;; OpenJDK 64-Bit Server VM 25.0.1
+;;    Docs: (doc function-name-here)
+;;          (find-doc "part-of-name-here")
+;;  Source: (source function-name-here)
+;; Javadoc: (javadoc java-object-or-class-here)
+;;    Exit: Control+D or (exit) or (quit)
+;; Results: Stored in vars *1, *2, *3, an exception in *e
+;; ...
+(in-ns 'user)
+;; => #object[clojure.lang.Namespace 0x1b9e9be9 "user"]
+(go)
+;; Starting database with {:dbtype postgresql, :host localhost, :port 8091, :dbname app, :user admin, :password password}
+;; Starting webserver on port 8090
+;; => #<SystemMap> 
 ```
 
 Note that this runs the app on the same port and against the same db as when
@@ -62,35 +56,33 @@ starting the app from outside the repl (see the Usage section below), so you
 cannot run the app in both ways at the same time.
 
 Call `reset` if you make changes to the code and need to restart the app:
-```clojure-repl
-user=> (reset)
-Stopping webserver
-Stopping database
-:reloading <truncated output>
-Starting database with {:dbtype postgresql, :host localhost, :port 8091, :dbname app, :user admin, :password password}
-Starting webserver on port 8090
-#<SystemMap>
-user=>
+```clojure
+(reset)
+;; Stopping webserver
+;; Stopping database
+;; :reloading <truncated output>
+;; Starting database with {:dbtype postgresql, :host localhost, :port 8091, :dbname app, :user admin, :password password}
+;; Starting webserver on port 8090
+;; => #<SystemMap>
 ```
 
 You can insepct the application's system map:
-```clojure-repl
-user=> (get-in system [:database :dbspec])
-{:dbtype "postgresql", :host "localhost", :port 8091, :dbname "app", :user "admin", :password "password"}
+```clojure
+(get-in system [:database :dbspec])
+;; => {:dbtype "postgresql", :host "localhost", :port 8091, :dbname "app", :user "admin", :password "password"}
 ```
 
 You can execute any public functions:
-```clojure-repl
-user=> (realworld-clojure.adapters.db/get-article-by-slug (:database system) "test")
+```clojure
+(realworld-clojure.adapters.db/get-article-by-slug (:database system) "test")
 ```
 
 Call `stop` to stop the app:
-```clojure-repl
-user=> (stop)
-Stopping webserver
-Stopping database
-#<SystemMap>
-user=>
+```clojure
+(stop)
+;; Stopping webserver
+;; Stopping database
+;; => #<SystemMap>
 ```
 
 

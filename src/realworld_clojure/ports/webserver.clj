@@ -13,6 +13,7 @@
    [realworld-clojure.ports.handlers :as handlers]
    [ring.logger :as logger]
    [ring.middleware.content-type :refer [wrap-content-type]]
+   [ring.middleware.cors :refer [wrap-cors]]
    [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
    [ring.middleware.keyword-params :refer [wrap-keyword-params]]
    [ring.middleware.params :refer [wrap-params]]))
@@ -126,7 +127,9 @@
         (wrap-json-response {:date-format "yyyy-MM-dd'T'HH:mm:ss.SSS'Z'"
                              :key-fn csk/->camelCaseString})
         (wrap-content-type "text/json")
-        (wrap-json-body {:key-fn csk/->kebab-case-keyword}))))
+        (wrap-json-body {:key-fn csk/->kebab-case-keyword})
+        (wrap-cors :access-control-allow-origin [#".*"]
+                   :access-control-allow-methods [:get :put :post :delete]))))
 
 (defrecord Webserver [port jwt-secret handler database server]
   component/Lifecycle

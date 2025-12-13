@@ -25,7 +25,8 @@
                  [camel-snake-kebab "0.4.3"]
                  [com.github.seancorfield/honeysql "2.7.1350"]
                  [org.clojure/tools.logging "1.3.0"]
-                 [ring-logger "1.1.1"]]
+                 [ring-logger "1.1.1"]
+                 [ring-cors/ring-cors "0.1.13"]]
 
   :main ^:skip-aot realworld-clojure.core
   :target-path "target/%s"

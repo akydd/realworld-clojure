@@ -23,12 +23,15 @@
                  [clojure.java-time "1.4.2"]
                  [cheshire "6.1.0"]
                  [camel-snake-kebab "0.4.3"]
-                 [com.github.seancorfield/honeysql "2.7.1350"]]
+                 [com.github.seancorfield/honeysql "2.7.1350"]
+                 [org.clojure/tools.logging "1.3.0"]
+                 [ring-logger "1.1.1"]]
 
   :main ^:skip-aot realworld-clojure.core
   :target-path "target/%s"
   :profiles {:uberjar {:aot :all
-                       :jvm-opts ["-Dclojure.compiler.direct-linking=true"]}
+                       :jvm-opts ["-Dclojure.compiler.direct-linking=true"
+                                  "-Dclojure.tools.logging.factory=clojure.tools.logging.impl/log4j2-factory"]}
              :dev {:source-paths ["dev"]
                    :dependencies [[org.clojure/tools.namespace "1.5.0"]
                                   [org.clojure/java.classpath "1.1.0"]

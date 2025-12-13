@@ -28,13 +28,6 @@
                                     "Internal error"
                                     (.getMessage e))}}))))))))
 
-(defn wrap-log-req
-  "Middleware to log requests."
-  [handler]
-  (fn [req]
-    (log/info (pr-str req))
-    (handler req)))
-
 (defn wrap-no-auth-error
   "Respond with a 401 when the request has not been authenticated."
   [handler]

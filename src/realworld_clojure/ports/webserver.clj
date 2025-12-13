@@ -9,9 +9,9 @@
    [org.httpkit.server :as http-server]
    [realworld-clojure.middleware :refer [wrap-exception
                                          wrap-no-auth-error
-                                         wrap-log-req
                                          wrap-auth-user]]
    [realworld-clojure.ports.handlers :as handlers]
+   [ring.logger :as logger]
    [ring.middleware.content-type :refer [wrap-content-type]]
    [ring.middleware.json :refer [wrap-json-body wrap-json-response]]
    [ring.middleware.keyword-params :refer [wrap-keyword-params]]
@@ -106,10 +106,10 @@
     (-> (core/routes
          (->
           (app-routes-no-auth handler)
-          (core/wrap-routes wrap-log-req))
+          (core/wrap-routes logger/wrap-with-logger))
          (->
           (app-routes-with-auth handler)
-          (core/wrap-routes wrap-log-req)
+          (core/wrap-routes logger/wrap-with-logger)
           (core/wrap-routes wrap-keyword-params)
           (core/wrap-routes wrap-params)
           (core/wrap-routes wrap-auth-user database)
@@ -117,7 +117,7 @@
           (core/wrap-routes wrap-authentication backend))
          (->
           (app-routes-optional-auth handler)
-          (core/wrap-routes wrap-log-req)
+          (core/wrap-routes logger/wrap-with-logger)
           (core/wrap-routes wrap-keyword-params)
           (core/wrap-routes wrap-params)
           (core/wrap-routes wrap-auth-user database)

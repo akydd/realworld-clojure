@@ -25,7 +25,7 @@
 (deftest no-user-found
   (test-utils/with-system
     [sut (core/new-system (config/read-test-config))]
-    (let [r (login-request "hi" "hi:")]
+    (let [r (login-request "hi" "hi")]
       (is (= 403 (:status r))))))
 
 (deftest wrong-password

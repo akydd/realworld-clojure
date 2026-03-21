@@ -43,7 +43,7 @@
     (if (u :errors)
       {:status 422
        :body u}
-      {:status 200
+      {:status 201
        :body {:user (converters/user->user u)}})))
 
 (defn login-user
@@ -156,7 +156,7 @@
       (if (:errors a)
         {:status 422
          :body a}
-        {:status 200
+        {:status 201
          :body {:article a}}))))
 
 (defn update-article
@@ -178,7 +178,7 @@
   (let [a (article/delete-article (:article-controller handler) slug auth-user)]
     (if (nil? a)
       {:status 404}
-      {:status 200})))
+      {:status 204})))
 
 (defn favorite-article
   "Mark article as a favorite for auth-user."
@@ -210,7 +210,7 @@
       (if (:errors c)
         {:status 422
          :body c}
-        {:status 200
+        {:status 201
          :body {:comment c}}))))
 
 (defn get-comments

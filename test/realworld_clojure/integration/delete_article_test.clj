@@ -43,7 +43,7 @@
           token (get-login-token user)
           r (delete-article-request (:slug article) token)
           s (get-article-request (:slug article))]
-      (is (= 200 (:status r)))
+      (is (= 204 (:status r)))
       (is (= 404 (:status s))))))
 
 (deftest favorited-article
@@ -55,7 +55,7 @@
           _ (test-utils/fav-article db user article)
           r (delete-article-request (:slug article) (get-login-token user))
           s (get-article-request (:slug article))]
-      (is (= 200 (:status r)))
+      (is (= 204 (:status r)))
       (is (= 404 (:status s))))))
 
 (deftest article-with-comment
@@ -67,5 +67,5 @@
           _ (test-utils/create-comment db (:id article) (:id user))
           r (delete-article-request (:slug article) (get-login-token user))
           s (get-article-request (:slug article))]
-      (is (= 200 (:status r)))
+      (is (= 204 (:status r)))
       (is (= 404 (:status s))))))

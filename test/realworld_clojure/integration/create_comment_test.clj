@@ -51,7 +51,7 @@
           token (get-login-token user)
           r (create-comment-request (:slug article) c token)
           returned-comment (:comment (json/parse-string (:body r) true))]
-      (is (= 200 (:status r)))
+      (is (= 201 (:status r)))
       (is (true? (m/validate auth-comment-schema returned-comment))
           (->> returned-comment
                (m/explain auth-comment-schema)

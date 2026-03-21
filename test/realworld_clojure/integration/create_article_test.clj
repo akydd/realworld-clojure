@@ -52,7 +52,7 @@
           token (get-login-token user)
           r (create-article-request input token)
           article (:article (json/parse-string (:body r) true))]
-      (is (= 200 (:status r)))
+      (is (= 201 (:status r)))
       (is (true? (m/validate auth-article-schema article))
           (->> article
                (m/explain auth-article-schema)
@@ -84,7 +84,7 @@
                       (:body)
                       (json/parse-string true)
                       (:article))]
-      (is (= 200 (:status r)))
+      (is (= 201 (:status r)))
       (is (true? (m/validate auth-article-schema article))
           (->> article
                (m/explain auth-article-schema)
@@ -105,7 +105,7 @@
                       (:body)
                       (json/parse-string true)
                       (:article))]
-      (is (= 200 (:status r)))
+      (is (= 201 (:status r)))
       (is (true? (m/validate auth-article-schema article))
           (->> article
                (m/explain auth-article-schema)
@@ -127,7 +127,7 @@
                       (:body)
                       (json/parse-string true)
                       (:article))]
-      (is (= 200 (:status r)))
+      (is (= 201 (:status r)))
       (is (true? (m/validate auth-article-schema article))
           (->> article
                (m/explain auth-article-schema)

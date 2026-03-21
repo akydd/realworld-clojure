@@ -58,7 +58,7 @@
                        (:body)
                        (json/parse-string true)
                        (:comments))]
-      (is (= 200 (:status r)))
+      (is (= 204 (:status r)))
       (is (= 200 (:status s)))
       (is (every? #(not= (:id c) (:id %)) comments)))))
 

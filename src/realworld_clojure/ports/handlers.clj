@@ -233,7 +233,7 @@
                                   auth-user)]
     (if (nil? p)
       {:status 404}
-      {:status 200})))
+      {:status 204})))
 
 (defn get-tags
   "Get tags."

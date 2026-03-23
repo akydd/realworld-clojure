@@ -9,9 +9,9 @@
 (def article-schema
   "Schema for [[create-article]] input."
   [:map {:closed true}
-   [:title [:string {:min 1}]]
-   [:description [:string {:min 1}]]
-   [:body [:string {:min 1}]]
+   [:title [:string {:min 1 :error/message "can't be blank"}]]
+   [:description [:string {:min 1 :error/message "can't be blank"}]]
+   [:body [:string {:min 1 :error/message "can't be blank"}]]
    [:tag-list {:optional true} [:vector {:min 1} [:string {:min 1}]]]])
 
 (defrecord ArticleController [database])

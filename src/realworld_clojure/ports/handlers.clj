@@ -82,7 +82,8 @@
             (profile/get-profile (:profile-controller handler) username
                                  auth-user))]
     (if (nil? p)
-      {:status 404}
+      {:status 404
+       :body {:errors {:profile ["not found"]}}}
       {:status 200
        :body {:profile p}})))
 
@@ -92,7 +93,8 @@
   (let [p (profile/follow-user (:profile-controller handler) auth-user
                                username)]
     (if (nil? p)
-      {:status 404}
+      {:status 404
+       :body {:errors {:profile ["not found"]}}}
       {:status 200
        :body {:profile p}})))
 
@@ -114,7 +116,8 @@
             (article/get-article-by-slug (:article-controller handler) slug
                                          auth-user))]
     (if (nil? a)
-      {:status 404}
+      {:status 404
+       :body {:errors {:article ["not found"]}}}
       {:status 200
        :body {:article a}})))
 
@@ -177,7 +180,8 @@
   [handler slug auth-user]
   (let [a (article/delete-article (:article-controller handler) slug auth-user)]
     (if (nil? a)
-      {:status 404}
+      {:status 404
+       :body {:errors {:article ["not found"]}}}
       {:status 204})))
 
 (defn favorite-article

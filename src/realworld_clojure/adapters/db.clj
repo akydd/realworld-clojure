@@ -97,7 +97,8 @@
 (defn- get-profile-query
   [username auth-user]
   (-> (apply h/select profile-selects)
-      (cond-> auth-user (h/select following-select))
+      (cond-> auth-user (h/select following-select)
+              (nil? auth-user) (h/select [false :following]))
       (h/from users-as-u)
       (cond-> auth-user (h/left-join follows-as-f
                                      [:and

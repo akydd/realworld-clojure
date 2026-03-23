@@ -10,7 +10,7 @@
 (def comment-create-schema
   "Schema for the `c` param to [[create-comment]]."
   [:map
-   [:body [:string {:min 1}]]])
+   [:body [:string {:min 1 :error/message "can't be blank"}]]])
 
 (defn create-comment!
   "Add a new comment to an article."

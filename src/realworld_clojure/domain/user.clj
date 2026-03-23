@@ -9,9 +9,9 @@
 (def user-schema
   "Schema for the `user` param of [[register-user]]."
   [:map {:closed true}
-   [:username [:string {:min 1}]]
-   [:password [:string {:min 1}]]
-   [:email [:string {:min 1}]]
+   [:username [:string {:min 1 :error/message "can't be blank"}]]
+   [:password [:string {:min 1 :error/message "can't be blank"}]]
+   [:email [:string {:min 1 :error/message "can't be blank"}]]
    [:bio {:optional true} [:string {:min 1}]]
    [:image {:optional true} [:string {:min 1}]]])
 
@@ -48,8 +48,8 @@
 (def user-login-schema
   "Schema for the `user` param of [[login-user]]."
   [:map {:closed true}
-   [:email [:string {:min 1}]]
-   [:password [:string {:min 1}]]])
+   [:email [:string {:min 1 :error/message "can't be blank"}]]
+   [:password [:string {:min 1 :error/message "can't be blank"}]]])
 
 (defn login-user
   "User login."
@@ -67,7 +67,7 @@
 (def user-update-schema
   "Schema for the `updates` param to [[update-user]]."
   [:map {:closed true}
-   [:email {:optional true} [:string {:min 1}]]
+   [:email {:optional true} [:string {:min 1 :error/message "can't be blank"}]]
    [:username {:optional true} [:string {:min 1}]]
    [:password {:optional true} [:string {:min 1}]]
    [:image {:optional true} [:string {:min 1}]]

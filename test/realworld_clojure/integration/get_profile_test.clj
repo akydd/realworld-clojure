@@ -6,8 +6,7 @@
    [malli.error :as me]
    [realworld-clojure.config-test :as config]
    [realworld-clojure.core :as core]
-   [realworld-clojure.integration.common :refer [no-auth-profile-schema
-                                                 auth-profile-schema
+   [realworld-clojure.integration.common :refer [auth-profile-schema
                                                  get-profile-request
                                                  get-login-token
                                                  profiles-equal?]]
@@ -21,14 +20,6 @@
       (:profile)))
 
 (defn- validate-profile
-  ([r user]
-   (let [profile (extract-profile r)]
-     (is (= 200 (:status r)))
-     (is (true? (m/validate no-auth-profile-schema profile))
-         (->> profile
-              (m/explain no-auth-profile-schema)
-              (me/humanize)))
-     (profiles-equal? user profile)))
   ([r user following]
    (let [profile (extract-profile r)]
      (is (= 200 (:status r)))
@@ -45,7 +36,7 @@
     (let [db (get-in sut [:database :datasource])
           user (test-utils/create-user db)
           r (get-profile-request (:username user))]
-      (validate-profile r user))))
+      (validate-profile r user false))))
 
 (deftest with-auth-not-following
   (test-utils/with-system

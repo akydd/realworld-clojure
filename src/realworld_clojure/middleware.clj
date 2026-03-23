@@ -35,7 +35,8 @@
     (if-not (buddy-auth/authenticated? req)
       (do
         (log/warn "request is not authenticated")
-        {:status 401})
+        {:status 401
+         :body {:errors {:token ["is missing"]}}})
       (handler req))))
 
 (defn wrap-auth-user

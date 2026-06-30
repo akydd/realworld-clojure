@@ -85,6 +85,35 @@
           r (update-article-request (:slug article-two) u token)]
       (is (= 409 (:status r))))))
 
+(deftest non-empty-taglist
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          user (test-utils/create-user db)
+          article (test-utils/create-article db (:id user))
+          u {:tag-list ["hi"]}
+          token (get-login-token user)
+          r (update-article-request (:slug article) u token)]
+      (is (= 422 (:status r))))))
+
+(deftest remove-tags
+  ;; This behaviour was not specified in the api docs, but it is a test case
+  ;; in the provided spec tests.
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          user (test-utils/create-user db)
+          article (test-utils/create-article db (:id user))
+          u {:tag-list []}
+          token (get-login-token user)
+          r (update-article-request (:slug article) u token)
+          returned-article (-> r
+                               (:body)
+                               (json/parse-string true)
+                               (:article))]
+      (is (= 200 (:status r)))
+      (is (= [] (:tag-list returned-article))))))
+
 (deftest success
   (test-utils/with-system
     [sut (core/new-system (config/read-test-config))]

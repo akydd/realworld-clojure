@@ -335,6 +335,7 @@
    [:body [:string {:min 1}]]
    [:createdAt [:string {:min 1}]]
    [:updatedAt [:string {:min 1}]]
+   [:favorited [:boolean]]
    [:favoritesCount [:int]]
    [:author #'no-auth-profile-schema]
    [:tagList [:maybe [:vector :string]]]])
@@ -346,6 +347,7 @@
    [:description [:string {:min 1}]]
    [:createdAt [:string {:min 1}]]
    [:updatedAt [:maybe :string]]
+   [:favorited [:boolean]]
    [:favoritesCount [:int]]
    [:author #'no-auth-profile-schema]
    [:tagList [:maybe [:vector :string]]]])

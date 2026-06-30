@@ -43,7 +43,8 @@
   [:map {:closed true}
    [:title {:optional true} [:string {:min 1}]]
    [:description {:optional true} [:string {:min 1}]]
-   [:body {:optional true} [:string {:min 1}]]])
+   [:body {:optional true} [:string {:min 1}]]
+   [:tag-list {:optional true} [:vector {:max 0} [:string]]]])
 
 (defn- update-slug
   [updates]
@@ -52,14 +53,16 @@
     updates))
 
 (defn update-article
-  "Update an article, given its slug."
+  "Update an article, given its slug. Note that only an empty tag-list vector is allowed."
   [controller slug updates auth-user]
   (if (m/validate article-update-schema updates)
     (when-let [article (db/get-article-by-slug (:database controller) slug)]
       ;; We don't have the author id at this level, but usernames are unique.
       (if (= (get-in article [:author :username]) (:username auth-user))
-        (db/update-article
-         (:database controller) slug (update-slug updates) auth-user)
+        (let [updates-without-tags (dissoc updates :tag-list)
+              clear-tags (contains? updates :tag-list)]
+          (db/update-article
+           (:database controller) slug (update-slug updates-without-tags) clear-tags auth-user))
         (throw-unauthorized)))
     {:errors (me/humanize (m/explain article-update-schema updates))}))
 

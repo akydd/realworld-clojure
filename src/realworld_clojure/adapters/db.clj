@@ -196,7 +196,8 @@
 (defn- get-article-by-slug-query
   [slug auth-user]
   (-> (apply h/select (concat article-selects profile-selects))
-      (cond-> auth-user (h/select favorited-select))
+      (cond-> auth-user (h/select favorited-select)
+              (nil? auth-user) (h/select [false :favorited]))
       (cond-> auth-user (h/select following-select))
       (h/select tag-list-select)
       (h/select favorites-count-select)
@@ -275,12 +276,17 @@
   (get-article-by-slug database (:slug article) auth-user))
 
 (defn update-article
-  "Update article having `slug`."
-  [database slug updates auth-user]
-  (try (sql/update! (:datasource database)
-                    :articles updates {:slug slug} update-options)
-       (catch org.postgresql.util.PSQLException e
-         (handle-psql-exception e)))
+  "Update article having `slug`. Remove all tags if requested."
+  [database slug updates clear-tags? auth-user]
+  (jdbc/with-transaction [tx (:datasource database)]
+    (when clear-tags?
+      (let [article (first (sql/find-by-keys tx :articles {:slug slug} query-options))]
+        (sql/delete! tx :article_tags {:article (:id article)})))
+    (when-not (empty? updates)
+      (try (sql/update! tx
+                        :articles updates {:slug slug} update-options)
+           (catch org.postgresql.util.PSQLException e
+             (handle-psql-exception e)))))
   (get-article-by-slug database (or (:slug updates) slug) auth-user))
 
 (defn delete-article
@@ -395,7 +401,8 @@
 (defn- list-articles-query
   [filters auth-user]
   (-> (apply h/select (concat multiple-article-selects profile-selects))
-      (cond-> auth-user (h/select favorited-select))
+      (cond-> auth-user (h/select favorited-select)
+              (nil? auth-user) (h/select [false :favorited]))
       (cond-> auth-user (h/select following-select))
       (h/select tag-list-select)
       (h/select favorites-count-select)

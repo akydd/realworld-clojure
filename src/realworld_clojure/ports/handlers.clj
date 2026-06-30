@@ -164,8 +164,8 @@
 
 (defn update-article
   "Update an article."
-  [handler slug article auth-user]
-  (let [a (article/update-article (:article-controller handler) slug article
+  [handler slug updates auth-user]
+  (let [a (article/update-article (:article-controller handler) slug updates
                                   auth-user)]
     (if (nil? a)
       {:status 404}

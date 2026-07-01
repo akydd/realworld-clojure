@@ -31,7 +31,7 @@
           r (create-article-request {:garbage "hi"} token)]
       (is (= 422 (:status r))))))
 
-(deftest duplicate-slug
+(deftest duplicate-title-gets-unique-slug
   (test-utils/with-system
     [sut (core/new-system (config/read-test-config))]
     (let [db (get-in sut [:database :datasource])
@@ -40,8 +40,13 @@
           input (assoc (mg/generate article/article-schema)
                        :title (:title article-one))
           token (get-login-token user)
-          r (create-article-request input token)]
-      (is (= 409 (:status r))))))
+          r (create-article-request input token)
+          article-two (-> r
+                          (:body)
+                          (json/parse-string true)
+                          (:article))]
+      (is (= 201 (:status r)))
+      (is (not= (:slug article-one) (:slug article-two))))))
 
 (deftest no-tags
   (test-utils/with-system

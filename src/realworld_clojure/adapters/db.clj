@@ -261,30 +261,45 @@
                                    :do-nothing true})
                      update-options))
 
+(defn- dedup-slug
+  [slug]
+  (str slug "-" (mod (System/currentTimeMillis) 10000)))
+
 (defn- create-article-without-tags!
-  "Save sn article to the db. This does not handle tags.
+  "Save an article to the db. Handles a duplicate slug. This does not handle tags.
   To save an article and tags, use create-article-with-tags."
   [tx article auth-user]
   (let [a (-> article
               (assoc :author (:id auth-user))
               (dissoc :tag-list))]
     (try
-      (sql/insert! tx :articles a update-options)
+      (jdbc/execute-one!
+       tx
+       ;; Notice how this handles duplicate slugs.
+       (hsql/format {:insert-into :articles
+                     :values [a]
+                     :on-conflict :slug
+                     :do-update-set {:slug (dedup-slug (:slug a))}
+                     :returning :*})
+       update-options)
       (catch org.postgresql.util.PSQLException e
         (handle-psql-exception e)))))
 
 (defn create-article!
   "Save new `article`, authored by `auth-user`."
   [database article auth-user]
-  (jdbc/with-transaction [tx (:datasource database)]
-    (let [tags (distinct (:tag-list article))
-          article-without-tags (dissoc article :tag-list)
-          saved-article (create-article-without-tags! tx article-without-tags auth-user)]
-      (doseq [t tags]
-        (let [saved-tag (insert-tag tx t)]
-          (link-article-and-tag tx saved-article saved-tag)))))
-  ;; This fetch needs to happen after the transaction above has completed.
-  (get-article-by-slug database (:slug article) auth-user))
+  (let [slug (jdbc/with-transaction [tx (:datasource database)]
+               (let [tags (distinct (:tag-list article))
+                     article-without-tags (dissoc article :tag-list)
+                     saved-article (create-article-without-tags! tx article-without-tags auth-user)]
+                 (doseq [t tags]
+                   (let [saved-tag (insert-tag tx t)]
+                     (link-article-and-tag tx saved-article saved-tag)))
+                 ;; The slug is returned here because it might not match the slug that was passed
+                 ;; into the function. See create-article-without-tags!.
+                 (:slug saved-article)))]
+    ;; This fetch needs to happen after the transaction above has completed.
+    (get-article-by-slug database slug auth-user)))
 
 (defn update-article
   "Update article having `slug`. Remove all tags if requested."

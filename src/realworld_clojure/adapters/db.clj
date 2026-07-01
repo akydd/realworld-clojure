@@ -261,27 +261,46 @@
                                    :do-nothing true})
                      update-options))
 
-(defn- dedup-slug
-  [slug]
-  (str slug "-" (mod (System/currentTimeMillis) 10000)))
+(def ^:private max-slug-attempts
+  "How many times to append a fresh token before giving up and letting the unique constraint reject the insert."
+  5)
+
+(defn- random-token
+  "Return a short, url-safe token for disambiguating a duplicate slug."
+  []
+  (subs (str (java.util.UUID/randomUUID)) 0 8))
+
+(defn- slug-taken?
+  "True if an article with `slug` already exists."
+  [tx slug]
+  (some? (jdbc/execute-one!
+          tx
+          (hsql/format {:select 1 :from :articles :where [:= :slug slug]})
+          query-options)))
+
+(defn- unique-slug
+  "Return `base` if it is free, otherwise `base` with a random token appended.
+  Retries a bounded number of times in the unlikely event a generated slug is
+  also taken; the unique constraint on :slug is the final backstop."
+  [tx base]
+  (loop [candidate base
+         attempts 0]
+    (if (or (not (slug-taken? tx candidate))
+            (>= attempts max-slug-attempts))
+      candidate
+      (recur (str base "-" (random-token)) (inc attempts)))))
 
 (defn- create-article-without-tags!
-  "Save an article to the db. Handles a duplicate slug. This does not handle tags.
+  "Save an article to the db, appending a random token to the slug if the base slug is already taken. 
+  This does not handle tags.
   To save an article and tags, use create-article-with-tags."
   [tx article auth-user]
   (let [a (-> article
-              (assoc :author (:id auth-user))
+              (assoc :author (:id auth-user)
+                     :slug (unique-slug tx (:slug article)))
               (dissoc :tag-list))]
     (try
-      (jdbc/execute-one!
-       tx
-       ;; Notice how this handles duplicate slugs.
-       (hsql/format {:insert-into :articles
-                     :values [a]
-                     :on-conflict :slug
-                     :do-update-set {:slug (dedup-slug (:slug a))}
-                     :returning :*})
-       update-options)
+      (sql/insert! tx :articles a update-options)
       (catch org.postgresql.util.PSQLException e
         (handle-psql-exception e)))))
 

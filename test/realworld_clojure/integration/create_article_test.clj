@@ -31,22 +31,26 @@
           r (create-article-request {:garbage "hi"} token)]
       (is (= 422 (:status r))))))
 
-(deftest duplicate-title-gets-unique-slug
+(deftest duplicate-slug-gets-unique-slug
   (test-utils/with-system
     [sut (core/new-system (config/read-test-config))]
     (let [db (get-in sut [:database :datasource])
           user (test-utils/create-user db)
-          article-one (test-utils/create-article db (:id user))
+          ;; The two articles have distinct titles (so the unique title constraint
+          ;; is satisfied) that slugify to the same base slug, forcing slug dedup.
+          article-one (test-utils/create-article db (:id user) {:title "Duplicate Slug Test"})
           input (assoc (mg/generate article/article-schema)
-                       :title (:title article-one))
+                       :title "duplicate slug test"
+                       :body "second article body")
           token (get-login-token user)
           r (create-article-request input token)
           article-two (-> r
                           (:body)
                           (json/parse-string true)
                           (:article))]
-      (is (= 201 (:status r)))
-      (is (not= (:slug article-one) (:slug article-two))))))
+      (is (= 201 (:status r)) "wrong http status")
+      (is (not= (:slug article-one) (:slug article-two)) "slugs should not be equal")
+      (is (= (:body input) (:body article-two)) "article-two was not saved"))))
 
 (deftest no-tags
   (test-utils/with-system

@@ -26,6 +26,17 @@
     "23505" (throw (ex-info "duplicate record" {:type :duplicate}))
     (throw (ex-info "db error" {:type :unknown :state (.getSQLState e)} e))))
 
+(defn- empty-str->null-reader
+  [_builder rs i]
+  (let [v (.getObject rs i)]
+    (if (and (string? v) (.isEmpty v))
+      nil
+      v)))
+
+(def ^:private user-reader
+  "Custom reader which also converts empty strings to nil."
+  (rs/builder-adapter rs/as-unqualified-kebab-maps empty-str->null-reader))
+
 (defn insert-user
   "Insert `user` into `database`."
   [database user]
@@ -34,7 +45,7 @@
                        (hsql/format {:insert-into :users
                                      :values [user]
                                      :returning :*})
-                       {:builder-fn rs/as-unqualified-kebab-maps})
+                       {:builder-fn user-reader})
     (catch org.postgresql.util.PSQLException e
       (handle-psql-exception e))))
 
@@ -45,7 +56,7 @@
                      (hsql/format {:select :*
                                    :from :users
                                    :where [:= :id id]})
-                     {:builder-fn rs/as-unqualified-kebab-maps}))
+                     {:builder-fn user-reader}))
 
 (defn get-user-by-email
   "Get a user record by `email` from `database`."
@@ -54,7 +65,7 @@
                      (hsql/format {:select :*
                                    :from :users
                                    :where [:= :email email]})
-                     {:builder-fn rs/as-unqualified-kebab-maps}))
+                     {:builder-fn user-reader}))
 
 ;; Table aliasing used throughout:
 ;; article a
@@ -123,7 +134,7 @@
                      (hsql/format {:select :*
                                    :from :users
                                    :where [:= :username username]})
-                     {:builder-fn rs/as-unqualified-kebab-maps}))
+                     {:builder-fn user-reader}))
 
 (defn update-user
   "Update `auth-user` with `data`."
@@ -134,7 +145,7 @@
                                      :set data
                                      :where [:= :id (:id auth-user)]
                                      :returning :*})
-                       {:builder-fn rs/as-unqualified-kebab-maps})
+                       {:builder-fn user-reader})
     (catch org.postgresql.util.PSQLException e
       (handle-psql-exception e))))
 

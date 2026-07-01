@@ -46,6 +46,84 @@
           r (update-user-request {:username (:username user-one)} token)]
       (is (= 409 (:status r))))))
 
+;; This case is not in the api docs. It's in the spec tests.
+(deftest empty-bio-string-to-null
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          user (test-utils/create-user db)
+          token (get-login-token user)
+          r (update-user-request {:bio ""} token)
+          returned-user (-> r
+                            (:body)
+                            (json/parse-string true)
+                            (:user))]
+      (is (= 200 (:status r)))
+      (is (true?
+           (m/validate user-response-schema returned-user))
+          (->> returned-user
+               (m/explain user-response-schema)
+               (me/humanize)))
+      (is (nil? (:bio returned-user))))))
+
+;; This case is not in the api docs. It's in the spec tests.
+(deftest allow-null-bio
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          user (test-utils/create-user db)
+          token (get-login-token user)
+          r (update-user-request {:bio nil} token)
+          returned-user (-> r
+                            (:body)
+                            (json/parse-string true)
+                            (:user))]
+      (is (= 200 (:status r)))
+      (is (true?
+           (m/validate user-response-schema returned-user))
+          (->> returned-user
+               (m/explain user-response-schema)
+               (me/humanize)))
+      (is (nil? (:bio returned-user))))))
+
+(deftest empty-image-string-to-null
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          user (test-utils/create-user db)
+          token (get-login-token user)
+          r (update-user-request {:image ""} token)
+          returned-user (-> r
+                            (:body)
+                            (json/parse-string true)
+                            (:user))]
+      (is (= 200 (:status r)))
+      (is (true?
+           (m/validate user-response-schema returned-user))
+          (->> returned-user
+               (m/explain user-response-schema)
+               (me/humanize)))
+      (is (nil? (:image returned-user))))))
+
+(deftest allow-null-image
+  (test-utils/with-system
+    [sut (core/new-system (config/read-test-config))]
+    (let [db (get-in sut [:database :datasource])
+          user (test-utils/create-user db)
+          token (get-login-token user)
+          r (update-user-request {:image nil} token)
+          returned-user (-> r
+                            (:body)
+                            (json/parse-string true)
+                            (:user))]
+      (is (= 200 (:status r)))
+      (is (true?
+           (m/validate user-response-schema returned-user))
+          (->> returned-user
+               (m/explain user-response-schema)
+               (me/humanize)))
+      (is (nil? (:image returned-user))))))
+
 (deftest success
   (test-utils/with-system
     [sut (core/new-system (config/read-test-config))]

@@ -70,8 +70,8 @@
    [:email {:optional true} [:string {:min 1 :error/message "can't be blank"}]]
    [:username {:optional true} [:string {:min 1}]]
    [:password {:optional true} [:string {:min 1}]]
-   [:image {:optional true} [:string {:min 1}]]
-   [:bio {:optional true} [:string {:min 1}]]])
+   [:image {:optional true} [:maybe :string]] ;; Allow {"image": ""} and {"image": null}
+   [:bio {:optional true} [:maybe :string]]]) ;; Allow {"bio": ""} and {"bio": null}
 
 (defn update-user
   "Update a user."

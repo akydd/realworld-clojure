@@ -27,8 +27,13 @@
           user (test-utils/create-user db)
           u (mg/generate article/article-update-schema)
           r (update-article-request "no-article-here" u
-                                    (get-login-token user))]
-      (is (= 404 (:status r))))))
+                                    (get-login-token user))
+          error (-> r
+                    (:body)
+                    (json/parse-string true)
+                    (get-in [:errors :article 0]))]
+      (is (= 404 (:status r)))
+      (is (= "not found" error)))))
 
 (deftest invalid-input
   (test-utils/with-system

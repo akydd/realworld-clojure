@@ -26,8 +26,13 @@
        (let [db (get-in sut [:database :datasource])
              user (test-utils/create-user db)
              token (get-login-token user)
-             r (unfavorite-article-request "no-article" token)]
-         (is (= 404 (:status r))))]))
+             r (unfavorite-article-request "no-article" token)
+             error (-> r
+                       (:body)
+                       (json/parse-string true)
+                       (get-in [:errors :article 0]))]
+         (is (= 404 (:status r)))
+         (is (= "not found" error)))]))
 
   (testing "marks a favorited article as unfavorited"
     (test-utils/with-system

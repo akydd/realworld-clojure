@@ -168,7 +168,8 @@
   (let [a (article/update-article (:article-controller handler) slug updates
                                   auth-user)]
     (if (nil? a)
-      {:status 404}
+      {:status 404
+       :body {:errors {:article ["not found"]}}}
       (if (:errors a)
         {:status 422
          :body a}
@@ -190,7 +191,8 @@
   (let [a (article/favorite-article (:article-controller handler) slug
                                     auth-user)]
     (if (nil? a)
-      {:status 404}
+      {:status 404
+       :body {:errors {:article ["not found"]}}}
       {:status 200
        :body {:article a}})))
 
@@ -200,7 +202,8 @@
   (let [a (article/unfavorite-aarticle (:article-controller handler) slug
                                        auth-user)]
     (if (nil? a)
-      {:status 400}
+      {:status 404
+       :body {:errors {:article ["not found"]}}}
       {:status 200
        :body {:article a}})))
 

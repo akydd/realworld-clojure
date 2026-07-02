@@ -23,8 +23,13 @@
     (let [db (get-in sut [:database :datasource])
           user (test-utils/create-user db)
           token (get-login-token user)
-          r (favorite-article-request "slug" token)]
-      (is (= 404 (:status r))))))
+          r (favorite-article-request "slug" token)
+          error (-> r
+                    (:body)
+                    (json/parse-string true)
+                    (get-in [:errors :article 0]))]
+      (is (= 404 (:status r)))
+      (is (= "not found" error)))))
 
 (deftest success
   (test-utils/with-system

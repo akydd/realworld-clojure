@@ -21,8 +21,13 @@
     (let [db (get-in sut [:database :datasource])
           user (test-utils/create-user db)
           token (get-login-token user)
-          r (delete-comment-request "no-article-here" 1 token)]
-      (is (= 404 (:status r))))))
+          r (delete-comment-request "no-article-here" 1 token)
+          error (-> r
+                    (:body)
+                    (json/parse-string true)
+                    (get-in [:errors :article 0]))]
+      (is (= 404 (:status r)))
+      (is (= "not found" error)))))
 
 (deftest unparsable-comment-id
   (test-utils/with-system

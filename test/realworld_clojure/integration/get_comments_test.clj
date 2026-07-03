@@ -16,8 +16,13 @@
 (deftest no-article
   (test-utils/with-system
     [sut (core/new-system (config/read-test-config))]
-    (let [r (get-comments-request "no-article")]
-      (is (= 404 (:status r))))))
+    (let [r (get-comments-request "no-article")
+          error (-> r
+                    (:body)
+                    (json/parse-string true)
+                    (get-in [:errors :article 0]))]
+      (is (= 404 (:status r)))
+      (is (= "not found" error)))))
 
 (deftest article-has-no-comments
   (test-utils/with-system

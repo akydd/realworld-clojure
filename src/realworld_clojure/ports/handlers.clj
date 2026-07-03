@@ -213,7 +213,8 @@
   (let [c (comment/create-comment! (:comment-controller handler) slug input
                                    auth-user)]
     (if (nil? c)
-      {:status 404}
+      {:status 404
+       :body {:errors {:article ["not found"]}}}
       (if (:errors c)
         {:status 422
          :body c}
@@ -229,7 +230,8 @@
                    (comment/get-article-comments (:article-controller handler)
                                                  slug auth-user))]
     (if (nil? comments)
-      {:status 404}
+      {:status 404
+       :body {:errors {:article ["not found"]}}}
       {:status 200
        :body {:comments comments}})))
 
@@ -239,7 +241,8 @@
   (let [p (comment/delete-comment (:article-controller handler) slug id
                                   auth-user)]
     (if (nil? p)
-      {:status 404}
+      {:status 404
+       :body {:errors {:article ["not found"]}}}
       {:status 204})))
 
 (defn get-tags

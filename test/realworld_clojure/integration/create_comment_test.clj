@@ -27,8 +27,13 @@
           user (test-utils/create-user db)
           c (mg/generate comment/comment-create-schema)
           token (get-login-token user)
-          r (create-comment-request "no-article" c token)]
-      (is (= 404 (:status r))))))
+          r (create-comment-request "no-article" c token)
+          error (-> r
+                    (:body)
+                    (json/parse-string true)
+                    (get-in [:errors :article 0]))]
+      (is (= 404 (:status r)))
+      (is (= "not found" error)))))
 
 (deftest invalid-input
   (test-utils/with-system

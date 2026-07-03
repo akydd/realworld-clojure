@@ -104,7 +104,8 @@
   (let [p (profile/unfollow-user (:profile-controller handler) auth-user
                                  username)]
     (if (nil? p)
-      {:status 404}
+      {:status 404
+       :body {:errors {:profile ["not found"]}}}
       {:status 200
        :body {:profile p}})))
 

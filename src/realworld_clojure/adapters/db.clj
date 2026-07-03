@@ -20,10 +20,21 @@
   {:return-keys true
    :builder-fn rs/as-unqualified-lower-maps})
 
+(defn- duplicate-field->keyword
+  [s]
+  (keyword (second (re-find #"\(([^)]*)\)" s))))
+
+(defn- handle-duplicate-exception
+  [e]
+  (let [msg (.getServerErrorMessage e)
+        details (.getDetail msg)
+        field (duplicate-field->keyword details)]
+    (throw (ex-info "duplicate record" {:type :duplicate :field field}))))
+
 (defn- handle-psql-exception
   [e]
   (case (.getSQLState e)
-    "23505" (throw (ex-info "duplicate record" {:type :duplicate}))
+    "23505" (handle-duplicate-exception e)
     (throw (ex-info "db error" {:type :unknown :state (.getSQLState e)} e))))
 
 (defn- empty-str->null-reader

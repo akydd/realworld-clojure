@@ -26,8 +26,13 @@
     (let [db (get-in sut [:database :datasource])
           user (test-utils/create-user db)
           token (get-login-token user)
-          r (unfollow-user-request "not-a-user" token)]
-      (is (= 404 (:status r))))))
+          r (unfollow-user-request "not-a-user" token)
+          error (-> r
+                    (:body)
+                    (json/parse-string true)
+                    (get-in [:errors :profile 0]))]
+      (is (= 404 (:status r)))
+      (is (= "not found" error)))))
 
 (deftest user-not-followed
   (test-utils/with-system

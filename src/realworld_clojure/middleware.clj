@@ -26,7 +26,7 @@
            (let [data (ex-data e)]
              (if (= (:type data) :duplicate)
                {:status 409
-                :body {:errors data}}
+                :body {:errors {(:field data) ["has already been taken"]}}}
                (case (::buddy-auth/type data)
                  ::buddy-auth/unauthorized (build-403-error
                                             (get-in data [::buddy-auth/payload :resource]))

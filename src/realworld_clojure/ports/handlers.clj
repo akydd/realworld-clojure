@@ -51,7 +51,8 @@
   [handler user]
   (let [u (user/login-user (:user-controller handler) user)]
     (if (nil? u)
-      {:status 403}
+      {:status 401
+       :body {:errors {:credentials ["invalid"]}}}
       (if (:errors u)
         {:status 422
          :body u}

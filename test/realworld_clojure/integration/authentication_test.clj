@@ -33,8 +33,13 @@
     [sut (core/new-system (config/read-test-config))]
     (let [db (get-in sut [:database :datasource])
           user (test-utils/create-user db)
-          r (login-request (:email user) "hi")]
-      (is (= 403 (:status r))))))
+          r (login-request (:email user) "hi")
+          error (-> r
+                    (:body)
+                    (json/parse-string true)
+                    (get-in [:errors :credentials 0]))]
+      (is (= 401 (:status r)))
+      (is (= "invalid" error)))))
 
 (deftest success
   (test-utils/with-system

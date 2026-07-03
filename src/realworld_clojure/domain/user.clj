@@ -1,16 +1,16 @@
 (ns realworld-clojure.domain.user
-  (:require [buddy.auth :refer [throw-unauthorized]]
-            [buddy.hashers :as hashers]
-            [buddy.sign.jwt :as jwt]
-            [malli.core :as m]
-            [malli.error :as me]
-            [realworld-clojure.adapters.db :as db]))
+  (:require
+   [buddy.hashers :as hashers]
+   [buddy.sign.jwt :as jwt]
+   [malli.core :as m]
+   [malli.error :as me]
+   [realworld-clojure.adapters.db :as db]))
 
 (def user-schema
   "Schema for the `user` param of [[register-user]]."
   [:map {:closed true}
    [:username [:string {:min 1 :error/message "can't be blank"}]]
-   [:password [:string {:min 1 :error/message "can't be blank"}]]
+   [:password [:string {:min 8 :error/message "can't be blank"}]]
    [:email [:string {:min 1 :error/message "can't be blank"}]]
    [:bio {:optional true} [:string {:min 1}]]
    [:image {:optional true} [:string {:min 1}]]])
@@ -59,9 +59,8 @@
                              (:database controller) (:email user))]
       (let [incoming-password (:password user)
             encrypted-password (:password fetched-user)]
-        (if (password-valid? incoming-password encrypted-password)
-          (add-token (:jwt-secret controller) fetched-user)
-          (throw-unauthorized))))
+        (when (password-valid? incoming-password encrypted-password)
+          (add-token (:jwt-secret controller) fetched-user))))
     {:errors (me/humanize (m/explain user-login-schema user))}))
 
 (def user-update-schema
@@ -69,7 +68,7 @@
   [:map {:closed true}
    [:email {:optional true} [:string {:min 1 :error/message "can't be blank"}]]
    [:username {:optional true} [:string {:min 1}]]
-   [:password {:optional true} [:string {:min 1}]]
+   [:password {:optional true} [:string {:min 8}]]
    [:image {:optional true} [:maybe :string]] ;; Allow {"image": ""} and {"image": null}
    [:bio {:optional true} [:maybe :string]]]) ;; Allow {"bio": ""} and {"bio": null}
 

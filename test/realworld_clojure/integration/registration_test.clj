@@ -35,7 +35,7 @@
                    (:body)
                    (json/parse-string true)
                    (:user))]
-      (is (= 200 (:status r)))
+      (is (= 201 (:status r)))
       (is (true? (m/validate user-response-schema user))
           (->> user
                (m/explain user-response-schema)

@@ -5,16 +5,31 @@
             [cambium.core :as log]
             [realworld-clojure.adapters.db :as db]))
 
-(defn- build-403-error
-  "Returns a properly formatted 403 response."
-  [resource]
-  (let [r {:status 403}]
+(defn- build-403-response
+  "Build a 403 response."
+  [data]
+  (let [r {:status 403}
+        resource (get-in data [::buddy-auth/payload :resource])]
     (if resource
       (assoc r :body {:errors {resource ["forbidden"]}})
       r)))
 
+(defn- build-409-response
+  "Build a 409 response."
+  [data]
+  {:status 409
+   :body {:errors {(:field data) ["has already been taken"]}}})
+
+(defn- build-500-response
+  "Build a 500 response."
+  [e]
+  {:status 500
+   :body {:errors (str
+                   "Internal error"
+                   (.getMessage e))}})
+
 (defn wrap-exception
-  "Convert exceptions to http status codes.
+  "Catch exception and convert into a response.
 
   If the db encountered a duplicate record on insert, return 409.
   If the request is not authorized, return 403.
@@ -25,17 +40,12 @@
          (catch Exception e
            (let [data (ex-data e)]
              (if (= (:type data) :duplicate)
-               {:status 409
-                :body {:errors {(:field data) ["has already been taken"]}}}
+               (build-409-response data)
                (case (::buddy-auth/type data)
-                 ::buddy-auth/unauthorized (build-403-error
-                                            (get-in data [::buddy-auth/payload :resource]))
+                 ::buddy-auth/unauthorized (build-403-response data)
                  (do
                    (log/error {} e "Caught exception")
-                   {:status 500
-                    :body {:errors (str
-                                    "Internal error"
-                                    (.getMessage e))}}))))))))
+                   (build-500-response e)))))))))
 
 (defn wrap-no-auth-error
   "Respond with a 401 when the request has not been authenticated."

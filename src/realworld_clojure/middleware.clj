@@ -5,6 +5,14 @@
             [cambium.core :as log]
             [realworld-clojure.adapters.db :as db]))
 
+(defn- build-403-error
+  "Returns a properly formatted 403 response."
+  [resource]
+  (let [r {:status 403}]
+    (if resource
+      (assoc r :body {:errors {resource ["forbidden"]}})
+      r)))
+
 (defn wrap-exception
   "Convert exceptions to http status codes.
 
@@ -20,7 +28,8 @@
                {:status 409
                 :body {:errors data}}
                (case (::buddy-auth/type data)
-                 ::buddy-auth/unauthorized {:status 403}
+                 ::buddy-auth/unauthorized (build-403-error
+                                            (get-in data [::buddy-auth/payload :resource]))
                  (do
                    (log/error {} e "Caught exception")
                    {:status 500

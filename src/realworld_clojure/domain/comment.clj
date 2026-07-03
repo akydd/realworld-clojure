@@ -27,7 +27,7 @@
     (when-let [c (db/get-comment (:database controller) id auth-user)]
       (if (= (:username auth-user) (get-in c [:author :username]))
         (db/delete-comment (:database controller) id)
-        (throw-unauthorized)))))
+        (throw-unauthorized {:resource :comment})))))
 
 (defn get-article-comments
   "Get all comments for article with `slug`."

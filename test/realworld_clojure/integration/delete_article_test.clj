@@ -1,5 +1,6 @@
 (ns realworld-clojure.integration.delete-article-test
   (:require
+   [cheshire.core :as json]
    [clojure.test :refer [deftest is]]
    [realworld-clojure.config-test :as config]
    [realworld-clojure.core :as core]
@@ -22,8 +23,13 @@
           user-two (test-utils/create-user db)
           article (test-utils/create-article db (:id user-one))
           token (get-login-token user-two)
-          r (delete-article-request (:slug article) token)]
-      (is (= 403 (:status r))))))
+          r (delete-article-request (:slug article) token)
+          error (-> r
+                    (:body)
+                    (json/parse-string true)
+                    (get-in [:errors :article 0]))]
+      (is (= 403 (:status r)))
+      (is (= "forbidden" error)))))
 
 (deftest no-article-found
   (test-utils/with-system

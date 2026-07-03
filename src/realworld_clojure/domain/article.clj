@@ -63,7 +63,7 @@
               clear-tags (contains? updates :tag-list)]
           (db/update-article
            (:database controller) slug (update-slug updates-without-tags) clear-tags auth-user))
-        (throw-unauthorized)))
+        (throw-unauthorized {:resource :article})))
     {:errors (me/humanize (m/explain article-update-schema updates))}))
 
 (defn delete-article
@@ -73,7 +73,7 @@
     ;; We don't have the author id at this level, but usernames are unique.
     (if (= (get-in article [:author :username]) (:username auth-user))
       (db/delete-article (:database controller) slug)
-      (throw-unauthorized))))
+      (throw-unauthorized {:resource :article}))))
 
 (def ^:private list-articles-filter-schema
   [:map {:closed true}

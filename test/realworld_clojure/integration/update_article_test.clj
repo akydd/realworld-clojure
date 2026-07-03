@@ -55,8 +55,13 @@
            article (test-utils/create-article db (:id user-one))
            u (mg/generate article/article-update-schema)
            token (get-login-token user-two)
-           r (update-article-request (:slug article) u token)]
-       (is (= 403 (:status r))))]))
+           r (update-article-request (:slug article) u token)
+           error (-> r
+                     (:body)
+                     (json/parse-string true)
+                     (get-in [:errors :article 0]))]
+       (is (= 403 (:status r)))
+       (is (= "forbidden" error)))]))
 
 (deftest new-title-makes-new-slug
   (test-utils/with-system
